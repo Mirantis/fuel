@@ -7,18 +7,18 @@ class galera::params {
 
   case $::osfamily {
     'RedHat': {
-      $pkg_provider         = 'rpmforce'
+      $pkg_provider         = 'yum'
       $libssl_package       = 'openssl098e'
       $libaio_package       = 'libaio'
       # $mysql_client_package = 'mysql'
       # $mysql_version        = '5.1/5.1.62-23.4'
-      $mysql_server_package = 'MySQL-server-5.5.28_wsrep_23.7-1.rhel5.x86_64.rpm'
+      $mysql_server_package = 'MySQL-server-5.5.28_wsrep_23.7-5.linux2.6.x86_64.rpm'
       $mysql_server_name    = 'MySQL-server'
       $galera_package       = 'galera-23.2.2-1.rhel5.x86_64.rpm'
       $libgalera_prefix     = '/usr/lib64'
     }
     'Debian': {
-      $pkg_provider         = 'dpkg'
+      $pkg_provider         = 'apt'
       $libssl_package       = 'libssl0.9.8'
       $libaio_package       = 'libaio1'
       # $mysql_client_package = 'mysql-client'
