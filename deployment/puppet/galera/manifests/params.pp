@@ -15,7 +15,7 @@ class galera::params {
 #      $mysql_server_package = 'MySQL-server-5.5.28_wsrep_23.7-5.linux2.6.x86_64.rpm'
       $mysql_server_name    = 'MySQL-server'
 #      $galera_package       = 'galera-23.2.2-1.rhel5.x86_64.rpm'
-      $galera_version       = '23.2.2-1'
+      $galera_version       = '23.2.2-1.rhel5'
       $libgalera_prefix     = '/usr/lib64'
     }
     'Debian': {
