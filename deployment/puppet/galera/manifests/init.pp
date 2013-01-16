@@ -165,7 +165,7 @@ class galera($cluster_name, $master_ip = false, $node_address = $ipaddress_eth0,
   }
 
   package { "MySQL-server" :
-    ensure      => present,
+    ensure      => $::galera::params::mysql_version,
     name 	=> $::galera::params::mysql_server_name,
     provider    => $::galera::params::pkg_provider,
 #    before => Package['Python-mysqldb']
@@ -180,7 +180,7 @@ class galera($cluster_name, $master_ip = false, $node_address = $ipaddress_eth0,
 #  }
 
   package { "galera" :
-    ensure      => present,
+    ensure      => $::galera::params::galera_version,
 #    require     => Package['MySQL-client'],
     provider    => $::galera::params::pkg_provider,
 #    source      => "/tmp/${::galera::params::galera_package}",
