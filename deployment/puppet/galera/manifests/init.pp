@@ -35,6 +35,7 @@ class galera (
         ensure  => present,
         mode    => 755,
         require => Package['MySQL-server'],
+        source => 'puppet:///modules/galera/mysql.init', 
         before  => Service['mysql-galera']
       }
 
