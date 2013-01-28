@@ -87,7 +87,7 @@ class openstack::controller_ha (
    $rabbit_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
    $quantum = false, $quantum_user_password, $quantum_db_password, $quantum_db_user = 'quantum',
    $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_iface = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
-   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $use_syslog = false,
+   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $mysql_skip_name_resolve = false, $use_syslog = false,
    $cinder_rate_limits = undef, $nova_rate_limits = undef
  ) {
 
@@ -261,6 +261,7 @@ local0.* -/var/log/haproxy.log'
       galera_master_ip      => $which ? { 0 => false, default => $controller_internal_addresses[$master_hostname] },
       galera_node_address   => $internal_address,
       galera_nodes          => $galera_nodes,
+      mysql_skip_name_resolve => $mysql_skip_name_resolve,
       admin_email             => $admin_email,
       admin_password          => $admin_password,
       keystone_db_password    => $keystone_db_password,
