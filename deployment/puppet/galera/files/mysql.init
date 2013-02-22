@@ -271,8 +271,8 @@ fi
 
 case "$mode" in
   'start')
-      sleep 30
     # Start daemon
+    sleep 30
     if pgrep "mysqld_safe|mysqld" 1>/dev/null
     then
         echo "There are other mysqld processes running. Exiting"
@@ -302,9 +302,9 @@ case "$mode" in
     ;;
 
   'stop')
-      sleep 30
     # Stop daemon. We use a signal here to avoid having to know the
     # root password.
+    sleep 30
     retry=0
     if test -s "$mysqld_pid_file_path"
     then
@@ -312,20 +312,8 @@ case "$mode" in
     else
         mysqld_pid=`pidof mysqld`
     fi
-    
-    #Attempting to turn off replication gracefully before mysql shutdown
-    mysql -e "SET GLOBAL wsrep_on='OFF';"
-    sleep 1
-    if (mysql -Nbe "show variables like 'wsrep_on';" | awk '$1 == "wsrep_on" {print $2}' | grep -q "OFF")
-    then
-      echo "Mysql replication is turned off with exit code $?"
-    else
-      #TODO: Invent something more suitable for the case of failed replication turn off.
-      echo "Failed to turn off mysql replication with exit code $?"
-    fi
-    sleep 1
-    mysql -Nbe "show variables like 'wsrep_cluster_address';"
-    sleep 1
+
+
 
 
       if (kill -0 $mysqld_pid 2>/dev/null)
@@ -338,13 +326,14 @@ case "$mode" in
         while test $j -ne 60  #wait a little bit for mysql to exit
         do 
                 if (kill -0 $mysqld_pid 2>/dev/null); then
-                        let j=$j+1
+                        j=$((j+1))
                 else
                         break
                 fi
                 sleep 1
         done
-        if test $j -eq 10; then 
+        if test $j -eq 10;
+         then
                 log_failure_msg "MySQL server process #$mysqld_pid failed to stop!"
                 return_value=1
         fi
