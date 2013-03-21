@@ -87,7 +87,18 @@ file {"quantum-logging.conf":
     group => "quantum",
 }
 
-}
+  if $use_syslog {
+    quantum_config {'DEFAULT/log_config': value => "/etc/quantum/logging.conf";}
+    file { "quantum-logging.conf":
+      content => template('quantum/logging.conf.erb'),
+      path => "/etc/quantum/logging.conf",
+      owner => "quantum",
+      group => "quantum",
+    }
+  } else {
+    quantum_config {'DEFAULT/log_config': ensure=> absent;}
+  }
+
   # SELINUX=permissive
   if !defined(Class['selinux']) and ($::osfamily == 'RedHat') {
     class { 'selinux' : }
