@@ -9,16 +9,16 @@ define quantum::agents::sysctl (
   }
 
   if !defined(Sysctl::Value['net.ipv4.conf.all.arp_ignore']) {
-      sysctl::value { 'net.ipv4.conf.all.arp_ignore': value => '2' }
+      sysctl::value { 'net.ipv4.conf.all.arp_ignore': value => '1' }
   }
 
-  if !defined(Sysctl::Value['net.ipv4.conf.all.arp_filter']) {
-      sysctl::value { 'net.ipv4.conf.all.arp_filter': value => '1' }
-  }
+  #if !defined(Sysctl::Value['net.ipv4.conf.all.arp_filter']) {
+  #    sysctl::value { 'net.ipv4.conf.all.arp_filter': value => '1' }
+  #}
 
   Sysctl::Value['net.ipv4.conf.all.arp_announce'] -> 
     Sysctl::Value['net.ipv4.conf.all.arp_ignore'] -> 
-      Sysctl::Value['net.ipv4.conf.all.arp_filter'] -> 
+      #Sysctl::Value['net.ipv4.conf.all.arp_filter'] -> 
         Package <| title == $before_package |>
 
 }
