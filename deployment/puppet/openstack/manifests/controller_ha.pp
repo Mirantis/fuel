@@ -86,9 +86,11 @@ class openstack::controller_ha (
    $nova_db_password, $nova_user_password, $rabbit_password, $rabbit_user,
    $rabbit_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
    $quantum = false, $quantum_user_password, $quantum_db_password, $quantum_db_user = 'quantum',
-   $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_iface = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
-   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $mysql_skip_name_resolve = false, $use_syslog = false,
-   $cinder_rate_limits = undef, $nova_rate_limits = undef
+   $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_addr = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
+   $nv_physical_volume = undef, $manage_volumes = false, $cinder_volume_group = 'cinder-volumes', $galera_nodes, $mysql_skip_name_resolve = false,
+   $use_syslog = false, $cinder_rate_limits = undef, $nova_rate_limits = undef,
+   $cinder_user_password    = 'cinder_user_pass',
+   $cinder_db_password      = 'cinder_db_pass',
  ) {
 
     $which = $::hostname ? { $master_hostname => 0, default => 1 }
@@ -290,9 +292,12 @@ local0.* -/var/log/haproxy.log'
       segment_range           => $segment_range,
       tenant_network_type     => $tenant_network_type,
       cinder                  => $cinder,
-      cinder_iscsi_bind_iface => $cinder_iscsi_bind_iface,
+      cinder_user_password    => $cinder_user_password,
+      cinder_db_password      => $cinder_db_password,
+      cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,
+      cinder_volume_group     => $cinder_volume_group,
       # turn on SWIFT_ENABLED option for Horizon dashboard
       swift                   => $glance_backend ? { 'swift' => true, default => false },
       use_syslog              => $use_syslog,

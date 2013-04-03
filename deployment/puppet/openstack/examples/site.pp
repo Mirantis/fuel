@@ -66,7 +66,7 @@ $controller_hostnames = ['fuel-controller-01', 'fuel-controller-02']
 $network_manager      = 'nova.network.manager.FlatDHCPManager'
 
 # Setup network interface, which Cinder used for export iSCSI targets.
-$cinder_iscsi_bind_iface = $internal_interface
+$cinder_iscsi_bind_addr = $internal_address
 
 # Here you can add physical volumes to cinder. Please replace values with the actual names of devices.
 $nv_physical_volume      = ['/dev/sdz', '/dev/sdy', '/dev/sdx']
@@ -198,7 +198,7 @@ node /fuel-controller-[\d+]/ {
       tenant_network_type     => $tenant_network_type,
       segment_range           => $segment_range,
       cinder                  => $cinder,
-      cinder_iscsi_bind_iface => $cinder_iscsi_bind_iface,
+      cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
       galera_nodes            => $controller_hostnames,
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,

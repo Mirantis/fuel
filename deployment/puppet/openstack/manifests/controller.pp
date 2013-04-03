@@ -134,7 +134,8 @@ class openstack::controller (
   $cinder_db_password      = 'cinder_db_pass',
   $cinder_db_user          = 'cinder',
   $cinder_db_dbname        = 'cinder',
-  $cinder_iscsi_bind_iface = false,
+  $cinder_iscsi_bind_addr  = false,
+  $cinder_volume_group     = 'cinder-volumes',
   #
   $quantum                 = false,
   $quantum_user_password   = 'quantum_pass',
@@ -325,23 +326,23 @@ class openstack::controller (
 
   ######### Cinder Controller Services ########
   if ($cinder) {
-    if ($cinder_iscsi_bind_iface) {
-      $cinder_iscsi_bind_addr = getvar("::ipaddress_${cinder_iscsi_bind_iface}")
+    if ($cinder_iscsi_bind_addr) {
+      $iscsi_bind_host = $cinder_iscsi_bind_addr
     } else {
-      $cinder_iscsi_bind_addr = $api_bind_address
+      $iscsi_bind_host = $api_bind_address
     }
     class {'openstack::cinder':
       sql_connection  => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
       rabbit_password => $rabbit_password,
       rabbit_host     => false,
       rabbit_nodes    => $rabbit_nodes,
-      volume_group    => 'cinder-volumes',
-      physical_volume => $physical_volume,
+      physical_volume => $nv_physical_volume,
       manage_volumes  => $manage_volumes,
       enabled         => true,
       auth_host       => $service_endpoint,
       bind_host       => $api_bind_address,
-      iscsi_bind_host => $cinder_iscsi_bind_addr,
+      iscsi_bind_host => $iscsi_bind_host,
+      volume_group    => $cinder_volume_group,
       cinder_user_password    => $cinder_user_password,
       use_syslog              => $use_syslog,
       cinder_rate_limits => $cinder_rate_limits
