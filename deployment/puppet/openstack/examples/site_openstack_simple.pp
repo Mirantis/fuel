@@ -476,7 +476,7 @@ class simple_controller (
       rabbit_password       => $rabbit_password,
       rabbit_user           => $rabbit_user,
       rabbit_ha_virtual_ip  => $controller_internal_address,
-      rabbit_nodes           => [$controller_internal_address],
+      rabbit_nodes          => [$controller_internal_address],
       quantum               => $quantum,
       quantum_user_password => $quantum_user_password,
       quantum_db_password   => $quantum_db_password,

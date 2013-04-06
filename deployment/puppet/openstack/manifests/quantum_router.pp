@@ -3,7 +3,7 @@
 class openstack::quantum_router (
   $db_host,
   $rabbit_password,
-  $internal_address         = $::ipaddress_br_mgmt,
+  $internal_address,
   $public_interface         = "br-ex",
   $private_interface        = "br-mgmt",
   $fixed_range              = '10.0.0.0/24',
@@ -41,6 +41,11 @@ class openstack::quantum_router (
     $enable_tunneling       = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
     $admin_auth_url = "http://${auth_host}:35357/v2.0"
 
+    $dhcp_in_namespaces = $::osfamily ? {
+        /(?i)redhat/  => false,
+        default       => true,
+    },
+
     class { '::quantum':
       bind_host            => $api_bind_address,
       rabbit_user          => $rabbit_user,
@@ -72,7 +77,7 @@ class openstack::quantum_router (
       }
       class { 'quantum::agents::dhcp':
         debug            => True,
-        use_namespaces   => False,
+        use_namespaces   => $dhcp_in_namespaces,
         service_provider => $service_provider,
         auth_url         => $admin_auth_url,
         auth_tenant      => 'services',
