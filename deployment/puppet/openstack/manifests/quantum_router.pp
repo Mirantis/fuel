@@ -44,7 +44,7 @@ class openstack::quantum_router (
     $dhcp_in_namespaces = $::osfamily ? {
         /(?i)redhat/  => false,
         default       => true,
-    },
+    }
 
     class { '::quantum':
       bind_host            => $api_bind_address,
