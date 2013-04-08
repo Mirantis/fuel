@@ -41,7 +41,7 @@ class openstack::quantum_router (
     $enable_tunneling       = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
     $admin_auth_url = "http://${auth_host}:35357/v2.0"
 
-    $dhcp_in_namespaces = $::osfamily ? {
+    $use_namespaces = $::osfamily ? {
         /(?i)redhat/  => false,
         default       => true,
     }
@@ -77,7 +77,7 @@ class openstack::quantum_router (
       }
       class { 'quantum::agents::dhcp':
         debug            => True,
-        use_namespaces   => $dhcp_in_namespaces,
+        use_namespaces   => $use_namespaces,
         service_provider => $service_provider,
         auth_url         => $admin_auth_url,
         auth_tenant      => 'services',
@@ -97,7 +97,7 @@ class openstack::quantum_router (
         auth_tenant         => 'services',
         auth_user           => 'quantum',
         auth_password       => $quantum_user_password,
-        use_namespaces      => False,
+        use_namespaces      => $use_namespaces,
         metadata_ip         => $internal_address,
         service_provider    => $service_provider
       }
