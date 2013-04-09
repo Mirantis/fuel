@@ -393,7 +393,15 @@ $openstack_version = {
 $mirror_type = 'default'
 $enable_test_repo = false
 $repo_proxy = undef
-
+$deb_mirror   = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_updates  = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_security = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_fuel_folsom_repo      = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom'
+$deb_cloud_archive_repo    = 'http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu' 
+$deb_rabbit_repo           = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom' 
+$fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list'
+$mirrorlist_base           = 'http://172.18.67.168/centos-repo/mirror-6.3-os.list'
+$mirrorlist_updates           = 'http://172.18.67.168/centos-repo/mirror-6.3-updates.list'
 # This parameter specifies the verbosity level of log messages
 # in openstack components config. Currently, it disables or enables debugging.
 $verbose = true
@@ -453,6 +461,15 @@ class { 'openstack::mirantis_repos':
   stage => 'openstack-custom-repo',
   type=>$mirror_type,
   enable_test_repo=>$enable_test_repo,
+  deb_mirror   => $deb_mirror,
+  deb_updates  => $deb_updates,
+  deb_security => $deb_security,
+  deb_fuel_folsom_repo => $deb_fuel_folsom_repo,
+  deb_cloud_archive_repo => $deb_cloud_archive_repo,
+  deb_rabbit_repo => $deb_rabbit_repo,
+  fuel_mirrorlist => $fuel_mirrorlist,
+  mirrorlist_updates => $mirrorlist_updates,
+  mirrorlist_base => $mirrorlist_base,
   repo_proxy=>$repo_proxy,
 }
 
