@@ -19,11 +19,9 @@ ultimately PXE boot from. In a simulation environment fuel-pm only
 needs virtual network (hostonlyif) connectivity.
 
 The easiest way to create an instance of fuel-pm is to download the
-Mirantis custom iso from:
+Mirantis ISO from http://fuel.mirantis.com/your-downloads/
 
-[LINK HERE]
-
-This iso can be used to create fuel-pm on a physical or virtual
+This ISO can be used to create fuel-pm on a physical or virtual
 machine based on CentOS6.3x86_64minimal.iso. If for some reason you
 can't use this ISO, follow the instructions in :ref:`Creating the Puppet master <Create-PM>` to create
 your own fuel-pm, then skip ahead to :ref:`Configuring fuel-pm <Configuring-Fuel-PM>`.
@@ -56,14 +54,14 @@ ip assignments:
 
 
 #. 10.20.0.0/24: management or internal network, for communication between Puppet master and Puppet clients, as well as PXE/TFTP/DHCP for Cobbler
-#. 10.20.1.0/24: public network, for the High Availability (HA) Virtual IP (VIP), as well as floating IPs assigned to OpenStack guest VMs
-#. 192.168.0.0/16: private network, fixed IPs automatically assigned to guest VMs by OpenStack upon their creation 
+#. 192.168.0.0/24: public network, for the High Availability (HA) Virtual IP (VIP), as well as floating IPs assigned to OpenStack guest VMs
+#. 10.20.1.0/24: private network, fixed IPs automatically assigned to guest VMs by OpenStack upon their creation 
 
 
 
 
 Next we need to allocate a static IP address from the internal network
-to eth1 for fuel-pm, and eth0 for the controller, compute, and (if necessary) quantum
+to eth0 for fuel-pm, and eth1 for the controller, compute, and (if necessary) quantum
 nodes. For High Availability (HA) we must choose and assign an IP
 address from the public network to HAProxy running on the controllers.
 You can configure network addresses/network mask according to your
@@ -76,12 +74,13 @@ on the interfaces:
 
         * 10.20.0.100 for Puppet Master
         * 10.20.0.101-10.0.0.103 for the controller nodes
-        * 10.20.0.201-10.0.0.254 for the compute nodes
+        * 10.20.0.110-10.0.0.126 for the compute nodes
+        * 10.20.0.10 internal Virtual IP for component access
         * 255.255.255.0 network mask
 
 #. eth1: public network
 
-    * 10.20.1.10 public Virtual IP for access to the Horizon GUI (OpenStack management interface)
+    * 192.168.0.10 public Virtual IP for access to the Horizon GUI (OpenStack management interface)
 
 #. eth2: for communication between OpenStack VMs without IP address with promiscuous mode enabled.
 
@@ -93,12 +92,20 @@ hostonly adapters exist and are configured correctly:
 
 
 
-If you are on VirtualBox, create the following adapter:
+If you are on VirtualBox, create the following adapters:
 
 * VirtualBox -> Preferences...
-    * Network -> Add Bridged Adapter (vboxnet0)
-
-        * Attached to whichever NIC of the host machine has access to the Internet
+    * Network -> Add HostOnly Adapter (vboxnet0)
+        * IPv4 Address:  10.20.0.1
+        * IPv4 Network Mask:  255.255.255.0
+        * DHCP server: disabled
+    * Network -> Add HostOnly Adapter (vboxnet1)
+        * IPv4 Address:  10.20.1.1
+        * IPv4 Network Mask:  255.255.255.0
+        * DHCP server: disabled
+    * Network -> Add HostOnly Adapter (vboxnet2)
+        * IPv4 Address:  0.0.0.0
+        * IPv4 Network Mask:  255.255.255.0
         * DHCP server: disabled
 
 After creating this interface, reboot the host machine to make sure that
@@ -111,7 +118,7 @@ Virtual HostOnly Network adapter.
 
 
 Creating fuel-pm on a Physical Machine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------------------
 
 If you plan to provision the Puppet master on hardware, you need to
 create a bootable DVD or USB disk from the downloaded ISO, then make
@@ -119,7 +126,7 @@ sure that you can boot your server from the DVD or USB drive.
 
 
 Creating fuel-pm on a Virtual Machine
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------------------
 
 The process of creating a virtual machine to host Fuel in VirtualBox depends on
 whether your deployment is purely virtual or consists of a virtual
@@ -137,32 +144,34 @@ Start up VirtualBox and create a new machine as follows:
     * Name: fuel-pm
     * Type: Linux
     * Version: Red Hat (32 or 64 Bit)
-    * Memory: 1024 MB
+    * Memory: 2048 MB
     * Drive space: 16 GB HDD
 
 * Machine -> Settings... -> Network
 
     * Adapter 1
 
-        * Enable Network Adapter
-        * Attached to: Bridged Adapter
-        * Name: The host machine's network with access to the Internet
+	* Physical network
+	        * Enable Network Adapter
+	        * Attached to: Bridged Adapter
+	        * Name: The host machine's network with access to the network on which the physical machines reside
+	* VirtualBox installation
+                * Enable Network Adapter
+                * Attached to: Hostonly Adapter
+                * Name: vboxnet0
 
     * Adapter 2
 
         * Enable Network Adapter
-        * Attached to: Hostonly Adapter
-        * Name: vboxnet0
+        * Attached to: Bridged Adapter
+        * Name: eth0 (or whichever physical network is attached to the Internet)
 
 * Machine -> Storage
 
-    * Attach the downloaded ISO as a drive
+    * Attach the downloaded ISO as a drive  
 
 
-Installing Fuel from the ISO
-----------------------------
+If you can't (or would rather not) install from the ISO, you can find instructions for installing from the Fuel Library in :ref:`Appendix A <Create-PM>`.
 
-Start the new machine to install the ISO.  The only real installation decision you will need to make is to specify the interface through which the installer can access the Internet:
 
-.. image:: /pages/installation-instructions/screenshots/fuel-iso-choose-nic.png
 

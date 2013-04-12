@@ -127,15 +127,19 @@ class Manifest(object):
     def describe_swift_node(self, node, role, zone):
         node_dict = self.describe_node(node, role)
         node_dict.update({'swift_zone': zone})
+        node_dict.update({'storage_local_net_ip': node.get_ip_address_by_network_name('internal')})
+        node_dict.update({'mountpoints': '1 2\n 2 1'})
         return node_dict
 
     def generate_nodes_configs_list(self, ci):
         zones = range(1, 50)
         nodes = []
         for node in ci.nodes().computes: nodes.append(self.describe_node(node, 'compute'))
-        for node in ci.nodes().controllers: nodes.append(self.describe_swift_node(node, 'controller', zones.pop()))
+        for node in ci.nodes().controllers[:1]: nodes.append(self.describe_swift_node(node, 'primary-controller', zones.pop()))
+        for node in ci.nodes().controllers[1:]: nodes.append(self.describe_swift_node(node, 'controller', zones.pop()))
         for node in ci.nodes().storages: nodes.append(self.describe_swift_node(node, 'storage', zones.pop()))
-        for node in ci.nodes().proxies: nodes.append(self.describe_node(node, 'swift-proxy'))
+        for node in ci.nodes().proxies[:1]: nodes.append(self.describe_node(node, 'primary-swift-proxy'))
+        for node in ci.nodes().proxies[1:]: nodes.append(self.describe_node(node, 'swift-proxy'))
         for node in ci.nodes().quantums: nodes.append(self.describe_node(node, 'quantum'))
         for node in ci.nodes().masters: nodes.append(self.describe_node(node, 'master'))
         for node in ci.nodes().cobblers: nodes.append(self.describe_node(node, 'cobbler'))
@@ -218,6 +222,8 @@ class Manifest(object):
             enable_test_repo=TEST_REPO,
             deployment_id = self.deployment_id(ci),
             use_syslog=use_syslog,
+            public_netmask = ci.public_net_mask(),
+            internal_netmask = ci.internal_net_mask(),
         )
         if is_not_essex():
             template.replace(
@@ -252,7 +258,8 @@ class Manifest(object):
     def write_openstack_ha_minimal_manifest(self, remote, template, ci, controllers, quantums,
                                  proxies=None, use_syslog=True,
                                  quantum=True, loopback=True,
-                                 cinder=True, cinder_on_computes=False):
+                                 cinder=True, cinder_on_computes=False, quantum_netnode_on_cnt=True,
+                                 ha_provider='pacemaker'):
         template.replace(
             internal_virtual_ip=ci.internal_virtual_ip(),
             public_virtual_ip=ci.public_virtual_ip(),
@@ -274,11 +281,14 @@ class Manifest(object):
             ntp_servers=['pool.ntp.org',ci.internal_router()],
             enable_test_repo=TEST_REPO,
             deployment_id = self.deployment_id(ci),
+            public_netmask = ci.public_net_mask(),
+            internal_netmask = ci.internal_net_mask(),
         )
         if is_not_essex():
             template.replace(
                 quantum=quantum,
-                quantum_netnode_on_cnt=quantum,
+                quantum_netnode_on_cnt=quantum_netnode_on_cnt,
+                ha_provider=ha_provider,
             )
 
         self.write_manifest(remote, template)
@@ -287,7 +297,8 @@ class Manifest(object):
     def write_openstack_manifest(self, remote, template, ci, controllers, quantums,
                                  proxies=None, use_syslog=True,
                                  quantum=True, loopback=True,
-                                 cinder=True, swift=True):
+                                 cinder=True, swift=True, quantum_netnode_on_cnt=True,
+                                 ha_provider='pacemaker'):
         template.replace(
             internal_virtual_ip=ci.internal_virtual_ip(),
             public_virtual_ip=ci.public_virtual_ip(),
@@ -309,12 +320,16 @@ class Manifest(object):
             default_gateway=ci.public_router(),
             enable_test_repo=TEST_REPO,
             deployment_id = self.deployment_id(ci),
+            public_netmask = ci.public_net_mask(),
+            internal_netmask = ci.internal_net_mask(),
         )
         if swift:
             template.replace(swift_loopback=self.loopback(loopback))
         if is_not_essex():
             template.replace(
                 quantum=quantum,
+                quantum_netnode_on_cnt=quantum_netnode_on_cnt,
+                ha_provider=ha_provider,
             )
 
         self.write_manifest(remote, template)
