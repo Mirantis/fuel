@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'optparse'
 
-ORCHESTRATION_ROLES = %w(controller compute quantum storage swift-proxy)
+ORCHESTRATION_ROLES = %w(controller compute quantum storage swift-proxy primary-controller primary-swift-proxy)
 HA_DEPLOYMENT_MODES = %w(ha_compute ha_compact ha_full ha_minimal)
 SITE_PPS = {
     :ha_compute.to_s => '/etc/puppet/modules/openstack/examples/site_openstack_ha_compact.pp',
@@ -49,7 +49,7 @@ class Template
     if ret[0..0] == '$'
       return ret
     end
-    "'%s'" % ret
+    '"%s"' % ret
   end
 
   def self._replace(template, key, value)
@@ -150,6 +150,14 @@ class ConfigYaml
     self.mandatory('mirror_type')
   end
 
+  def public_netmask()
+    self.mandatory('public_netmask')
+  end
+
+  def internal_netmask()
+    self.mandatory('internal_netmask')
+  end
+
   def template()
     self.obligatory('template')
   end
@@ -241,18 +249,28 @@ class ConfigYaml
   def swift_loopback()
     self.obligatory('swift_loopback')
   end
+
+  def network_manager()
+    self.obligatory('network_manager')
+  end
+
+  def auto_assign_floating_ip()
+    self.obligatory('auto_assign_floating_ip')
+  end
+
+  def quantum_netnode_on_cnt()
+    self.obligatory('quantum_netnode_on_cnt')
+  end
 end
 
 class Manifest
   def self.prepare_manifest(template, config)
     if config.ha?
       template.replace(:internal_virtual_ip => config.internal_virtual_ip(),
-                       :public_virtual_ip => config.public_virtual_ip())
+                       :public_virtual_ip => config.public_virtual_ip()
+      )
     end
-
     template.replace(:deployment_id => config.deployment_id()) unless config.deployment_id().nil?
-    template.replace(:swift_loopback => config.swift_loopback()) unless config.swift_loopback().nil?
-
     template.replace(:floating_range => config.floating_range(),
                      :fixed_range => config.fixed_range(),
                      :mirror_type => config.mirror_type(),
@@ -269,11 +287,15 @@ class Manifest
                      :dns_nameservers => config.dns_nameservers(),
                      :default_gateway => config.default_gateway(),
                      :segment_range => config.segment_range(),
-                     :repo_proxy => config.repo_proxy()
+                     :repo_proxy => config.repo_proxy(),
+                     :public_netmask => config.public_netmask(),
+                     :internal_netmask => config.internal_netmask(),
+                     :network_manager => config.network_manager(),
+                     :auto_assign_floating_ip => config.auto_assign_floating_ip(),
+                     :quantum_netnode_on_cnt=> config.quantum_netnode_on_cnt()
     )
-
     if config.swift()
-      template.replace(:swift_loopback => config.loopback())
+      template.replace(:swift_loopback => config.swift_loopback()) unless config.swift_loopback().nil?
     end
     template.replace(:quantum => config.quantum())
   end
@@ -285,8 +307,8 @@ class Astute
       !(ORCHESTRATION_ROLES & [node['role']]).empty?
     end.
         collect do |node|
-      {:uid.to_s => node['name'], :role.to_s => node['role']}
-    end
+          {:uid.to_s => node['name'], :role.to_s => node['role']}
+        end
     YAML.dump({:nodes.to_s => nodes}.update(config.orchestrator_common()))
   end
 end

@@ -54,24 +54,52 @@ define haproxy_service($order, $balancers, $virtual_ips, $port, $define_cookies 
       $balancer_port = $port
     }
   }
-
-  haproxy::listen { $name:
-    order            => $order - 1,
-    ipaddress        => $virtual_ips,
-    ports            => $port,
-    options          => $haproxy_config_options,
-    collect_exported => false
+  
+  add_haproxy_service { $name : 
+    order                    => $order, 
+    balancers                => $balancers, 
+    virtual_ips              => $virtual_ips, 
+    port                     => $port, 
+    haproxy_config_options   => $haproxy_config_options, 
+    balancer_port            => $balancer_port, 
+    balancermember_options   => $balancermember_options, 
+    define_cookies           => $define_cookies, 
+    define_backend           => $define_backend,
   }
-  @haproxy::balancermember { "${name}":
-    order                  => $order,
-    listening_service      => $name,
-    balancers              => $balancers,
-    balancer_port          => $balancer_port,
-    balancermember_options => $balancermember_options,
-    define_cookies         => $define_cookies,
-    define_backend        =>  $define_backend
-  }
+}
 
+# add_haproxy_service moved to separate define to allow adding custom sections 
+# to haproxy config without any default config options, except only required ones.
+define add_haproxy_service (
+    $order, 
+    $balancers, 
+    $virtual_ips, 
+    $port, 
+    $haproxy_config_options, 
+    $balancer_port, 
+    $balancermember_options,
+    $mode = 'tcp',
+    $define_cookies = false, 
+    $define_backend = false, 
+    $collect_exported = false
+    ) {
+    haproxy::listen { $name:
+      order            => $order - 1,
+      ipaddress        => $virtual_ips,
+      ports            => $port,
+      options          => $haproxy_config_options,
+      collect_exported => $collect_exported,
+      mode             => $mode,
+    }
+    @haproxy::balancermember { "${name}":
+      order                  => $order,
+      listening_service      => $name,
+      balancers              => $balancers,
+      balancer_port          => $balancer_port,
+      balancermember_options => $balancermember_options,
+      define_cookies         => $define_cookies,
+      define_backend        =>  $define_backend,
+    }
 }
 
 define keepalived_dhcp_hook($interface)
@@ -94,9 +122,12 @@ class openstack::controller_ha (
    $nova_db_password, $nova_user_password, $rabbit_password, $rabbit_user,
    $rabbit_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
    $quantum = false, $quantum_user_password='', $quantum_db_password='', $quantum_db_user = 'quantum',
-   $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_iface = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
+   $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_addr = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
    $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $use_syslog = false,
    $cinder_rate_limits = undef, $nova_rate_limits = undef,
+   $cinder_volume_group     = 'cinder-volumes',
+   $cinder_user_password    = 'cinder_user_pass',
+   $cinder_db_password      = 'cinder_db_pass',
    $rabbit_node_ip_address  = $internal_address,
    $horizon_use_ssl         = false,
    $quantum_network_node    = false,
@@ -196,14 +227,15 @@ local0.* -/var/log/haproxy.log'
     }
     sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
-    package {'socat': ensure => present}
+    package { 'socat': ensure => present }
     exec { 'wait-for-haproxy-mysql-backend':
-      command => "echo show stat | socat unix-connect:///var/lib/haproxy/stats stdio | grep 'mysqld,BACKEND' | awk -F ',' '{print \$18}' | grep -q 'UP'",
-      path => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
-      require => [Service['haproxy'],Package['socat']],
-      try_sleep   => 5,
-      tries       => 60,
+      command   => "echo show stat | socat unix-connect:///var/lib/haproxy/stats stdio | grep -q '^mysqld,BACKEND,.*,UP,'",
+      path      => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
+      require   => [Service['haproxy'], Package['socat']],
+      try_sleep => 5,
+      tries     => 60,
     }
+
     Exec<| title == 'wait-for-synced-state' |> -> Exec['wait-for-haproxy-mysql-backend']
     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'initial-db-sync' |>
     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'keystone-manage db_sync' |>
@@ -312,9 +344,12 @@ local0.* -/var/log/haproxy.log'
       segment_range           => $segment_range,
       tenant_network_type     => $tenant_network_type,
       cinder                  => $cinder,
-      cinder_iscsi_bind_iface => $cinder_iscsi_bind_iface,
+      cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
+      cinder_user_password    => $cinder_user_password,
+      cinder_db_password      => $cinder_db_password,
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,
+      cinder_volume_group     => $cinder_volume_group,
       # turn on SWIFT_ENABLED option for Horizon dashboard
       swift                   => $glance_backend ? { 'swift' => true, default => false },
       use_syslog              => $use_syslog,

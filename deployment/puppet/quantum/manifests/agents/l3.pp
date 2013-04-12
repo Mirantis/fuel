@@ -120,8 +120,8 @@ class quantum::agents::l3 (
         $external_alloc_pool = [$ext_ipinfo['pool_start'], $ext_ipinfo['pool_end']]
       }
 
-      Keystone_user_role["$auth_user@$auth_tenant"] -> Quantum::Network::Setup <| |>
-      Keystone_user_role["$auth_user@$auth_tenant"] -> Quantum::Network::Provider_router <| |>
+      Keystone_user_role<| title=="$auth_user@$auth_tenant"|> -> Quantum::Network::Setup <| |>
+      Keystone_user_role<| title=="$auth_user@$auth_tenant"|> -> Quantum::Network::Provider_router <| |>
 
       quantum::network::setup { 'net04':
         physnet      => $internal_physical_network,
@@ -163,13 +163,13 @@ class quantum::agents::l3 (
       # turn down the current default route metric priority
       # TODO: make function for recognize REAL defaultroute
       # temporary use
-      $update_default_route_metric = "/sbin/ip route del default via ${::default_gateway};\
-        /sbin/ip route add default via ${::default_gateway} metric 100"
+      $update_default_route_metric = "bash -c \"(/sbin/ip route delete default via ${::default_gateway} || exit 0 ) && /sbin/ip route replace default via ${::default_gateway} metric 100\""
 
       exec { 'update_default_route_metric':
         command     => $update_default_route_metric,
         returns     => [0, 7],
         refreshonly => true,
+        path      => ['/usr/bin', '/bin', '/sbin', '/usr/sbin']
       }
       Quantum::Network::Provider_router['router04'] -> Exec['update_default_route_metric']
       Class[quantum::waistline] -> Quantum::Network::Setup <| |>
