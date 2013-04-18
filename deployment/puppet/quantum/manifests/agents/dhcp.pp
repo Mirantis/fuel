@@ -42,6 +42,10 @@ class quantum::agents::dhcp (
     }
   }
 
+  #if ! defined(Quantum::Agents::Sysctl["$dhcp_agent_package"]) {
+  #  quantum::agents::sysctl{"$dhcp_agent_package": }
+  #}
+
   Package[$dhcp_agent_package] -> Quantum_dhcp_agent_config <| |>
   Package[$dhcp_agent_package] -> Quantum_config <| |>
 

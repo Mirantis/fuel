@@ -28,8 +28,7 @@ class openstack::cinder(
     Cinder_config['DEFAULT/rabbit_ha_queues']->Service<| title == 'cinder-volume' |>
     Cinder_config['DEFAULT/rabbit_ha_queues']->Service<| title == 'cinder-scheduler' |>
     cinder_config { 'DEFAULT/rabbit_ha_queues': value => 'True' }
-  }
-  elsif $rabbit_ha_virtual_ip {
+  } elsif $rabbit_ha_virtual_ip {
     $rabbit_hosts = "${rabbit_ha_virtual_ip}:5672"
     Cinder_config['DEFAULT/rabbit_ha_queues']->Service<| title == 'cinder-api'|>
     Cinder_config['DEFAULT/rabbit_ha_queues']->Service<| title == 'cinder-volume' |>
@@ -60,12 +59,10 @@ class openstack::cinder(
     }
   }
   if $manage_volumes {
-
     class { 'cinder::volume':
       package_ensure => $::openstack_version['cinder'],
       enabled        => true,
     }
-
     class { 'cinder::volume::iscsi':
       iscsi_ip_address => $iscsi_bind_host,
       physical_volume  => $physical_volume,
