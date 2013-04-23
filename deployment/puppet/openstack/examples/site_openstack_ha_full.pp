@@ -702,7 +702,6 @@ node /fuel-swift-[\d+]/ {
     nv_physical_volume     => $nv_physical_volume,
     db_host                => $internal_virtual_ip,
     service_endpoint       => $internal_virtual_ip,
-    nova_rate_limits       => $nova_rate_limits,
     cinder_rate_limits     => $cinder_rate_limits,
     rabbit_nodes           => $controller_hostnames,
     rabbit_password        => $rabbit_password,
