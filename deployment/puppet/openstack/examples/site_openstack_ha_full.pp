@@ -659,8 +659,6 @@ node /fuel-compute-[\d+]/ {
     ssh_public_key         => 'puppet:///ssh_keys/openstack.pub',
     use_syslog             => $use_syslog,
     nova_rate_limits       => $nova_rate_limits,
-    cinder_rate_limits     => $cinder_rate_limits
-
   }
 }
 
