@@ -297,7 +297,7 @@ class Manifest(object):
     def write_openstack_manifest(self, remote, template, ci, controllers, quantums,
                                  proxies=None, use_syslog=True,
                                  quantum=True, loopback=True,
-                                 cinder=True, cinder_nodes='all',
+                                 cinder=True, cinder_nodes='controller',
                                  swift=True, quantum_netnode_on_cnt=True,
                                  ha_provider='pacemaker'):
         template.replace(
