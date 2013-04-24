@@ -199,7 +199,8 @@ class openstack::compute (
   }
 
   #Cinder setup
-  if ($cinder_compute) {
+  #Always run cinder if $cinder is true, but only manage_volumes if $manage_volumes and $cinder_compute are true
+  if ($cinder) {
     $enabled_apis = 'metadata'
     package {'python-cinderclient': ensure => present}
     class {'openstack::cinder':
@@ -209,7 +210,7 @@ class openstack::compute (
       rabbit_nodes         => $rabbit_nodes,
       volume_group         => $cinder_volume_group,
       physical_volume      => $nv_physical_volume,
-      manage_volumes       => $manage_volumes,
+      manage_volumes       => $cinder_compute ? { true => $manage_volumes, false => false},
       enabled              => true,
       auth_host            => $service_endpoint,
       bind_host            => false,
