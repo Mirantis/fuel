@@ -323,7 +323,16 @@ $mirror_type = 'default'
 $enable_test_repo = false
 $repo_proxy = undef
 $use_upstream_mysql = true
-
+$deb_mirror   = 'http://mirror.yandex.ru/ubuntu'
+$deb_updates  = 'http://mirror.yandex.ru/ubuntu'
+$deb_security = 'http://mirror.yandex.ru/ubuntu'
+$deb_fuel_folsom_repo      = 'http://download.mirantis.com/precise-fuel-folsom'
+$deb_cloud_archive_repo    = 'http://ubuntu-cloud.archive.canonical.com/ubuntu' 
+$deb_rabbit_repo           = 'http://download.mirantis.com/precise-fuel-folsom' 
+$fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list'
+$mirrorlist_base           = 'http://mirrorlist.centos.org/?release=6.3&arch=x86_64&repo=os'
+$mirrorlist_updates           = 'http://mirrorlist.centos.org/?release=6.3&arch=x86_64&repo=updates'
+#
 # This parameter specifies the verbosity level of log messages
 # in openstack components config. Currently, it disables or enables debugging.
 $verbose = true
@@ -381,12 +390,22 @@ Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
 tag("${::deployment_id}::${::environment}")
 
 stage { 'openstack-custom-repo': before => Stage['netconfig'] }
+
 class { 'openstack::mirantis_repos':
   stage => 'openstack-custom-repo',
   type=>$mirror_type,
   enable_test_repo=>$enable_test_repo,
+  deb_mirror   => $deb_mirror,
+  deb_updates  => $deb_updates,
+  deb_security => $deb_security,
+  deb_fuel_folsom_repo => $deb_fuel_folsom_repo,
+  deb_cloud_archive_repo => $deb_cloud_archive_repo,
+  deb_rabbit_repo => $deb_rabbit_repo,
+  fuel_mirrorlist => $fuel_mirrorlist,
+  mirrorlist_base => $mirrorlist_base,
+  mirrorlist_updates => $mirrorlist_updates,
   repo_proxy=>$repo_proxy,
-  use_upstream_mysql=>$use_upstream_mysql
+  use_upstream_mysql => $use_upstream_mysql
 }
 
 if $::operatingsystem == 'Ubuntu' {

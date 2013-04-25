@@ -16,7 +16,16 @@ $cobbler_password    = 'cobbler'
 $pxetimeout          = '0'
 $dhcp_interface      = 'eth1'
 $mirror_type         = 'default'
-
+$fast_mirror         = 'http://172.18.67.168'
+$deb_mirror   = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_updates  = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_security = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu'
+$deb_fuel_folsom_repo      = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom'
+$deb_cloud_archive_repo    = 'http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu' 
+$deb_rabbit_repo           = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom' 
+$fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list'
+$mirrorlist_base           = 'http://172.18.67.168/centos-repo/mirror-6.3-os.list'
+$mirrorlist_updates        = 'http://172.18.67.168/centos-repo/mirror-6.3-updates.list'
 stage { 'openstack-custom-repo': before => Stage['main'] }
 class { 'openstack::mirantis_repos': stage => 'openstack-custom-repo', type=>$mirror_type }
 
@@ -49,8 +58,8 @@ node fuel-cobbler {
     # }
 
     class { cobbler::distro::centos63_x86_64:
-      http_iso => "http://172.18.67.168/CentOS-6.3-x86_64-minimal.iso",
-      ks_url   => "http://172.18.67.168/centos-repo/centos-6.3",
+      http_iso => "$fast_mirror/CentOS-6.3-x86_64-minimal.iso",
+      ks_url   => "$fast_mirror/centos-repo/centos-6.3",
     }
 
 
@@ -69,11 +78,11 @@ node fuel-cobbler {
         },
         {
         "name" => "Stanford",
-        "url"  => "http://172.18.67.168/centos-repo/centos-6.3",
+        "url"  => "$fast_mirror/centos-repo/centos-6.3",
         },
         {
         "name" => "Epel",
-        "url"  => "http://172.18.67.168/centos-repo/epel",
+        "url"  => "$fast_mirror/centos-repo/epel",
         }
       ]
     }
@@ -83,9 +92,9 @@ node fuel-cobbler {
       Class[cobbler::profile::ubuntu_1204_x86_64]
 
       class { cobbler::distro::ubuntu_1204_x86_64 :
-        http_iso => "http://172.18.67.168/mini.iso",
+        http_iso => "$fast_mirror/mini.iso",
         require  => Class[cobbler],
-        ks_url   => "http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu",
+        ks_url   => "$fast_mirror/ubuntu-repo/mirror.yandex.ru/ubuntu",
       }
 
       class { cobbler::profile::ubuntu_1204_x86_64 :
@@ -98,7 +107,7 @@ node fuel-cobbler {
           },
           {
             "name" => "Canonical",
-            "url"  => "http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu/",
+            "url"  => "$fast_mirror/ubuntu-repo/ubuntu-cloud.archive.canonical.com/ubuntu/",
             "release" => "precise-updates/folsom",
             "repos" => "main",
           },

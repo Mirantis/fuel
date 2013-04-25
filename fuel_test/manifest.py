@@ -2,7 +2,7 @@ from ipaddr import IPNetwork
 import re
 from fuel_test.helpers import load, write_config, is_not_essex
 from fuel_test.root import root
-from fuel_test.settings import INTERFACES, TEST_REPO
+from fuel_test.settings import INTERFACES, TEST_REPO, REPO_PREFIX, OPENSTACK_RELEASE
 
 
 class Template(object):
@@ -90,7 +90,28 @@ class Manifest(object):
     def mirror_type(self):
         return 'custom'
 
+    def write_repos(self,template):
+        deb_mirror = "%s/ubuntu-repo/mirror.yandex.ru/ubuntu" % REPO_PREFIX
+        deb_updates = "%s/ubuntu-repo/mirror.yandex.ru/ubuntu" % REPO_PREFIX
+        deb_security = "%s/ubuntu-repo/mirror.yandex.ru/ubuntu" % REPO_PREFIX
+        deb_fuel_folsom_repo = "%s/ubuntu-repo/precise-fuel-%s" % (REPO_PREFIX, OPENSTACK_RELEASE)
+        deb_cloud_archive_repo = "%s/ubuntu-repo/ubuntu-cloud.archive.canonical.com/ubuntu" % REPO_PREFIX
+        deb_rabbit_repo = "%s/ubuntu-repo/precise-fuel-%s" % (REPO_PREFIX, OPENSTACK_RELEASE)
+        mirrorlist_base = "%s/centos-repo/mirror-6.3-os.list" % REPO_PREFIX
+        mirrorlist_updates = "%s/centos-repo/mirror-6.3-updates.list" % REPO_PREFIX
+        fuel_mirrorlist = "%s/centos-repo/epel-fuel-%s-2.1/mirror.internal-stage.list" % (REPO_PREFIX, OPENSTACK_RELEASE)
+        template.replace(deb_mirror=deb_mirror,
+            deb_updates=deb_updates,
+            deb_security=deb_security,
+            deb_fuel_folsom_repo=deb_fuel_folsom_repo,
+            deb_cloud_archive_repo=deb_cloud_archive_repo,
+            deb_rabbit_repo=deb_rabbit_repo,
+            mirrorlist_updates=mirrorlist_updates,
+            mirrorlist_base=mirrorlist_base,
+            fuel_mirrorlist=fuel_mirrorlist)
+
     def write_manifest(self, remote, manifest):
+        self.write_repos(manifest)
         write_config(remote, '/etc/puppet/manifests/site.pp',
             str(manifest))
 
@@ -366,6 +387,7 @@ class Manifest(object):
             dhcp_gateway=network[1],
             pxetimeout='3000',
             mirror_type=self.mirror_type(),
+            fast_mirror=REPO_PREFIX
         )
         self.write_manifest(remote, site_pp)
 

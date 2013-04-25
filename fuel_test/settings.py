@@ -1,7 +1,11 @@
 import os
 
+def get_location(node_name):
+    return node_name.split('-')[1]
+
 OS_FAMILY = os.environ.get('OS_FAMILY', "centos")
 PUPPET_GEN = os.environ.get('PUPPET_GEN', "3")
+LOCATION=os.environ.get('LOCATION',get_location(os.uname()[1]))
 
 DEFAULT_IMAGES = {
     'centos': '/var/lib/libvirt/images/centos63-cobbler-base.qcow2',
@@ -68,6 +72,19 @@ OPENSTACK_SNAPSHOT = os.environ.get('OPENSTACK_SNAPSHOT', 'openstack')
 
 INTERFACE_ORDER = ('public', 'internal', 'private')
 ROUTED_INTERFACE = 'public'
+
+REPO_PREFIX = os.environ.get('REPO_PREFIX', None)
+
+LOCATION_REPOS = {
+    'msk':{'centos':'http://srv11-msk.msk.mirantis.net','ubuntu':'http://srv11-msk.msk.mirantis.net'},
+    'srt':{'centos': 'http://srv08-srt.srt.mirantis.net', 'ubuntu': 'http://srv08-srt.srt.mirantis.net'}
+}
+
+if not REPO_PREFIX:
+    REPO_PREFIX = LOCATION_REPOS[LOCATION][OS_FAMILY]
+
+
+OPENSTACK_RELEASE = os.environ.get('OPENSTACK_RELEASE', 'folsom')
 
 INTERFACES = {
     'public': 'eth0',
