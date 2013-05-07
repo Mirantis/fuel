@@ -34,8 +34,8 @@ class openstack::mirantis_repos (
       if $use_upstream_mysql {
         apt::pin { 'upstream-mysql':
           order    => 19,
-          priority => 1002,
-          version  => "5.5.29*",
+          priority => 1,
+          version  => "5.5.28*",
           packages => "mysql*"
         }
       }
