@@ -60,6 +60,7 @@ if [ -d iso ]; then
   cp build/iso/*.iso $build_dir/../
 fi
 
+cd $build_dir/..
 # remove build directory
 rm -rf $build_dir
 
