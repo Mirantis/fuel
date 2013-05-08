@@ -131,7 +131,6 @@ class quantum::agents::l3 (
         subnet_name  => 'subnet04',
         subnet_cidr  => $fixed_range,
         nameservers  => '8.8.4.4',
-        shared       => 'True',
       }
       Quantum_l3_agent_config <| |> -> Quantum::Network::Setup['net04']
 
