@@ -38,8 +38,10 @@ git checkout -f $tag
 # capture commit id
 commit=`git rev-parse HEAD`
 
-# remove git tracking
+# remove git tracking and gepetto files
 rm -rf `find . -name ".git*"`
+rm -rf `find . -name ".project"`
+rm -rf `find . -name ".idea*"`
 
 # generate release version
 echo $tag > release.version
@@ -57,7 +59,7 @@ cp -R docs/_build/html/* documentation/
 
 # create archive
 cd $cur_dir
-tar -czf ${build_dir}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version"
+tar -czf ${build_dir}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version" "$build_dir/README.md"
 
 cd $build_dir
 if [ -d iso ]; then
