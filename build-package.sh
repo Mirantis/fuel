@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-if [ ! $# == 1 ]; then
+if [ $# == 0 ]; then
 
-  echo "Usage: $0 <tag-or-branch>"
+  echo "Usage: $0 <tag-or-branch> [package-suffix]"
   echo "Available branches from git:"
   for line in `git branch -r`; do echo "  * $line (run \"$0 $line\")"; done
   echo "Available tags from git:"
@@ -17,7 +17,12 @@ fi
 
 # determine release tag
 tag="$1"
-build_dir="$(pwd)/fuel-$(echo $tag|sed -e 's/.*\///g')"
+if [ $# > 1 ]; then
+  pkgSuffix="$2"
+else
+  pkgSuffix=$(echo $tag|sed -e 's/.*\///g')
+fi
+build_dir="$(pwd)/fuel-$pkgSuffix"
 
 # create directory
 rm -rf $build_dir
