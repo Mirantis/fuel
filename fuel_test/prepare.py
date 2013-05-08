@@ -119,8 +119,8 @@ class Prepare(object):
             'FLAVOR_REF_ALT': '1', # skip flavor '2' which provides 20Gb ephemerals and lots of RAM...
             'COMPUTE_BUILD_INTERVAL': '10',
             'COMPUTE_BUILD_TIMEOUT': '600',
-            'RUN_SSH': 'true',
-            'NETWORK_FOR_SSH': 'net04', # todo use private instead of floating?
+            'RUN_SSH': 'false',
+            'NETWORK_FOR_SSH': 'net04_ext',
             'SSH_USER': 'cirros',
             'LIVE_MIGRATION': 'true',
             'USE_BLOCKMIG_FOR_LIVEMIG' : 'true',
@@ -162,7 +162,7 @@ class Prepare(object):
             'QUANTUM': 'true',
             'TENANT_NETS_REACHABLE': 'false',
             'TENANT_NETWORK_CIDR': '192.168.112.0/24', # choose do not overlap with 'net04'
-            'TENANT_NETWORK_MASK_BITS': '28', # 29 is too less to test quantum quotas (at least 50 ips needed)
+            'TENANT_NETWORK_MASK_BITS': '28', # 29 is not enougth to test quantum quotas
             'PUBLIC_NETWORK_ID': public_network_id,
             'PUBLIC_ROUTER_ID': public_router_id,
         }
