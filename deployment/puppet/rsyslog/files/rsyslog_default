@@ -1,3 +1,0 @@
-# File is managed by puppet
-
-RSYSLOGD_OPTIONS="-c4"
