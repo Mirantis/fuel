@@ -53,7 +53,7 @@ class quantum::agents::l3 (
   Quantum_config <| |> ~> Service['quantum-l3']
   Quantum_l3_agent_config <| |> ~> Service['quantum-l3']
   Quantum_l3_agent_config <| |> -> Quantum_router <| |>
-  Quantum_l3_agent_config <| |> -> Quantum_net['net04'] -> Quantum_net['net04_ext']
+  Quantum_l3_agent_config <| |> -> Quantum_net <| |>
   Quantum_l3_agent_config <| |> -> Quantum_subnet <| |>
 
   quantum_l3_agent_config {
