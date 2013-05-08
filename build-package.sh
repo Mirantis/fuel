@@ -6,6 +6,7 @@ if [ $# == 0 ]; then
   echo "Usage: $0 <tag-or-branch> [package-suffix]"
   echo "Available branches from git:"
   for line in `git branch -r`; do echo "  * $line (run \"$0 $line\")"; done
+  echo 
   echo "Available tags from git:"
   for line in `git tag -l`; do echo "  * $line (run \"$0 $line\")"; done
   echo "In order to create a new release tag, use:"
@@ -17,12 +18,13 @@ fi
 
 # determine release tag
 tag="$1"
-if [ $# > 1 ]; then
-  pkgSuffix="$2"
-else
+if [ $# == 1 ]; then
   pkgSuffix=$(echo $tag|sed -e 's/.*\///g')
+else
+  pkgSuffix="$2"
 fi
-build_dir="$(pwd)/fuel-$pkgSuffix"
+cur_dir=$(pwd)
+build_dir="fuel-$pkgSuffix"
 
 # create directory
 rm -rf $build_dir
@@ -54,18 +56,18 @@ mkdir documentation
 cp -R docs/_build/html/* documentation/
 
 # create archive
-cd ..
-tar -czf $build_dir.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version"
+cd $cur_dir
+tar -czf ${build_dir}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version"
 
 cd $build_dir
 if [ -d iso ]; then
   cd iso
 
   make iso
-  cp build/iso/*.iso $build_dir/../
+  cp build/iso/*.iso $cur_dir
 fi
 
-cd $build_dir/..
+cd $cur_dir
 # remove build directory
 rm -rf $build_dir
 
