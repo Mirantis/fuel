@@ -6,7 +6,7 @@ from fuel_test.ci.ci_cobbler import CiCobbler
 from fuel_test.cobbler.cobbler_client import CobblerClient
 from fuel_test.helpers import tcp_ping, udp_ping, build_astute, install_astute, add_to_hosts, await_node_deploy
 from fuel_test.manifest import Manifest, Template
-from fuel_test.settings import PUPPET_VERSION, OS_FAMILY, CLEAN
+from fuel_test.settings import PUPPET_VERSION, OS_FAMILY, CLEAN, UPGRADE, OPENSTACK_SNAPSHOT
 
 
 class CobblerTestCase(BaseTestCase):
@@ -57,7 +57,9 @@ class CobblerTestCase(BaseTestCase):
         self.update_modules()
 
     def get_nodes_deployed_state(self):
-        if not self.environment().has_snapshot('nodes-deployed'):
+        if UPGRADE and self.environment().has_snapshot(OPENSTACK_SNAPSHOT):
+            self.environment().revert(OPENSTACK_SNAPSHOT)
+        elif not self.environment().has_snapshot('nodes-deployed'):
             self.ci().get_empty_state()
             self.update_modules()
             self.prepare_cobbler_environment()
