@@ -32,7 +32,7 @@ Any other                                    = redeploy lab from 'nodes-deployed
 
 Other shell script keys:
 CLEAN                                        = clean exitsting dirty state before to proceed (default True)
-CREATE_SNAPSHOTS                             = make 'openstack' snapshots after lab have deployed (default False)
+CREATE_SNAPSHOTS                             = make 'openstack' snapshots after lab have deployed or 'openstack-upgraded' in case of upgrade (default False)
 UPGRADE                                      = tell jenkins to revert to 'openstack' snapshotes instead of 'nodes-deployed' (default False)
 PUBLIC_POOL                                  = use new IP allocation pool for public & ext networking (use with dos.py only). See also: fuel_test/settings.py
 

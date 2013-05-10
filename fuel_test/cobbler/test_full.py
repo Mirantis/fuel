@@ -25,10 +25,8 @@ class FullTestCase(CobblerTestCase):
         self.validate(self.nodes().controllers[1:], 'puppet agent --test'+extargs+' 2>&1')
         self.validate(self.nodes().controllers[:1], 'puppet agent --test'+extargs+' 2>&1')
         self.validate(self.nodes().computes, 'puppet agent --test'+extargs+' 2>&1')
-        if CREATE_SNAPSHOTS and not UPGRADE:
+        if CREATE_SNAPSHOTS:
             self.environment().snapshot('full', force=True)
-        elif CREATE_SNAPSHOTS:
-            self.environment().snapshot('full-upgraded', force=True)
 
 if __name__ == '__main__':
     unittest.main()
