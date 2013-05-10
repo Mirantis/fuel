@@ -2,7 +2,7 @@ import unittest
 from fuel_test.cobbler.cobbler_test_case import CobblerTestCase
 from fuel_test.helpers import is_not_essex
 from fuel_test.manifest import Manifest, Template
-from fuel_test.settings import CREATE_SNAPSHOTS
+from fuel_test.settings import CREATE_SNAPSHOTS, UPGRADE, DEBUG
 
 
 class FullTestCase(CobblerTestCase):
@@ -14,15 +14,21 @@ class FullTestCase(CobblerTestCase):
             proxies=self.nodes().proxies,
             quantums=self.nodes().quantums,
             quantum=True)
-        self.validate(self.nodes().proxies[:1], 'puppet agent --test 2>&1')
-        self.validate(self.nodes().proxies[1:], 'puppet agent --test 2>&1')
-        self.validate(self.nodes().storages, 'puppet agent --test 2>&1')
-        self.validate(self.nodes().controllers[:1], 'puppet agent --test 2>&1')
-        self.validate(self.nodes().controllers[1:], 'puppet agent --test 2>&1')
-        self.validate(self.nodes().controllers[:1], 'puppet agent --test 2>&1')
-        self.validate(self.nodes().computes, 'puppet agent --test 2>&1')
-        if CREATE_SNAPSHOTS:
+        if DEBUG:
+            extargs = ' -vd --evaltrace'
+        else
+            extargs = ''
+        self.validate(self.nodes().proxies[:1], 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().proxies[1:], 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().storages, 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().controllers[:1], 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().controllers[1:], 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().controllers[:1], 'puppet agent --test'+extargs+' 2>&1')
+        self.validate(self.nodes().computes, 'puppet agent --test'+extargs+' 2>&1')
+        if CREATE_SNAPSHOTS and not UPGRADE:
             self.environment().snapshot('full', force=True)
+        elif CREATE_SNAPSHOTS:
+            self.environment().snapshot('full-upgraded', force=True)
 
 if __name__ == '__main__':
     unittest.main()
