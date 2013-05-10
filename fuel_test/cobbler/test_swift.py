@@ -9,7 +9,7 @@ class SwiftCase(CobblerTestCase):
             controllers=self.nodes().controllers)
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(self.nodes().controllers[0], 'puppet agent --test'+extargs+' 2>&1')
         self.do(self.nodes().storages, 'puppet agent --test'+extargs+' 2>&1')

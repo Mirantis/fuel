@@ -83,7 +83,7 @@ class CobblerTestCase(BaseTestCase):
             self.nodes().cobblers)
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(
             self.nodes().cobblers,
@@ -111,7 +111,7 @@ class CobblerTestCase(BaseTestCase):
         Manifest().write_stomp_manifest(self.remote())
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(
             self.nodes().stomps,

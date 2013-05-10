@@ -16,7 +16,7 @@ class FullTestCase(CobblerTestCase):
             quantum=True)
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(self.nodes().proxies[:1], 'puppet agent --test'+extargs+' 2>&1')
         self.validate(self.nodes().proxies[1:], 'puppet agent --test'+extargs+' 2>&1')

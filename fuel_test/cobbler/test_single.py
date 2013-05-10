@@ -13,7 +13,7 @@ class SingleTestCase(CobblerTestCase):
         )
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(
             self.nodes().controllers[:1],

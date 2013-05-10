@@ -9,7 +9,7 @@ class CompactTestCase(CobblerTestCase):
     def deploy_compact(self, quantum_node=True, loopback=True):
         if DEBUG:
             extargs = ' -vd --evaltrace'
-        else
+        else:
             extargs = ''
         self.validate(self.nodes().controllers[:1], 'puppet agent --test'+extargs+' 2>&1')
         self.validate(self.nodes().controllers[1:], 'puppet agent --test'+extargs+' 2>&1')
