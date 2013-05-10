@@ -101,3 +101,4 @@ TEST_REPO = os.environ.get('TEST_REPO', 'false') == 'true'
 EXIST_TAR = os.environ.get('EXIST_TAR', None)
 CREATE_SNAPSHOTS = os.environ.get('CREATE_SNAPSHOTS', 'true') == 'true'
 CLEAN = os.environ.get('CLEAN', 'true') == 'true'
+UPGRADE = (os.environ.get('UPGRADE', 'false') == 'true') & CREATE_SNAPSHOTS # UPGRADE option are valid only with CREATE_SNAPSHOTS true
