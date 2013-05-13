@@ -1,6 +1,6 @@
 ::
 
-Grizzly CI job example
+Grizzly CI TEMPEST parameterized job example
 ==============================================
 
 This is an example of grizzly TEMPEST job for CI cycle, i.e. commit & verify.
@@ -19,7 +19,7 @@ Quickstart
 - Configure shell command to execute
 - Run the job
 
-Shell commands example for CI TEMPEST parameterized job
+Shell env. varaibles used for job
 -------------------------------------------------------
 
 Accepted values for test_name parameter are:
