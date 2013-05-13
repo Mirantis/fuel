@@ -10,7 +10,7 @@
 (skip)* Add `manage_service` parameter to `mysql::server`
 (skip)* Add syslog logging support via the `log_error` parameter
 (skip)* Add initial SuSE support
-* Fix remove non-localhost root user when fqdn != hostname
+(skip)* Fix remove non-localhost root user when fqdn != hostname
 (skip)* Fix dependency in `mysql::server::monitor`
 * Fix .my.cnf path for root user and root password
 (skip)* Fix ipv6 support for users
