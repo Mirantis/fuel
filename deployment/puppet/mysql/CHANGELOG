@@ -1,39 +1,3 @@
-2013-01-11 - Version 0.6.1
-* Fix providers when /root/.my.cnf is absent
-
-2013-01-09 - Version 0.6.0
-(skip)* Add `mysql::server::config` define for specific config directives
-(skip)* Add `mysql::php` class for php support
-(skip)* Add `backupcompress` parameter to `mysql::backup`
-(skip)* Add `restart` parameter to `mysql::config`
-(skip)* Add `purge_conf_dir` parameter to `mysql::config`
-(skip)* Add `manage_service` parameter to `mysql::server`
-(skip)* Add syslog logging support via the `log_error` parameter
-(skip)* Add initial SuSE support
-(skip)* Fix remove non-localhost root user when fqdn != hostname
-(skip)* Fix dependency in `mysql::server::monitor`
-* Fix .my.cnf path for root user and root password
-(skip)* Fix ipv6 support for users
-(skip)* Fix / update various spec tests
-(skip)* Fix typos
-(skip)* Fix lint warnings
-
-2012-08-23 - Version 0.5.0
-(skip)* Add puppetlabs/stdlib as requirement
-* Add validation for mysql privs in provider
-(skip)* Add `pidfile` parameter to mysql::config
-(skip)* Add `ensure` parameter to mysql::db
-(skip)* Add Amazon linux support
-* Change `bind_address` parameter to be optional in my.cnf template
-* Fix quoting root passwords
-
-2012-07-24 - Version 0.4.0
-(skip)* Fix various bugs regarding database names
-(skip)* FreeBSD support
-(skip)* Allow specifying the storage engine
-(skip)* Add a backup class
-(skip)* Add a security class to purge default accounts
-
 2012-05-03 - Version 0.3.0
 * #14218 Query the database for available privileges
 * Add mysql::java class for java connector installation
