@@ -318,17 +318,17 @@ class Prepare(object):
         return image.id
 
     def tempest_add_images(self):
-        if not os.path.isfile('cirros-0.3.0-x86_64-disk.img'):
+        if not os.path.isfile('cirros-0.3.1-x86_64-disk.img'):
             subprocess.check_call(['wget', CIRROS_IMAGE])
         glance = self._get_image_client()
-        images = self._get_images(glance, 'cirros_0.3.0')
+        images = self._get_images(glance, 'cirros_0.3.1')
         if len(images) > 1:
             return images[0].id, images[1].id
         else:
-            return self.upload(glance, 'cirros_0.3.0',
-                              'cirros-0.3.0-x86_64-disk.img'), \
-                   self.upload(glance, 'cirros_0.3.0',
-                              'cirros-0.3.0-x86_64-disk.img')
+            return self.upload(glance, 'cirros_0.3.1',
+                              'cirros-0.3.1-x86_64-disk.img'), \
+                   self.upload(glance, 'cirros_0.3.1',
+                              'cirros-0.3.1-x86_64-disk.img')
 
     def tempest_get_netid_routerid(self):
         networking = self._get_networking_client()
