@@ -67,8 +67,9 @@ class CobblerTestCase(BaseTestCase):
             self.ci().get_empty_state()
             self.update_modules()
             self.prepare_cobbler_environment()
-        print ('Reverting to nodes-deployed...')
-        self.environment().revert('nodes-deployed')
+        else:
+            print ('Reverting to nodes-deployed...')
+            self.environment().revert('nodes-deployed')
         for node in self.nodes():
             node.await('internal')
 
