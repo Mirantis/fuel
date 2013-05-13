@@ -4,19 +4,23 @@ socket    = <%= socket %>
 [mysqld_safe]
 socket    = <%= socket %>
 nice    = 0
-<% if use_syslog -%>
+<% if log_error == 'syslog' or use_syslog -%>
 syslog
 <% end -%>
 [mysqld]
 user    = mysql
-#pid-file  = <%= pidfile %>
+pid-file  = <%= pidfile %>
 socket    = <%= socket %>
 port      = <%= port %>
 basedir   = <%= basedir %>
 datadir   = <%= datadir %>
 tmpdir    = /tmp
 skip-external-locking
+
+<% if bind_address %>
 bind-address    = <%= bind_address %>
+<% end %> 
+
 key_buffer         = 16M
 max_allowed_packet = 16M
 thread_stack       = 192K
@@ -27,11 +31,11 @@ query_cache_size   = 16M
 <% if use_syslog -%>
 #log_error          = syslog:local1
 <% else -%>
+<% if log_error != 'syslog' -%>
 log_error          = <%= log_error %>
 <% end -%>
 expire_logs_days   = 10
 max_binlog_size    = 100M
-max_connections    = 512
 <% if default_engine != 'UNSET' %>
 default-storage-engine = <%= default_engine %>
 <% end %>

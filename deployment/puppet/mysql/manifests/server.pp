@@ -15,7 +15,6 @@
 # Sample Usage:
 #
 class mysql::server (
-  $custom_setup_class = undef,
   $package_name     = $mysql::params::server_package_name,
   $package_ensure   = 'present',
   $service_name     = $mysql::params::service_name,
@@ -28,35 +27,30 @@ class mysql::server (
   $galera_nodes = undef,
   $mysql_skip_name_resolve = false,
   $use_syslog              = false,
+  $manage_service   = true
 ) inherits mysql::params {
-    
-  if ($custom_setup_class == undef) {
-    include mysql
-    Class['mysql::server'] -> Class['mysql::config']
-    Class['mysql']         -> Class['mysql::server']
 
-    create_resources( 'class', { 'mysql::config' => $config_hash } )
-#    exec { "debug-mysql-server-installation" :
-#      command     => "/usr/bin/yum -d 10 -e 10 -y install MySQL-server-5.5.28-6 2>&1 | tee mysql_install.log",
-#      before => Package["mysql-server"],
-#      logoutput => true,
-#    }
-    if !defined(Package[mysql-client]) {
-      package { 'mysql-client':
-        name   => $package_name,
-       #ensure => $mysql::params::client_version,
-      }
-    }
-    package { 'mysql-server':
-      name   => $package_name,
-     #ensure => $mysql::params::server_version,
-     #require=> Package['mysql-shared'],
-    }
-    Package[mysql-client] -> Package[mysql-server]
- 
+  Class['mysql::server'] -> Class['mysql::config']
+
+  $config_class = { 'mysql::config' => $config_hash }
+
+  create_resources( 'class', $config_class )
+
+  package { 'mysql-server':
+    ensure => $package_ensure,
+    name   => $package_name,
+  }
+
+  if $enabled {
+    $service_ensure = 'running'
+  } else {
+    $service_ensure = 'stopped'
+  }
+
+  if $manage_service {
     service { 'mysqld':
+      ensure   => $service_ensure,
       name     => $service_name,
-      ensure   => $enabled ? { true => 'running', default => 'stopped' },
       enable   => $enabled,
       require  => Package['mysql-server'],
       provider => $service_provider,
