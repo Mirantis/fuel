@@ -21,7 +21,7 @@
 2012-08-23 - Version 0.5.0
 (skip)* Add puppetlabs/stdlib as requirement
 * Add validation for mysql privs in provider
-* Add `pidfile` parameter to mysql::config
+(skip)* Add `pidfile` parameter to mysql::config
 (skip)* Add `ensure` parameter to mysql::db
 (skip)* Add Amazon linux support
 * Change `bind_address` parameter to be optional in my.cnf template
