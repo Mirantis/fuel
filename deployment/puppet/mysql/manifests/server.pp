@@ -70,6 +70,7 @@ class mysql::server (
       provider => $service_provider,
     }
   }
+ }
   elsif ($custom_setup_class == 'galera')  {
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
