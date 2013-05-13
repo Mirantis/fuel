@@ -25,8 +25,10 @@ class CiBase(object):
 
     def get_empty_state(self):
         if self.environment().has_snapshot(EMPTY_SNAPSHOT):
+            print ('Reverting to '+EMPTY_SNAPSHOT+'...')
             self.environment().revert(EMPTY_SNAPSHOT)
         else:
+            print ('Setting up environment...')
             self.setup_environment()
 
     def environment(self):

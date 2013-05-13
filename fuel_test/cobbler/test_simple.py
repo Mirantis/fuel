@@ -1,7 +1,7 @@
 import unittest
 from fuel_test.cobbler.cobbler_test_case import CobblerTestCase
 from fuel_test.manifest import Manifest
-from fuel_test.settings import OPENSTACK_SNAPSHOT, CREATE_SNAPSHOTS
+from fuel_test.settings import OPENSTACK_SNAPSHOT, CREATE_SNAPSHOTS, UPGRADE, DEBUG
 
 
 class SimpleTestCase(CobblerTestCase):
@@ -10,11 +10,17 @@ class SimpleTestCase(CobblerTestCase):
             remote=self.remote(),
             ci=self.ci(),
             controllers=self.nodes().controllers)
+        if DEBUG:
+            extargs = ' -vd --evaltrace'
+        else:
+            extargs = ''
         self.validate(
             self.nodes().controllers[:1] + self.nodes().computes,
-            'puppet agent --test 2>&1')
-        if CREATE_SNAPSHOTS:
+            'puppet agent --test'+extargs+' 2>&1')
+        if CREATE_SNAPSHOTS and not UPGRADE:
             self.environment().snapshot(OPENSTACK_SNAPSHOT, force=True)
+        elif CREATE_SNAPSHOTS and UPGRADE:
+            self.environment().snapshot(OPENSTACK_SNAPSHOT+'-upgraded', force=True)
 
 if __name__ == '__main__':
     unittest.main()
