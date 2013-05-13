@@ -16,9 +16,10 @@ class mysql::params {
   $port                = 3306
   $etc_root_password   = false
   $ssl                 = false
+  $restart             = true
 
   case $::operatingsystem {
-    "Ubuntu": {
+    'Ubuntu': {
       $service_provider = upstart
     }
     default: {
@@ -30,13 +31,9 @@ class mysql::params {
     'RedHat': {
       $basedir               = '/usr'
       $datadir               = '/var/lib/mysql'
-      $service_name          = 'mysql'
-      $client_package_name   = 'MySQL-client'
-      $client_version        = '5.5.28-6'
-      $server_package_name   = 'MySQL-server'
-      $server_version        = '5.5.28-6'
-      $shared_package_name   = 'MySQL-shared'
-      $shared_version        = '5.5.28_wsrep_23.7'
+      $service_name          = 'mysqld'
+      $client_package_name   = 'mysql'
+      $server_package_name   = 'mysql-server'
       $socket                = '/var/lib/mysql/mysql.sock'
       $pidfile               = '/var/run/mysqld/mysqld.pid'
       $config_file           = '/etc/my.cnf'
@@ -44,6 +41,41 @@ class mysql::params {
       $ruby_package_name     = 'ruby-mysql'
       $ruby_package_provider = 'gem'
       $python_package_name   = 'MySQL-python'
+      $php_package_name      = 'php-mysql'
+      $java_package_name     = 'mysql-connector-java'
+      $root_group            = 'root'
+      $ssl_ca                = '/etc/mysql/cacert.pem'
+      $ssl_cert              = '/etc/mysql/server-cert.pem'
+      $ssl_key               = '/etc/mysql/server-key.pem'
+    }
+
+    'Suse': {
+      $basedir               = '/usr'
+      $datadir               = '/var/lib/mysql'
+      $service_name          = 'mysql'
+      $client_package_name   = $::operatingsystem ? {
+        /OpenSuSE/           => 'mysql-community-server-client',
+        /(SLES|SLED)/        => 'mysql-client',
+        }
+      $server_package_name   = $::operatingsystem ? {
+        /OpenSuSE/           => 'mysql-community-server',
+        /(SLES|SLED)/        => 'mysql',
+        }
+      $socket                = $::operatingsystem ? {
+        /OpenSuSE/           => '/var/run/mysql/mysql.sock',
+        /(SLES|SLED)/        => '/var/lib/mysql/mysql.sock',
+        }
+      $pidfile               = '/var/run/mysql/mysqld.pid'
+      $config_file           = '/etc/my.cnf'
+      $log_error             = $::operatingsystem ? {
+        /OpenSuSE/           => '/var/log/mysql/mysqld.log',
+        /(SLES|SLED)/        => '/var/log/mysqld.log',
+        }
+      $ruby_package_name     = $::operatingsystem ? {
+        /OpenSuSE/           => 'rubygem-mysql',
+        /(SLES|SLED)/        => 'ruby-mysql',
+        }
+      $python_package_name   = 'python-mysql'
       $java_package_name     = 'mysql-connector-java'
       $root_group            = 'root'
       $ssl_ca                = '/etc/mysql/cacert.pem'
@@ -56,17 +88,14 @@ class mysql::params {
       $datadir              = '/var/lib/mysql'
       $service_name         = 'mysql'
       $client_package_name  = 'mysql-client'
-      $client_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
       $server_package_name  = 'mysql-server'
-      $server_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
-      $shared_package_name  = 'mysql-common'
-      $shared_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
       $socket               = '/var/run/mysqld/mysqld.sock'
       $pidfile              = '/var/run/mysqld/mysqld.pid'
       $config_file          = '/etc/mysql/my.cnf'
       $log_error            = '/var/log/mysql/error.log'
       $ruby_package_name    = 'libmysql-ruby'
       $python_package_name  = 'python-mysqldb'
+      $php_package_name     = 'php5-mysql'
       $java_package_name    = 'libmysql-java'
       $root_group           = 'root'
       $ssl_ca               = '/etc/mysql/cacert.pem'
@@ -79,11 +108,7 @@ class mysql::params {
       $datadir               = '/var/db/mysql'
       $service_name          = 'mysql-server'
       $client_package_name   = 'databases/mysql55-client'
-      $client_version        = 'latest'
       $server_package_name   = 'databases/mysql55-server'
-      $server_version        = 'latest'
-      $shared_package_name   = 'databases/mysql55-server'
-      $shared_version        = 'latest'
       $socket                = '/tmp/mysql.sock'
       $pidfile               = '/var/db/mysql/mysql.pid'
       $config_file           = '/var/db/mysql/my.cnf'
@@ -91,6 +116,7 @@ class mysql::params {
       $ruby_package_name     = 'ruby-mysql'
       $ruby_package_provider = 'gem'
       $python_package_name   = 'databases/py-MySQLdb'
+      $php_package_name      = 'php5-mysql'
       $java_package_name     = 'databases/mysql-connector-java'
       $root_group            = 'wheel'
       $ssl_ca                = undef
@@ -99,7 +125,31 @@ class mysql::params {
     }
 
     default: {
-      fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat Debian and FreeBSD")
+      case $::operatingsystem {
+        'Amazon': {
+          $basedir               = '/usr'
+          $datadir               = '/var/lib/mysql'
+          $service_name          = 'mysqld'
+          $client_package_name   = 'mysql'
+          $server_package_name   = 'mysql-server'
+          $socket                = '/var/lib/mysql/mysql.sock'
+          $config_file           = '/etc/my.cnf'
+          $log_error             = '/var/log/mysqld.log'
+          $ruby_package_name     = 'ruby-mysql'
+          $ruby_package_provider = 'gem'
+          $python_package_name   = 'MySQL-python'
+          $php_package_name      = 'php-mysql'
+          $java_package_name     = 'mysql-connector-java'
+          $root_group            = 'root'
+          $ssl_ca                = '/etc/mysql/cacert.pem'
+          $ssl_cert              = '/etc/mysql/server-cert.pem'
+          $ssl_key               = '/etc/mysql/server-key.pem'
+        }
+
+        default: {
+          fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat, Debian, and FreeBSD, or operatingsystem Amazon")
+        }
+      }
     }
   }
 
