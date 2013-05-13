@@ -13,12 +13,12 @@
 #
 class mysql (
   $package_name   = $mysql::params::client_package_name,
-  $package_ensure = 'present'
+  $package_ensure = $mysql::params::client_version
 ) inherits mysql::params {
 
-  package { 'mysql_client':
+  package { 'mysql-client':
     ensure => $package_ensure,
-    name   => $package_name,
+    name    => $package_name,
   }
 
 }
