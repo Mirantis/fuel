@@ -45,8 +45,10 @@ Shell script example
 export ENV_NAME=$JOB_NAME
 export CREATE_SNAPSHOTS=true
 export UPGRADE=false
-export PUBLIC_POOL=172.18.91.128/25:26
-#export PUBLIC_POOL=172.18.91.0/24:27
+export DEBUG=true
+export PUPPET_GEN=2
+#export PUBLIC_POOL=172.18.91.128/25:26
+export PUBLIC_POOL=172.18.91.0/24:27
 if [ "$test_name" == "TEMPEST" ] || [ "$(echo $test_name | cut -d"/" -f1)" == "tempest" ]; then
   export run_tests=tempest/tempest/tests
   [ "$test_name" != "TEMPEST" ] && export run_tests="-v $test_name"
