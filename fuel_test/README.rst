@@ -31,6 +31,7 @@ Any other                                    = redeploy lab from 'nodes-deployed
                                             (uncomented dos.py would cause full erase and redeploy with BM including vm networks recreation)
 
 Other shell script keys:
+PUPPET_GEN				     = puppet generation (2,3) to use with master & agents, i.e. 2 => v2.x.x, 3 => v3.x.x (default 3)
 DEBUG                                        = run puppet with '-tvd -evaltrace' args
 CLEAN                                        = clean exitsting dirty state before to proceed (default True)
 CREATE_SNAPSHOTS                             = make 'openstack' snapshots after lab have deployed or 'openstack-upgraded' in case of upgrade (default False)
