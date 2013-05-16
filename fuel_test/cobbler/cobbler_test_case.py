@@ -6,7 +6,7 @@ from fuel_test.ci.ci_cobbler import CiCobbler
 from fuel_test.cobbler.cobbler_client import CobblerClient
 from fuel_test.helpers import tcp_ping, udp_ping, build_astute, install_astute, add_to_hosts, await_node_deploy
 from fuel_test.manifest import Manifest, Template
-from fuel_test.settings import PUPPET_VERSION, OS_FAMILY, CLEAN, UPGRADE, OPENSTACK_SNAPSHOT, DEBUG
+from fuel_test.settings import PUPPET_VERSION, OS_FAMILY, CLEAN, DEBUG
 
 
 class CobblerTestCase(BaseTestCase):
