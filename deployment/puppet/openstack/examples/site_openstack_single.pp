@@ -18,6 +18,8 @@ $public_interface        = 'eth0'
 # this configuration assumes this interface is active but does not have an
 # ip address allocated to it.
 $private_interface       = 'eth1'
+# Libvirt type ('kvm'/'qemu'). Use qemu for nested VMs (virtual compute nodes) or in case of HW virtualization is not supported by HW compute nodes.
+$libvirt_type            = 'kvm'
 # credentials
 $admin_email             = 'root@localhost'
 $admin_password          = 'nova'
@@ -144,7 +146,7 @@ node default {
     mysql_root_password     => $mysql_root_password,
     rabbit_password         => $rabbit_password,
     rabbit_user             => $rabbit_user,
-    libvirt_type            => 'kvm',
+    libvirt_type            => $libvirt_type,
     floating_range          => $floating_range,
     fixed_range             => $fixed_range,
     verbose                 => $verbose,

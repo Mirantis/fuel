@@ -26,6 +26,9 @@ $internal_virtual_ip = '10.0.0.253'
 # interface resides
 $public_virtual_ip   = '10.0.204.253'
 
+# Libvirt type ('kvm'/'qemu'). Use qemu for nested VMs (virtual compute nodes) or in case of HW virtualization is not supported by HW compute nodes.
+$libvirt_type        = 'kvm'
+
 $nodes_harr = [
   {
     'name' => 'master',
@@ -575,7 +578,7 @@ node /fuel-compute-[\d+]/ {
     public_interface       => $public_int,
     private_interface      => $private_interface,
     internal_address       => $internal_address,
-    libvirt_type           => 'kvm',
+    libvirt_type           => $libvirt_type,
     fixed_range            => $fixed_range,
     network_manager        => $network_manager,
     network_config         => { 'vlan_start' => $vlan_start },
