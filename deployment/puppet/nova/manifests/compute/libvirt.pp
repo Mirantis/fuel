@@ -1,6 +1,9 @@
 class nova::compute::libvirt (
   $libvirt_type = 'kvm',
-  $vncserver_listen = '127.0.0.1'
+  $vncserver_listen = '127.0.0.1',
+  $secret_uuid = '062bb06d-5b4a-4dbb-b822-2ab65e4d32f2',
+  $rbd_user = 'volumes',
+  $use_rbd = 'no',
 ) {
 
   include nova::params
@@ -62,6 +65,21 @@ class nova::compute::libvirt (
     provider => $::nova::params::special_service_provider,
     require  => Package['libvirt'],
   }
+  unless $user_rbd  == 'no' {
+       file {"secret.xml":
+    	    content => template("openstack/secret.xml.erb"),
+    	    path => "/tmp/secret.xml",
+        }
+       exec { 'add-secret':
+               require => [ File['secret.xml'],Service['libvirt']],
+               command => "virsh secret-define --file /tmp/secret.xml",
+       }
+       exec { 'define-secret':
+    		require => [ File['secret.xml'],Service['libvirt'],Exec['add-secret']],
+    		command => "virsh secret-set-value --secret ${secret_uuid} --base64 `ceph auth get-key client.${rbd_user}`",
+       }
+   }
+                                           
 
   case $libvirt_type {
     'kvm': {

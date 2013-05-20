@@ -14,7 +14,12 @@ class openstack::cinder(
   $bind_host          = '0.0.0.0',
   $iscsi_bind_host    = '0.0.0.0',
   $use_syslog         = false,
-  $cinder_rate_limits = undef
+  $cinder_rate_limits = undef,
+  $cinder_use_rbd    = 'no',
+  $cinder_rbd_user    = 'volumes',
+  $cinder_rbd_pool    = 'volumes',
+  $cinder_rbd_uuid    = '143b14f0-54ba-4c21-ba11-8b08c33c5375',
+          
 ) {
   include cinder::params
   #  if ($purge_cinder_config) {
@@ -59,16 +64,32 @@ class openstack::cinder(
       enabled        => true,
     }
   }
-  if $manage_volumes {
-    class { 'cinder::volume':
-      package_ensure => $::openstack_version['cinder'],
-      enabled        => true,
-    }
-    class { 'cinder::volume::iscsi':
-      iscsi_ip_address => $iscsi_bind_host,
-      physical_volume  => $physical_volume,
-      volume_group     => $volume_group,
-    }
+  if cinder_use_rbd == 'no' {
+    if $manage_volumes {
+	class { 'cinder::volume':
+          package_ensure => $::openstack_version['cinder'],
+          enabled        => true,
+	}
+        class { 'cinder::volume::iscsi':
+	  iscsi_ip_address => $iscsi_bind_host,
+          physical_volume  => $physical_volume,
+          volume_group     => $volume_group,
+	}
+    } 
+  } else {
+	if $cinder_rbd_user != 'admin' {
+            Ceph::Key <<| title == $cinder_rbd_user |>>
+	    file { "/etc/ceph/client.${cinder_rbd_user}.keyring":
+    	        group => "cinder",
+        	owner => "cinder",
+            }
+        }
+        cinder_config {
+    	    'DEFAULT/volume_driver':		value => 'cinder.volume.driver.RBDDriver';
+            'DEFAULT/rbd_pool':			value => $cinder_rbd_pool;
+            'DEFAULT/rbd_user':			value => $cinder_rbd_user;
+            'DEFAULT/rbd_secret_uuid':		value => $cinder_rbd_uuid;
+        }
   }
 }
 

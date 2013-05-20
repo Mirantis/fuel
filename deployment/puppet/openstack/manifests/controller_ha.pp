@@ -139,6 +139,13 @@ class openstack::controller_ha (
    $create_networks         = true,
    $use_unicast_corosync    = false,
    $ha_mode                 = true,
+   $rbd_user<--><------>    = 'images',
+   $rbd_pool<--><------>    = 'images',
+   $cinder_use_rbd         = 'no',
+   $cinder_rbd_user         = 'volumes',
+   $cinder_rbd_pool         = 'volumes',
+   $cinder_rbd_uuid         = '143b14f0-54ba-4c21-ba11-8b08c33c5375',
+                     
  ) {
 
     # haproxy
@@ -345,6 +352,10 @@ class openstack::controller_ha (
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,
       cinder_volume_group     => $cinder_volume_group,
+      cinder_use_rbd          => $cinder_use_rbd,
+      cinder_rbd_user         => $cinder_rbd_user,
+      cinder_rbd_pool         => $cinder_rbd_pool,
+      cinder_rbd_uuid         => $cinder_rbd_uuid,
       # turn on SWIFT_ENABLED option for Horizon dashboard
       swift                   => $glance_backend ? { 'swift' => true, default => false },
       use_syslog              => $use_syslog,
@@ -352,6 +363,8 @@ class openstack::controller_ha (
       nova_rate_limits        => $nova_rate_limits,
       horizon_use_ssl         => $horizon_use_ssl,
       ha_mode                 => $ha_mode,
+      rbd_user		      => $rbd_user,
+      rbd_pool		      => $rbd_pool,
     }
     if $quantum and $quantum_network_node {
       class { '::openstack::quantum_router':

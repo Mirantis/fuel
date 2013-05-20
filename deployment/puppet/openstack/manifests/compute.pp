@@ -106,7 +106,10 @@ class openstack::compute (
   $use_syslog              = false,
   $nova_rate_limits        = undef,
   $cinder_rate_limits      = undef,
-  $create_networks         = false
+  $create_networks         = false,
+  $secret_uuid = '062bb06d-5b4a-4dbb-b822-2ab65e4d32f2',
+  $rbd_user = 'volumes',
+  $use_rbd = 'no',
 ) {
 
   #
@@ -213,6 +216,10 @@ class openstack::compute (
   class { 'nova::compute::libvirt':
     libvirt_type     => $libvirt_type,
     vncserver_listen => $internal_address,
+    secret_uuid     => $secret_uuid,
+    rbd_user     => $rbd_user,
+    use_rbd     => $use_rbd
+                
   }
     case $::osfamily {
       'Debian': {$scp_package='openssh-client'}
