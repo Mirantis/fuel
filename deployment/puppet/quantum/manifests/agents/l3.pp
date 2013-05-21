@@ -257,8 +257,8 @@ class quantum::agents::l3 (
 
     cs_commit { 'l3': cib => 'l3' }
 
-    Cs_commit <| title == 'dhcp' |> -> Cs_shadow <| title == 'l3' |>
     Cs_commit <| title == 'ovs' |> -> Cs_shadow <| title == 'l3' |>
+    Cs_commit <| title == 'dhcp' |> -> Cs_colocation['dhcp-without-l3']
 
     Cs_commit['l3'] -> Service['quantum-l3']
     ::corosync::cleanup{"p_${::quantum::params::l3_agent_service}":}
@@ -284,7 +284,6 @@ class quantum::agents::l3 (
       score      => -100,
     }
     Cs_colocation['l3-with-ovs'] -> Cs_colocation['dhcp-without-l3']
-    Cs_colocation['dhcp-with-ovs'] -> Cs_colocation['dhcp-without-l3']
 
     cs_order { 'l3-after-ovs':
       ensure => present,
