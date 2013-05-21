@@ -31,6 +31,7 @@ Any other                                    = redeploy lab from 'nodes-deployed
                                             (uncomented dos.py would cause full erase and redeploy with BM including vm networks recreation)
 
 Other shell script keys:
+PUPPET_GEN				     = puppet generation (2,3) to use with master & agents, i.e. 2 => v2.x.x, 3 => v3.x.x (default 3)
 DEBUG                                        = run puppet with '-tvd -evaltrace' args
 CLEAN                                        = clean exitsting dirty state before to proceed (default True)
 CREATE_SNAPSHOTS                             = make 'openstack' snapshots after lab have deployed or 'openstack-upgraded' in case of upgrade (default False)
@@ -44,8 +45,10 @@ Shell script example
 export ENV_NAME=$JOB_NAME
 export CREATE_SNAPSHOTS=true
 export UPGRADE=false
-export PUBLIC_POOL=172.18.91.128/25:26
-#export PUBLIC_POOL=172.18.91.0/24:27
+export DEBUG=true
+export PUPPET_GEN=2
+#export PUBLIC_POOL=172.18.91.128/25:26
+export PUBLIC_POOL=172.18.91.0/24:27
 if [ "$test_name" == "TEMPEST" ] || [ "$(echo $test_name | cut -d"/" -f1)" == "tempest" ]; then
   export run_tests=tempest/tempest/tests
   [ "$test_name" != "TEMPEST" ] && export run_tests="-v $test_name"
