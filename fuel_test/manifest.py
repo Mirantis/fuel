@@ -90,6 +90,9 @@ class Manifest(object):
     def mirror_type(self):
         return 'custom'
 
+    def libvirt_type(self):
+        return 'qemu' # Always qemu for nested VMs
+
     def write_manifest(self, remote, manifest):
         write_config(remote, '/etc/puppet/manifests/site.pp',
             str(manifest))
@@ -224,6 +227,7 @@ class Manifest(object):
             use_syslog=use_syslog,
             public_netmask = ci.public_net_mask(),
             internal_netmask = ci.internal_net_mask(),
+            libvirt_type = self.libvirt_type(),
         )
         if is_not_essex():
             template.replace(
@@ -261,7 +265,7 @@ class Manifest(object):
                                             loopback=True, cinder=True,
                                             cinder_nodes=None,
                                             quantum_netnode_on_cnt=True,
-                                            ha_provider='pacemaker'):
+                                 ha_provider='pacemaker'):
         if not cinder_nodes: cinder_nodes = ['controller']
         template.replace(
             internal_virtual_ip=ci.internal_virtual_ip(),
@@ -286,6 +290,7 @@ class Manifest(object):
             deployment_id = self.deployment_id(ci),
             public_netmask = ci.public_net_mask(),
             internal_netmask = ci.internal_net_mask(),
+            libvirt_type = self.libvirt_type(),
         )
         if is_not_essex():
             template.replace(
@@ -327,6 +332,7 @@ class Manifest(object):
             deployment_id = self.deployment_id(ci),
             public_netmask = ci.public_net_mask(),
             internal_netmask = ci.internal_net_mask(),
+            libvirt_type = self.libvirt_type(),
         )
         if swift:
             template.replace(swift_loopback=self.loopback(loopback))
