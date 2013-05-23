@@ -1,4 +1,5 @@
 COMMIT_SHA:=$(shell git rev-parse --verify HEAD)
+COMMIT_SHA_SHORT:=$(shell git rev-parse --short HEAD)
 FUEL_VERSION:=2.2-folsom
 
 CENTOS_MAJOR:=6
@@ -50,7 +51,7 @@ ISOBASENAME:=fuel-centos-$(CENTOS_RELEASE)-$(CENTOS_ARCH)-$(FUEL_VERSION)
 [ -z "$$ISOSUFFIX" ] || ISOBASENAME:=$(ISOBASENAME)-$(ISOSUFFIX)
 #ISOBASENAME:=fuel-centos-$(CENTOS_RELEASE)-$(CENTOS_ARCH)_$(BUILD_ID)
 
-ISONAME:=$(BUILD_DIR)/iso/$(ISOBASENAME).iso
+ISONAME:=$(BUILD_DIR)/iso/$(ISOBASENAME)-$(COMMIT_SHA_SHORT).iso
 
 iso: $(ISONAME)
 
