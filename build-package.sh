@@ -16,6 +16,8 @@ if [ $# == 0 ]; then
 
 fi
 
+rm -f *.iso *.tar.gz
+
 # determine release tag
 tag="$1"
 if [ $# == 1 ]; then
@@ -40,9 +42,9 @@ commit=`git rev-parse HEAD`
 shortcommit=`git rev-parse --short HEAD`
 
 # remove git tracking and gepetto files
-rm -rf `find . -name ".git*"`
-rm -rf `find . -name ".project"`
-rm -rf `find . -name ".idea*"`
+rm -rf `find deployment/ -name ".git*"`
+rm -rf `find deployment/ -name ".project"`
+rm -rf `find deployment/ -name ".idea*"`
 
 # generate release version
 echo $tag > release.version
@@ -65,10 +67,12 @@ tar -czf ${build_dir}-${shortcommit}.tar.gz "$build_dir/deployment/" "$build_dir
 cd $build_dir
 if [ -d iso ]; then
   cd iso
-#  ISOSUFFIX=$ISOSUFFIX-$shortcommit
-#  export ISOSUFFIX
   make iso
-  cp build/iso/*.iso $cur_dir
+  cd build/iso
+  for filename in `ls *.iso`; do
+    mv $filename ${cur_dir}/${filename%.*}-${shortcommit}.iso
+  done
+
 fi
 
 cd $cur_dir
