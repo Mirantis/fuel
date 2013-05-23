@@ -65,8 +65,8 @@ tar -czf ${build_dir}-${shortcommit}.tar.gz "$build_dir/deployment/" "$build_dir
 cd $build_dir
 if [ -d iso ]; then
   cd iso
-  export ISOSUFFIX=$ISOSUFFIX-$shortcommit
-
+#  ISOSUFFIX=$ISOSUFFIX-$shortcommit
+#  export ISOSUFFIX
   make iso
   cp build/iso/*.iso $cur_dir
 fi
