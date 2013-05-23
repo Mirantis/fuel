@@ -37,6 +37,7 @@ git checkout -f $tag
 
 # capture commit id
 commit=`git rev-parse HEAD`
+shortcommit=`git rev-parse --short HEAD`
 
 # remove git tracking and gepetto files
 rm -rf `find . -name ".git*"`
@@ -59,11 +60,12 @@ cp -R docs/_build/html/* documentation/
 
 # create archive
 cd $cur_dir
-tar -czf ${build_dir}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version" "$build_dir/README.md"
+tar -czf ${build_dir}-${shortcommit}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version" "$build_dir/README.md"
 
 cd $build_dir
 if [ -d iso ]; then
   cd iso
+  export ISOSUFFIX=$ISOSUFFIX-$shortcommit
 
   make iso
   cp build/iso/*.iso $cur_dir
