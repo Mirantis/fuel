@@ -17,6 +17,7 @@
 #
 
 define ceph::osd::device (
+    $osd_id,
 ) {
 
   include ceph::osd
@@ -24,7 +25,8 @@ define ceph::osd::device (
   $devname = regsubst($name, '.*/', '')
   exec { "mktable_gpt_${devname}":
     command => "parted -a optimal --script ${name} mktable gpt",
-    unless  => "parted --script ${name} print|grep -sq 'Partition Table: gpt'",
+    unless  => "parted --script ${name} print|grep -sq 'gpt'",
+#    unless  => "parted --script ${name} print|grep -sq 'Partition Table: gpt'",
     require => Package['parted']
   }
 
@@ -55,7 +57,7 @@ size=1024m -n size=64k ${name}1",
                           
     $osd_id_fact = "ceph_osd_id_${devname}1"
     notify { "OSD ID FACT ${devname}: ${osd_id_fact}": }
-    $osd_id = inline_template('<%= scope.lookupvar(osd_id_fact) %>')
+#    $osd_id = inline_template('<%= scope.lookupvar(osd_id_fact) %>')
     notify { "OSD ID ${devname}: ${osd_id}":}
 
     if $osd_id != 'undefined' {

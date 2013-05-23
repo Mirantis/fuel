@@ -62,7 +62,7 @@ class ceph_client_add (
 }
 
 
-node 'ceph4' {
+node 'ceph1' {
     if !empty($::ceph_admin_key) {
       @@ceph::key { 'admin':
         secret       => $::ceph_admin_key,
@@ -71,15 +71,22 @@ node 'ceph4' {
     }
     class { 'role_ceph_mon': id => 0}
     class { 'role_mds': id => 0}
-    class { 'ceph_client_add': 
-	name => 'images',
-	create_pool => 'yes',
+    ceph::osd::deploy { '/dev/sdc': 
+	osd_id	=> '0',
     }
-    ceph::client { 'volumes':
-      create_pool => 'yes',
-      pool2 => 'images',
+    ceph::osd::deploy { '/dev/sdb':
+	osd_id	=> '1',
     }
-    ceph::conf::admin { 'admin': }
+                                 
+#    class { 'ceph_client_add': 
+#	name => 'images',
+#	create_pool => 'yes',
+#    }
+#    ceph::client { 'volumes':
+#      create_pool => 'yes',
+#      pool2 => 'images',
+#    }
+#    ceph::conf::admin { 'admin': }
 #    class { 'ceph::radosgw': 
 #	use_keystone => "true",
 #	keystone_url => "192.168.122.206:5000",
@@ -109,28 +116,6 @@ ceph::osd::device { '/dev/sdc': }
     ceph::osd::device { '/dev/sdb': }
     class { 'role_mds': id => 1}
 #    Ceph::Key <<| title == 'image8' |>>
-}
-
-node 'ceph01' {
-    class { 'role_ceph_mon': id => 2}
- class { 'ceph::osd' :
-        public_address  => $ipaddress_eth0,
-        cluster_address => $ipaddress_eth0,
-    }
-    ceph::conf::osd { '0':
-	device	=> '/dev/sdb',
-	public_addr	=> $ipaddress_eth0,
-	cluster_addr	=> $ipaddress_eth0,
-    }
-    ceph::osd::device { '/dev/sdb': }
-    ceph::conf::osd { '5':
-	device	=> '/dev/sdc',
-	public_addr	=> $ipaddress_eth0,
-	cluster_addr	=> $ipaddress_eth0,
-    }
-    ceph::osd::device { '/dev/sdc': }
-    class { 'role_mds': id => 2}
-
 }
 
 node 'ceph02' {

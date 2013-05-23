@@ -44,7 +44,8 @@ define ceph::mds (
   }
 
   exec { 'mk-mds-dir':
-    command => "mkdir -p /var/lib/ceph/mds"
+    command => "mkdir -p /var/lib/ceph/mds",
+    creates => "/var/lib/ceph/mds",
   }
   exec { 'ceph-mds-keyring':
     command =>"ceph auth get-or-create mds.${name} mds 'allow ' osd 'allow *' mon 'allow rwx' -o /var/lib/ceph/mds/mds.${name}/keyring",
