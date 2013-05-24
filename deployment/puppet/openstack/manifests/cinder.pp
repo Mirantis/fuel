@@ -83,6 +83,12 @@ class openstack::cinder(
     	        group => "cinder",
         	owner => "cinder",
             }
+        } else {
+            file { "/etc/ceph/client.admin.keyring":
+    	        group => "cinder",
+        	owner => "cinder",
+        	mode => "666",
+            }
         }
         cinder_config {
     	    'DEFAULT/volume_driver':		value => 'cinder.volume.driver.RBDDriver';
