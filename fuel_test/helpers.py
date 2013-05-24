@@ -47,7 +47,8 @@ def write_config(remote, path, text):
         logging.info('Write config %s' % text)
         config.close()
     except IOError as e:
-        raise IOError('Filename: "{path}", error: {error}'.format(path=path, error=e.message or e.strerror))
+        e.strerror += "\nRemote:{host}:{port}\nFilename: '{path}'".format(path=path, host=remote.host, port=remote.port)
+        raise
 
 def retry(count, func, **kwargs):
     i = 0
