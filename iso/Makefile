@@ -16,7 +16,7 @@ UBUNTU_COMP:=main
 
 FUEL_DIR:=$(PWD)/../deployment/puppet
 SOURCE_DIR:=$(PWD)
-BUILD_DIR:=$(PWD)/build
+BUILD_DIR?=$(PWD)/build
 
 LOCAL_MIRROR:=$(PWD)/../../local_mirror
 LOCAL_MIRROR_CENTOS:=$(LOCAL_MIRROR)/centos
