@@ -84,7 +84,7 @@ class openstack::cinder(
         	owner => "cinder",
             }
         } else {
-            file { "/etc/ceph/client.admin.keyring":
+            file { "/etc/ceph/keyring":
     	        group => "cinder",
         	owner => "cinder",
         	mode => "666",
