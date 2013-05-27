@@ -30,6 +30,8 @@ class ceph::conf (
   $osd_data        = '/var/lib/ceph/osd/osd.$id',
   $osd_journal     = undef,
   $mds_data        = '/var/lib/ceph/mds/mds.$id'
+  $ssh_private_key = undef,
+  $ssh_public_key  = undef,
 ) {
 
   include 'ceph::package'
@@ -60,26 +62,42 @@ class ceph::conf (
     order   => '01',
     content => template('ceph/ceph.conf.erb'),
   }
-  file {"id_rsa":
-     content => template("${module_name}/id_rsa.erb"),
-     path => "/root/.ssh/id_rsa",
-     mode => 600,
-     owner => root,
-     group => root,
+  if ( $ssh_private_key != undef ) {
+   file { '/root/.ssh':
+      ensure => directory,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0700'
+    }
+    file { '/root/.ssh/authorized_keys':
+      ensure => present,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0400',
+      source => $ssh_public_key,
+    }
+    file { '/root/.ssh/id_rsa':
+      ensure => present,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0400',
+      source => $ssh_private_key,
+    }
+    file { '/root/.ssh/id_rsa.pub':
+      ensure => present,
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0400',
+      source => $ssh_public_key,
+    }
+    file { '/root/.ssh/config':
+      ensure  => present,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0600',
+      content => "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null\n",
+    }
   }
-  file {"id_rsa.pub":
-     content => template("${module_name}/id_rsa.pub.erb"),
-     path => "/root/.ssh/id_rsa.pub",
-     mode => 600,
-     owner => root,
-     group => root,
-  }
-  file {"authorized_keys":
-     content => template("${module_name}/authorized_keys.erb"),
-     path => "/root/.ssh/authorized_keys",
-     mode => 600,
-     owner => root,
-     group => root,
-  }
+
 
 }

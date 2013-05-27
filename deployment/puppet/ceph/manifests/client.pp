@@ -2,6 +2,8 @@ define ceph::client (
   $keyring_path = "/etc/ceph/client.${name}.keyring",
   $pool2 = 'none',
   $create_pool = 'no',
+  $pg_num = '128',
+  $replicas = "3",
 ) {
     if $pool2 == 'none' {
 	if !ceph_key_get($name) {
@@ -37,9 +39,12 @@ define ceph::client (
     }
     if $create_pool == 'yes' {
 	exec { "ceph-pool-create-${name}":
-	    command => "ceph osd pool create ${name} 128",
+	    command => "ceph osd pool create ${name} ${pg_num}",
 	    require => Package['ceph'],
 	}
+	exec { "ceph-pool-set-replicas-${name}":
+	    command => "ceph osd pool set ${name} size ${replicas}",
+	    require => [Package['ceph'],Exec["ceph-pool-create-${name}"]],
     }
     
     ceph::conf::client { $name: }

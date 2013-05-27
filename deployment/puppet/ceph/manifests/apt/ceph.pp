@@ -1,5 +1,5 @@
 class ceph::apt::ceph (
-  $release = 'bobtail'
+  $release = 'cuttlefish'
 ) {
         Yumrepo {
           failovermethod => 'priority',
