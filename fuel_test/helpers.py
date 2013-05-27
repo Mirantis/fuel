@@ -2,7 +2,7 @@ import logging
 import subprocess
 import tarfile
 from time import sleep
-from devops.helpers.helpers import wait
+from devops.helpers.helpers import _wait
 import os
 import re
 from fuel_test.cobbler.cobbler_client import CobblerClient
@@ -174,7 +174,7 @@ def setup_puppet_master(remote):
     puppet_apply(remote.sudo.ssh,
         'class {puppet: puppet_master_version => "%s"}'
         '-> class {puppet::thin:}'
-        '-> class {puppet::nginx: puppet_master_hostname => "master.your-domain-name.com"}'
+        '-> class {puppet::nginx: puppet_master_hostname => "master.localdomain"}'
         % PUPPET_VERSION)
     remote.mkdir('/var/lib/puppet/ssh_keys')
     puppet_apply(remote.sudo.ssh, 'class {puppet::fileserver_config:}')
@@ -228,11 +228,15 @@ def add_to_hosts(remote, ip, short, full):
     remote.sudo.ssh.execute('echo %s %s %s >> /etc/hosts' % (ip, full, short))
 
 
+def check_node_ready(client, token, name):
+    if client.get_system(name, token)['netboot_enabled']:
+        raise Exception("Cobbler doesn't finish hode deploy", name)
+
+
 def await_node_deploy(ip, name):
     client = CobblerClient(ip)
     token = client.login('cobbler', 'cobbler')
-    wait(
-        lambda: client.get_system(name, token)['netboot_enabled'] == False, timeout=30 * 120)
+    _wait(lambda: check_node_ready(client, token, name), timeout=30 * 60)
 
 
 def build_astute():
