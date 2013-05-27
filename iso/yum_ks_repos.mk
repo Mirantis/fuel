@@ -10,8 +10,8 @@ repo --name=updates --baseurl=$(MIRROR_CENTOS_UPDATES)/ --cost=10
 repo --name=openstack-epel-fuel --mirrorlist=http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list --cost=1
 #repo --name=openstack-epel-fuel --mirrorlist=http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal.list --cost=1
 #repo --name=openstack-epel-fuel-grizzly --baseurl=http://osci-koji.srt.mirantis.net/mash/epel-fuel-grizzly/x86_64/ --cost=1
-repo --name=puppetlabs --baseurl=http://yum.puppetlabs.com/el/6/products/x86_64/ --cost=5
-repo --name=puppetosci --baseurl=http://osci-koji.srt.mirantis.net/mash/puppet27/x86_64/ --cost=5
+#repo --name=puppetlabs --baseurl=http://yum.puppetlabs.com/el/6/products/x86_64/ --cost=5
+#repo --name=puppetosci --baseurl=http://osci-koji.srt.mirantis.net/mash/puppet27/x86_64/ --cost=5
 repo --name=puppetlabs-deps --baseurl=http://yum.puppetlabs.com/el/6/dependencies/x86_64/ --cost=200
 #repo --name=devel_puppetlabs --baseurl=http://yum.puppetlabs.com/el/6/devel/x86_64/ --cost=5
 #repo --name=rpmforge --baseurl=http://apt.sw.be/redhat/el6/en/x86_64/rpmforge --cost=5
