@@ -9,14 +9,14 @@ class openstack::mirantis_repos (
   $deb_updates  = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu',
   $deb_security = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu',
   $deb_fuel_folsom_repo      = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
-  $deb_fuel_grizzly_repo  = 'http://osci-gbp.srt.mirantis.net/ubuntu/fuel/',
+  $deb_fuel_grizzly_repo     = 'http://osci-gbp.srt.mirantis.net/ubuntu/fuel/',
   $deb_cloud_archive_repo    = 'http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu',
   $deb_rabbit_repo           = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
   $enable_epel = false,
-  $fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list',
+  #$fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-grizzly-2.1/mirror.internal-stage.list',
   $mirrorlist_base           = 'http://172.18.67.168/centos-repo/mirror-6.3-os.list',
   $mirrorlist_updates        = 'http://172.18.67.168/centos-repo/mirror-6.3-updates.list',
-  $grizzly_baseurl        = 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0/x86_64/',
+  $grizzly_baseurl           = 'http://download.mirantis.com/epel-fuel-grizzly/',
   $enable_test_repo          = false,
   $repo_proxy   = undef,
   $use_upstream_mysql     = false,
@@ -78,7 +78,7 @@ class openstack::mirantis_repos (
 
       # Below we set our internal repos for testing purposes. Some of them may match with external ones.
       if $type == 'custom' {
-        
+
         apt::pin { 'precise-fuel-grizzly':
           order      => 19,
           priority   => 1001,
@@ -162,7 +162,7 @@ class openstack::mirantis_repos (
 
       # added internal (custom)/external (default) network mirror
       if $type == 'default' {
-        
+
         yumrepo { 'centos-base':
             descr      => 'Mirantis-CentOS-Base',
             name       => 'base',
@@ -224,7 +224,7 @@ class openstack::mirantis_repos (
           descr    => 'Mirantis OpenStack OSCI Packages',
           baseurl  => 'http://osci-koji.srt.mirantis.net/mash/fuel-folsom/x86_64/',
           gpgcheck => '1',
-          gpgkey   => 'http://download.mirantis.com/epel-fuel-folsom/epel.key  http://download.mirantis.com/epel-fuel-folsom/centos.key http://download.mirantis.com/epel-fuel-folsom/rabbit.key http://download.mirantis.com/epel-fuel-folsom/mirantis.key http://download.mirantis.com/epel-fuel-folsom/mysql.key http://download.mirantis.com/epel-fuel-folsom/nginx.key',
+          gpgkey   => 'http://download.mirantis.com/epel-fuel-grizzly/epel.key  http://download.mirantis.com/epel-fuel-grizzly/centos.key http://download.mirantis.com/epel-fuel-grizzly/rabbit.key http://download.mirantis.com/epel-fuel-grizzly/mirantis.key http://download.mirantis.com/epel-fuel-grizzly/mysql.key http://download.mirantis.com/epel-fuel-grizzly/nginx.key',
         }
       }
 
