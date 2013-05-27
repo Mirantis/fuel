@@ -2,7 +2,7 @@ from ipaddr import IPNetwork
 import re
 from fuel_test.helpers import load, write_config
 from fuel_test.root import root
-from fuel_test.settings import INTERFACES, TEST_REPO, DOMAIN_NAME
+from fuel_test.settings_monroid_local import INTERFACES, TEST_REPO, DOMAIN_NAME
 
 
 class Template(object):

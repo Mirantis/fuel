@@ -7,7 +7,7 @@ from fuel_test.ci.ci_base import CiBase
 from fuel_test.helpers import add_nmap, dhcp_checksum, puppet_apply
 
 from fuel_test.node_roles import NodeRoles
-from fuel_test.settings import CONTROLLERS, COMPUTES, \
+from fuel_test.settings_monroid_local import CONTROLLERS, COMPUTES, \
     STORAGES, PROXIES, \
     EMPTY_SNAPSHOT, POOLS, INTERFACE_ORDER, FORWARDING, DHCP, ISO_IMAGE
 

@@ -7,7 +7,7 @@ import os
 from fuel_test.ci.ci_vm import CiVM
 from fuel_test.helpers import load, retry, install_packages, switch_off_ip_tables
 from fuel_test.root import root
-from fuel_test.settings import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE
+from fuel_test.settings_monroid_local import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE
 
 
 class Prepare(object):

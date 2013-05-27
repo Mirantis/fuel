@@ -1,6 +1,6 @@
 import yaml
 from fuel_test.manifest import Manifest
-from fuel_test.settings import CURRENT_PROFILE, PUPPET_VERSION, INTERFACE_ORDER, INTERFACES, DOMAIN_NAME
+from fuel_test.settings_monroid_local import CURRENT_PROFILE, PUPPET_VERSION, INTERFACE_ORDER, INTERFACES, DOMAIN_NAME
 
 
 class Config():

@@ -3,7 +3,7 @@ import unittest
 from fuel_test.config import Config
 from fuel_test.helpers import write_config
 from fuel_test.manifest import Manifest, Template
-from fuel_test.settings import ASTUTE_USE
+from fuel_test.settings_monroid_local import ASTUTE_USE
 
 
 class CompactTestCase(CobblerTestCase):

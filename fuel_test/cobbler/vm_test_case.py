@@ -9,7 +9,7 @@ from fuel_test.cobbler.cobbler_client import CobblerClient
 from fuel_test.config import Config
 from fuel_test.helpers import tcp_ping, udp_ping, add_to_hosts, await_node_deploy, write_config
 from fuel_test.manifest import Manifest
-from fuel_test.settings import OS_FAMILY, CLEAN, USE_ISO, INTERFACES, PARENT_PROXY, DOMAIN_NAME
+from fuel_test.settings_monroid_local import OS_FAMILY, CLEAN, USE_ISO, INTERFACES, PARENT_PROXY, DOMAIN_NAME
 
 
 class CobblerTestCase(BaseTestCase):

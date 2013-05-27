@@ -3,7 +3,7 @@ from fuel_test.cobbler.vm_test_case import CobblerTestCase
 from fuel_test.config import Config
 from fuel_test.helpers import write_config
 from fuel_test.manifest import Manifest, Template
-from fuel_test.settings import OPENSTACK_SNAPSHOT, CREATE_SNAPSHOTS, ASTUTE_USE
+from fuel_test.settings_monroid_local import OPENSTACK_SNAPSHOT, CREATE_SNAPSHOTS, ASTUTE_USE
 
 
 class SimpleTestCase(CobblerTestCase):
