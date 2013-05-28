@@ -1,5 +1,5 @@
 COMMIT_SHA:=$(shell git rev-parse --verify HEAD)
-FUEL_VERSION:=2.1-folsom
+FUEL_VERSION:=3.0
 
 CENTOS_MAJOR:=6
 CENTOS_MINOR:=4
@@ -22,7 +22,7 @@ LOCAL_MIRROR_UBUNTU_DEB:=$(LOCAL_MIRROR_UBUNTU)/$(UBUNTU_COMP)/binary-$(UBUNTU_A
 LOCAL_MIRROR_UBUNTU_INSTALLER:=$(LOCAL_MIRROR_UBUNTU)/$(UBUNTU_COMP)/debian-installer/binary-$(UBUNTU_ARCH)
 MIRROR_CENTOS:=http://download.mirantis.com/centos-6.4
 MIRROR_CENTOS_OS_BASEURL:=$(MIRROR_CENTOS)/$(CENTOS_RELEASE)/os/$(CENTOS_ARCH)
-MIRROR_UBUNTU:=http://mirror.yandex.ru/ubuntu
+MIRROR_UBUNTU:=http://download.mirantis.com/precise-fuel-folsom
 MIRROR_UBUNTU_OS_BASEURL:=$(MIRROR_UBUNTU)/dists/$(UBUNTU_DISTR)/$(UBUNTU_COMP)
 YUM_REPOS:=centos epel fuel_folsom puppetlabs rpmforge
 

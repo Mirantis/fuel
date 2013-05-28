@@ -13,9 +13,7 @@ class SingleTestCase(CobblerTestCase):
                 quantum=False,
             )
         )
-        self.validate(
-            self.nodes().controllers[:1],
-            PUPPET_AGENT_COMMAND)
+        self.validate(self.nodes().controllers[:1], PUPPET_AGENT_COMMAND)
         if CREATE_SNAPSHOTS:
             self.environment().snapshot(OPENSTACK_SNAPSHOT, force=True)
 
