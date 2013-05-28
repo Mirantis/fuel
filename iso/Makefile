@@ -3,7 +3,7 @@ TOP_DIR?=$(PWD)
 TOP_DIR:=$(abspath $(TOP_DIR))
 
 COMMIT_SHA:=$(shell git rev-parse --verify HEAD)
-FUEL_VERSION:=2.2-folsom
+FUEL_VERSION:=2.1-folsom
 
 CENTOS_MAJOR:=6
 CENTOS_MINOR:=4
@@ -24,14 +24,13 @@ LOCAL_MIRROR_CENTOS_OS_BASEURL:=$(LOCAL_MIRROR_CENTOS)/$(CENTOS_RELEASE)/os/$(CE
 LOCAL_MIRROR_UBUNTU:=$(LOCAL_MIRROR)/ubuntu/dists/$(UBUNTU_DISTR)
 LOCAL_MIRROR_UBUNTU_DEB:=$(LOCAL_MIRROR_UBUNTU)/$(UBUNTU_COMP)/binary-$(UBUNTU_ARCH)
 LOCAL_MIRROR_UBUNTU_INSTALLER:=$(LOCAL_MIRROR_UBUNTU)/$(UBUNTU_COMP)/debian-installer/binary-$(UBUNTU_ARCH)
-MIRANTIS_MIRROR?=http://srv08-srt.srt.mirantis.net/centos-repo/epel-fuel-folsom-2.1/
-MIRROR_CENTOS:=http://srv11-msk.msk.mirantis.net/centos-repo/centos-6.4/
-MIRROR_CENTOS_UPDATES:=http://srv11-msk.msk.mirantis.net/centos-repo/centos-6.4-updates/
+MIRROR_CENTOS?=http://download.mirantis.com/centos-6.4/
 #MIRROR_CENTOS:=http://archive.kernel.org/centos
-MIRROR_CENTOS_OS_BASEURL:=$(MIRROR_CENTOS)
+MIRROR_CENTOS_OS_BASEURL:=$(MIRROR_CENTOS)/$(CENTOS_RELEASE)/os/$(CENTOS_ARCH)
 #MIRROR_CENTOS_OS_BASEURL:=$(MIRROR_CENTOS)/$(CENTOS_RELEASE)/os/$(CENTOS_ARCH)
 MIRROR_UBUNTU:=http://mirror.yandex.ru/ubuntu
 MIRROR_UBUNTU_OS_BASEURL:=$(MIRROR_UBUNTU)/dists/$(UBUNTU_DISTR)/$(UBUNTU_COMP)
+MIRANTIS_MIRROR?=http://download.mirantis.com/epel-fuel-folsom-2.1/
 YUM_REPOS:=centos epel fuel_folsom puppetlabs rpmforge
 
 BUILDKS:=$(BUILD_DIR)/iso/ks-build.cfg
@@ -247,3 +246,4 @@ $(BUILD_DIR)/%/.dir:
 	@touch $@
 
 find-files=$(shell test -d $1 && find $1 -type f 2> /dev/null)
+
