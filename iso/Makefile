@@ -60,7 +60,7 @@ ISOROOT:=$(BUILD_DIR)/iso/isoroot
 #endif
 
 ISOBASENAME:=fuel-centos-$(CENTOS_RELEASE)-$(CENTOS_ARCH)-$(FUEL_VERSION)
-[ -z "$$ISOSUFFIX" ] || ISOBASENAME:=$(ISOBASENAME)-$(ISOSUFFIX)
+#[ -z "$$ISOSUFFIX" ] || ISOBASENAME:=$(ISOBASENAME)-$(ISOSUFFIX)
 #ISOBASENAME:=fuel-centos-$(CENTOS_RELEASE)-$(CENTOS_ARCH)_$(BUILD_ID)
 
 ISONAME:=$(BUILD_DIR)/iso/$(ISOBASENAME).iso
@@ -130,8 +130,6 @@ $(BUILD_DIR)/iso/isoroot-files.done: \
 		$(ISOROOT)/version.yaml \
 		$(ISOROOT)/fuel-modules.tgz \
 		$(ISOROOT)/astute-0.0.1.gem \
-		$(ISOROOT)/Packages/puppet-2.7.19-1.el6.noarch.rpm \
-		$(ISOROOT)/Packages/puppet-server-2.7.19-1.el6.noarch.rpm \
 		$(ISOROOT)/Packages/rebuild
 	$(ACTION.TOUCH)
 
@@ -165,7 +163,7 @@ $(ISOROOT)/Packages/puppet-server-3.0.1-1.el6.noarch.rpm:
 	$(ACTION.TOUCH)
 
 $(ISOROOT)/Packages/rebuild:
-	( cd $(ISOROOT) && createrepo -g repodata/*comps*.xml . )
+	[ ! -d $(ISOROOT)/Packages ] || ( cd $(ISOROOT) && createrepo -g repodata/*comps*.xml . )
 
 $(ISOROOT)/.discinfo: $(SOURCE_DIR)/.discinfo ; $(ACTION.COPY)
 $(ISOROOT)/.treeinfo: $(SOURCE_DIR)/.treeinfo ; $(ACTION.COPY)

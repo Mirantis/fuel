@@ -1,7 +1,8 @@
 ISOLINUX_FILES:=boot.msg grub.conf initrd.img isolinux.bin memtest splash.jpg vesamenu.c32 vmlinuz
 IMAGES_FILES:=efiboot.img efidisk.img install.img
 EFI_FILES:=BOOTX64.conf BOOTX64.efi splash.xpm.gz
-PUPPET_FILES:=puppet-2.7.19-1.el6.noarch.rpm puppet-server-2.7.19-1.el6.noarch.rpm puppet-3.0.1-1.el6.noarch.rpm puppet-server-3.0.1-1.el6.noarch.rpm
+PUPPET_FILES:=puppet-2.7.19-1.el6.noarch.rpm puppet-server-2.7.19-1.el6.noarch.rpm
+#PUPPET_FILES:=puppet-2.7.19-1.el6.noarch.rpm puppet-server-2.7.19-1.el6.noarch.rpm puppet-3.0.1-1.el6.noarch.rpm puppet-server-3.0.1-1.el6.noarch.rpm
 # centos isolinux files
 $(addprefix $(LOCAL_MIRROR_CENTOS_OS_BASEURL)/isolinux/,$(ISOLINUX_FILES)):
 	@mkdir -p $(@D)
