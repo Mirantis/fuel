@@ -185,7 +185,7 @@ class openstack::mirantis_repos (
 
         yumrepo { 'openstack-epel-fuel-grizzly':
           descr      => 'Mirantis OpenStack grizzly Custom Packages',
-          baseurl    => 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0/x86_64/',
+          baseurl    => 'http://download.mirantis.com/epel-fuel-grizzly/',
           gpgcheck   => '0',
         }
 
