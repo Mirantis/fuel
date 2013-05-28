@@ -132,8 +132,6 @@ $(BUILD_DIR)/iso/isoroot-files.done: \
 		$(ISOROOT)/astute-0.0.1.gem \
 		$(ISOROOT)/Packages/puppet-2.7.19-1.el6.noarch.rpm \
 		$(ISOROOT)/Packages/puppet-server-2.7.19-1.el6.noarch.rpm \
-		$(ISOROOT)/Packages/puppet-3.0.1-1.el6.noarch.rpm \
-		$(ISOROOT)/Packages/puppet-server-3.0.1-1.el6.noarch.rpm \
 		$(ISOROOT)/Packages/rebuild
 	$(ACTION.TOUCH)
 
