@@ -377,5 +377,4 @@ class Prepare(object):
 
 
 if __name__ == '__main__':
-    #Prepare().prepare_tempest_grizzly_simple()
-    print os.path.isfile('config.py')
+    Prepare().prepare_tempest_grizzly_simple()
