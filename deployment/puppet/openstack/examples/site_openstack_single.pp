@@ -1,12 +1,6 @@
 #
-# Parameter values in this file should be changed, taking into consideration your
-# networking setup and desired OpenStack settings.
-# 
-# Please consult with the latest Fuel User Guide before making edits.
+# Example of how to deploy basic single openstack environment.
 #
-
-### GENERAL CONFIG ###
-# This section sets main parameters such as hostnames and IP addresses of different nodes
 
 # deploy a script that can be used to test nova
 class { 'openstack::test_file': }
@@ -24,35 +18,6 @@ $public_interface        = 'eth0'
 # this configuration assumes this interface is active but does not have an
 # ip address allocated to it.
 $private_interface       = 'eth1'
-
-$nodes_harr = [
-  {
-    'name' => 'fuel-controller-01',
-    'role' => 'primary-controller',
-    'internal_address' => '10.0.0.103',
-    'public_address'   => '10.0.204.103',
-  },
-]
-$nodes = $nodes_harr
-$default_gateway = '10.0.204.1'
-
-# Specify nameservers here.
-# Need points to cobbler node IP, or to special prepared nameservers if you known what you do.
-$dns_nameservers = ['10.0.204.1','8.8.8.8']
-
-# Specify netmasks for internal and external networks.
-$internal_netmask = '255.255.255.0'
-$public_netmask = '255.255.255.0'
-
-
-$node = filter_nodes($nodes,'name',$::hostname)
-$internal_address = $node[0]['internal_address']
-$public_address = $node[0]['public_address']
-
-#$controllers = merge_arrays(filter_nodes($nodes,'role','primary-controller'), filter_nodes($nodes,'role','controller'))
-#$controller_internal_address = $controllers[0]['internal_address']
-#$controller_public_address   = $controllers[0]['public_address']
-
 # credentials
 $admin_email             = 'root@localhost'
 $admin_password          = 'nova'
@@ -83,6 +48,7 @@ stage {'netconfig':
       before  => Stage['main'],
 }
 class {'l23network': stage=> 'netconfig'}
+$quantum_gre_bind_addr = $internal_address
 
 # Packages repo setup
 $mirror_type = 'default'
@@ -108,21 +74,17 @@ class {'openstack::clocksync': ntp_servers=>$ntp_servers}
 #connectinq to AMQP server are started.
 
 Exec<| title == 'clocksync' |>->Nova::Generic_service<| |>
+Exec<| title == 'clocksync' |>->Service<| title == 'quantum-l3' |>
+Exec<| title == 'clocksync' |>->Service<| title == 'quantum-dhcp-service' |>
+Exec<| title == 'clocksync' |>->Service<| title == 'quantum-ovs-plugin-service' |>
+Exec<| title == 'clocksync' |>->Service<| title == 'cinder-volume' |>
+Exec<| title == 'clocksync' |>->Service<| title == 'cinder-api' |>
+Exec<| title == 'clocksync' |>->Service<| title == 'cinder-scheduler' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'keystone-manage db_sync' |>
-Exec<| title == 'clocksync' |>->Exec<| title == 'keystone-manage pki_setup' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'glance-manage db_sync' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'nova-manage db sync' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'initial-db-sync' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
-
-
-
-
-### END OF PUBLIC CONFIGURATION PART ###
-# Normally, you do not need to change anything after this string 
-
-# Globally apply an environment-based tag to all resources on each node.
-tag("${::deployment_id}::${::environment}")
 
 stage { 'openstack-custom-repo': before => Stage['netconfig'] }
 class { 'openstack::mirantis_repos':
@@ -154,6 +116,7 @@ $openstack_version = {
   'horizon'          => 'latest',
   'nova'             => 'latest',
   'novncproxy'       => 'latest',
+  'cinder'           => 'latest',
   'rabbitmq_version' => $rabbitmq_version_string,
 }
 
@@ -165,7 +128,7 @@ node default {
   }
 
   class { 'openstack::all':
-    public_address          => $public_address,
+    public_address          => $ipaddress_eth0,
     public_interface        => $public_interface,
     private_interface       => $private_interface,
     admin_email             => $admin_email,
