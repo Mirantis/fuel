@@ -18,7 +18,7 @@ class openstack::mirantis_repos (
   $mirrorlist_updates        = 'http://172.18.67.168/centos-repo/mirror-6.3-updates.list',
   $grizzly_baseurl           = 'http://download.mirantis.com/epel-fuel-grizzly/',
   $enable_test_repo          = false,
-  $repo_proxy   = undef,
+  $repo_proxy                = undef,
   $use_upstream_mysql     = false,
 ) {
   case $::osfamily {
