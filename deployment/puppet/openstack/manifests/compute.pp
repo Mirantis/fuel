@@ -267,6 +267,7 @@ class openstack::compute (
     admin_user        => 'nova',
     admin_password    => $nova_user_password,
     enabled_apis      => $enabled_apis,
+    cinder            => $cinder,
     auth_host         => $service_endpoint,
     nova_rate_limits  => $nova_rate_limits,
   }
