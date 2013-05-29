@@ -1,7 +1,7 @@
 import os
 from fuel_test.ci.ci_base import CiBase
 from fuel_test.node_roles import NodeRoles
-from fuel_test.settings_monroid_local import CONTROLLERS, COMPUTES,\
+from fuel_test.settings import CONTROLLERS, COMPUTES,\
     STORAGES, PROXIES
 
 

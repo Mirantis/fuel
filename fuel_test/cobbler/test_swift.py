@@ -5,6 +5,8 @@ from fuel_test.settings import PUPPET_AGENT_COMMAND
 
 
 class SwiftCase(CobblerTestCase):
+
+
     def test_swift(self):
         Manifest.write_manifest(
             self.remote(),

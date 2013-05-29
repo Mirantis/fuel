@@ -6,7 +6,7 @@ from devops.helpers.helpers import _wait
 import os
 import re
 from fuel_test.cobbler.cobbler_client import CobblerClient
-from fuel_test.settings_monroid_local import OS_FAMILY, PUPPET_CLIENT_PACKAGE, PUPPET_VERSION, PUPPET_MASTER_SERVICE, EXIST_TAR, USE_ISO
+from fuel_test.settings import OS_FAMILY, PUPPET_CLIENT_PACKAGE, PUPPET_VERSION, PUPPET_MASTER_SERVICE, EXIST_TAR, USE_ISO
 from root import root
 
 def get_file_as_string(path):
