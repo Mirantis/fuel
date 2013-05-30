@@ -108,9 +108,17 @@ $controller_internal_addresses = nodes_to_hash($controllers,'name','internal_add
 $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
 $controller_hostnames = keys($controller_internal_addresses)
 
-#Set this to anything other than pacemaker if you do not want Quantum HA
-#Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
-#on the ONLY controller
+# Set this to anything other than pacemaker if you do not want Quantum HA
+# Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
+# on the ONLY controller
+# There are two modes - normal and High Availability mode. For first one, ha_provider must be set 
+# to 'generic' and for any type of HA deployment 'pacemaker' value must be set. 
+# 
+# If cluster contains more than approximately twenty nodes, one may want to use multicast, so 
+# use_unicast_corosync should be set to false. Also please mind that any network equipment in
+# the middle, if present, must not drop multicast traffic and allow communications for 
+# UDP port 5405.
+
 $ha_provider = 'pacemaker'
 $use_unicast_corosync = true
 
