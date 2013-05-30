@@ -55,7 +55,8 @@ Other shell script keys
 - CURRENT_PROFILE = ``centos64_x86_64`` or ``ubuntu_1204_x86_64`` - cobbler ks profile to use (default depends on OS_FAMILY)
 - CONTROLLERS,COMPUTES,STORAGES,PROXIES = number of nodes of corresponding role type to deploy (defaults ``3,3,3,2``)
 - PARENT_PROXY = parent-proxy server for squid at master node (``172.18.67.168`` Saratov, ``172.18.3.14`` Moscow) (default none)
-- CIRROS_IMAGE = cirros url (default ``http://srv08-srt.srt.mirantis.net/cirros-0.3.0-x86_64-disk.img``)
+- CIRROS_IMAGE = cirros url (default ``http://srv08-srt.srt.mirantis.net/cirros-$CIRROS_VERSION-x86_64-disk.img``)
+- CIRROS_VERSION = cirros version to use (default ``0.3.0``)
 - ISO_IMAGE = Fuel iso image to use for master node (default ``~/fuel-centos-6.4-x86_64.iso``)
 - USE_ISO  = use ISO for deployment (default ``True``), note: this option is broken
 - ASTUTE_USE = use astute addon for mcollective to deploy nodes (default ``True``)

@@ -9,7 +9,7 @@ import os
 from fuel_test.ci.ci_vm import CiVM
 from fuel_test.helpers import load, retry, install_packages, switch_off_ip_tables
 from fuel_test.root import root
-from fuel_test.settings import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE
+from fuel_test.settings import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE, CIRROS_VERSION
 
 
 class Prepare(object):
@@ -318,17 +318,17 @@ class Prepare(object):
         return image.id
 
     def tempest_add_images(self):
-        if not os.path.isfile('cirros-0.3.0-x86_64-disk.img'):
+        if not os.path.isfile('cirros-'+CIRROS_VERSION+'-x86_64-disk.img'):
             subprocess.check_call(['wget', CIRROS_IMAGE])
         glance = self._get_image_client()
-        images = self._get_images(glance, 'cirros_0.3.0')
+        images = self._get_images(glance, 'cirros_'+CIRROS_VERSION)
         if len(images) > 1:
             return images[0].id, images[1].id
         else:
-            return self.upload(glance, 'cirros_0.3.0',
-                           'cirros-0.3.0-x86_64-disk.img'), \
-               self.upload(glance, 'cirros_0.3.0',
-                           'cirros-0.3.0-x86_64-disk.img')
+            return self.upload(glance, 'cirros_'+CIRROS_VERSION,
+                           'cirros-'+CIRROS_VERSION+'-x86_64-disk.img'), \
+               self.upload(glance, 'cirros_'+CIRROS_VERSION,
+                           'cirros-'+CIRROS_VERSION+'-x86_64-disk.img')
 
     def tempest_get_netid_routerid(self):
         networking = self._get_networking_client()
