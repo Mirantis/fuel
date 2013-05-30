@@ -54,6 +54,18 @@ $nodes_harr = [
     'public_address'   => '10.0.204.107',
   },
   {
+    'name' => 'ceph02',
+    'role' => 'radosgw',
+    'internal_address' => '172.18.125.242',
+    'public_address'   => '172.16.112.242',
+  },
+  {
+    'name' => 'ceph03',
+    'role' => 'radosgw',
+    'internal_address' => '172.18.125.243',
+    'public_address'   => '172.16.112.243',
+  },
+  {
     'name' => 'fuel-swiftproxy-01',
     'role' => 'primary-swift-proxy',
     'internal_address' => '10.0.0.108',
@@ -120,7 +132,8 @@ $controller_public_addresses = nodes_to_hash($controllers,'name','public_address
 $controller_hostnames = keys($controller_internal_addresses)
 $swift_proxy_nodes = merge_arrays(filter_nodes($nodes,'role','primary-swift-proxy'),filter_nodes($nodes,'role','swift-proxy'))
 $swift_proxies = nodes_to_hash($swift_proxy_nodes,'name','internal_address')
-
+$rados_gw_nodes = merge_arrays(filter_nodes($nodes,'role','radosgw'),filter_nodes($nodes,'role','radosgw'))
+$radosgw_nodes = nodes_to_hash($rados_gw_nodes,'name','internal_address')
 
 #Set this to anything other than pacemaker if you do not want Quantum HA
 #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
@@ -560,6 +573,7 @@ class ha_controller (
     export_resources        => false,
     glance_backend          => $glance_backend,
     swift_proxies           => $swift_proxies,
+    ragosgw_nodes	    => $ragosgw_nodes,
     quantum                 => $quantum,
     quantum_user_password   => $quantum_user_password,
     quantum_db_password     => $quantum_db_password,
@@ -594,6 +608,7 @@ class ha_controller (
     public_address   => $public_virtual_ip,
     internal_address => $internal_virtual_ip,
     admin_address    => $internal_virtual_ip,
+    use_rados	     => true,
   }
 }
 

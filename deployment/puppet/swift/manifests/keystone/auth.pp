@@ -5,7 +5,8 @@ class swift::keystone::auth(
   $internal_address   = undef,
   $admin_address = undef,
   $public_address = undef,
-  $port      = '8080'
+  $port      = '8080',
+  $use_rados = false,
 ) {
   if ($internal_address == undef) {
     $internal_address_real = $address
@@ -41,12 +42,22 @@ class swift::keystone::auth(
     type        => 'object-store',
     description => 'Openstack Object-Store Service',
   }
-  keystone_endpoint { $auth_name:
-    ensure       => present,
-    region       => 'RegionOne',
-    public_url   => "http://${public_address_real}:${port}/v1/AUTH_%(tenant_id)s",
-    admin_url    => "http://${admin_address_real}:${port}/",
-    internal_url => "http://${internal_address_real}:${port}/v1/AUTH_%(tenant_id)s",
+  if !($user_rados) {
+      keystone_endpoint { $auth_name:
+	ensure       => present,
+        region       => 'RegionOne',
+        public_url   => "http://${public_address_real}:${port}/v1/AUTH_%(tenant_id)s",
+        admin_url    => "http://${admin_address_real}:${port}/",
+        internal_url => "http://${internal_address_real}:${port}/v1/AUTH_%(tenant_id)s",
+      }
+  } else {
+     keystone_endpoint { $auth_name:
+        ensure       => present,
+        region       => 'RegionOne',
+        public_url   => "http://${public_address_real}:${port}/auth",
+        admin_url    => "http://${admin_address_real}:${port}/auth",
+        internal_url => "http://${internal_address_real}:${port}/auth",
+    }
   }
 
   keystone_service { "${auth_name}_s3":
