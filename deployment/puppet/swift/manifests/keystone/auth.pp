@@ -54,9 +54,9 @@ class swift::keystone::auth(
      keystone_endpoint { $auth_name:
         ensure       => present,
         region       => 'RegionOne',
-        public_url   => "http://${public_address_real}:${port}/auth",
-        admin_url    => "http://${admin_address_real}:${port}/auth",
-        internal_url => "http://${internal_address_real}:${port}/auth",
+        public_url   => "http://${public_address_real}:${port}/swift/v1",
+        admin_url    => "http://${admin_address_real}:${port}/swift/v1",
+        internal_url => "http://${internal_address_real}:${port}/swift/v1",
     }
   }
 
