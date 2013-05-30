@@ -71,8 +71,7 @@ $controllers = merge_arrays(filter_nodes($nodes,'role','primary-controller'), fi
 $controller_internal_address = $controllers[0]['internal_address']
 $controller_public_address   = $controllers[0]['public_address']
 
-# Set this to anything other than pacemaker if you do not want Quantum HA
-# Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
+# If you do not want Quantum HA, you MUST enable $quantum_network_node
 # on the ONLY controller
 # There are two modes - normal and High Availability mode. For first one, ha_provider must be set 
 # to 'generic' and for any type of HA deployment 'pacemaker' value must be set. 

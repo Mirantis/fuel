@@ -108,8 +108,7 @@ $controller_internal_addresses = nodes_to_hash($controllers,'name','internal_add
 $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
 $controller_hostnames = keys($controller_internal_addresses)
 
-# Set this to anything other than pacemaker if you do not want Quantum HA
-# Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
+# If you do not want Quantum HA, you MUST enable $quantum_network_node
 # on the ONLY controller
 # There are two modes - normal and High Availability mode. For first one, ha_provider must be set 
 # to 'generic' and for any type of HA deployment 'pacemaker' value must be set. 
