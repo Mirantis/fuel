@@ -5,8 +5,8 @@ define ceph::osd::deploy (
 
     ceph::conf::osd { $osd_id:
         device  => $name,
-        cluster_addr    => $ipaddress_eth0,
-        public_addr     => $ipaddress_eth0,
+        cluster_addr    => $ipaddress_br-mgmt,
+        public_addr     => $ipaddress_br-ex,
     }
     ceph::osd::device { $name:
         osd_id => $osd_id,
