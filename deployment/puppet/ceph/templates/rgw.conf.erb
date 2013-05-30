@@ -1,5 +1,6 @@
 FastCgiExternalServer /var/www/s3gw.fcgi -socket /tmp/radosgw.sock
-<VirtualHost *:80>
+Listen *:8080
+<VirtualHost *:8080>
         ServerName <%= hostname %>
         DocumentRoot /var/www
         RewriteEngine On
