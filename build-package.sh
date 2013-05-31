@@ -41,7 +41,7 @@ git checkout -f $tag
 commit=`git rev-parse HEAD`
 shortcommit=`git rev-parse --short HEAD`
 # iso and tgz will have a suffix like short commit ID  and current timestamp
-filesuffix=${shortcommit}-`date +%y$%m%d%H%M`
+filesuffix=${shortcommit}-`date +%y%m%d%H%M`
 
 
 # remove git tracking and gepetto files
