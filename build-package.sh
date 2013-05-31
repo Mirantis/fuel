@@ -40,6 +40,9 @@ git checkout -f $tag
 # capture commit id
 commit=`git rev-parse HEAD`
 shortcommit=`git rev-parse --short HEAD`
+# iso and tgz will have a suffix like short commit ID  and current timestamp
+filesuffix=${shortcommit}-`date +%y$%m%d%H%M`
+
 
 # remove git tracking and gepetto files
 rm -rf `find deployment/ -name ".git*"`
@@ -62,7 +65,7 @@ cp -R docs/_build/html/* documentation/
 
 # create archive
 cd $cur_dir
-tar -czf ${build_dir}-${shortcommit}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version" "$build_dir/README.md"
+tar -czf ${build_dir}-${filesuffix}.tar.gz "$build_dir/deployment/" "$build_dir/documentation/" "$build_dir/release.commit" "$build_dir/release.version" "$build_dir/README.md"
 
 cd $build_dir
 if [ -d iso ]; then
@@ -70,7 +73,7 @@ if [ -d iso ]; then
   make iso
   cd build/iso
   for filename in `ls *.iso`; do
-    mv $filename ${cur_dir}/${filename%.*}-${shortcommit}.iso
+    mv $filename ${cur_dir}/${filename%.*}-${filesuffix}.iso
   done
 
 fi
