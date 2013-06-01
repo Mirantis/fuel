@@ -137,10 +137,16 @@ $controller_hostnames = keys($controller_internal_addresses)
 $swift_proxy_nodes = merge_arrays(filter_nodes($nodes,'role','primary-swift-proxy'),filter_nodes($nodes,'role','swift-proxy'))
 $swift_proxies = nodes_to_hash($swift_proxy_nodes,'name','internal_address')
 
+# If you do not want Quantum HA, you MUST enable $quantum_network_node
+# on the ONLY controller
+# There are two modes - normal and High Availability mode. For first one, ha_provider must be set 
+# to 'generic' and for any type of HA deployment 'pacemaker' value must be set. 
+# 
+# If cluster contains more than approximately twenty nodes, one may want to use multicast, so 
+# use_unicast_corosync should be set to false. Also please mind that any network equipment in
+# the middle, if present, must not drop multicast traffic and allow communications for 
+# UDP port 5405.
 
-#Set this to anything other than pacemaker if you do not want Quantum HA
-#Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
-#on the ONLY controller
 $ha_provider = 'pacemaker'
 $use_unicast_corosync = true
 

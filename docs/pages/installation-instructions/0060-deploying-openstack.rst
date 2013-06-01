@@ -132,9 +132,16 @@ Next ``site.pp`` defines DNS servers and provides netmasks::
   $internal_netmask = '255.255.255.0'
   $public_netmask = '255.255.255.0'
   ...
-  #Set this to anything other than pacemaker if you do not want Quantum HA
-  #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
-  #on the ONLY controller
+  # If you do not want Quantum HA, you MUST enable $quantum_network_node
+  # on the ONLY controller
+  # There are two modes - normal and High Availability mode. For first one, ha_provider must be set 
+  # to 'generic' and for any type of HA deployment 'pacemaker' value must be set. 
+  # 
+  # If cluster contains more than approximately twenty nodes, one may want to use multicast, so 
+  # use_unicast_corosync should be set to false. Also please mind that any network equipment in
+  # the middle, if present, must not drop multicast traffic and allow communications for 
+  # UDP port 5405.
+
   $ha_provider = 'pacemaker'
   $use_unicast_corosync = false
 
