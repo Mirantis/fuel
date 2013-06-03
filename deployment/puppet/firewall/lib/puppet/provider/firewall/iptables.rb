@@ -198,7 +198,10 @@ Puppet::Type.type(:firewall).provide :iptables, :parent => Puppet::Provider::Fir
 
     # Normalise all rules to CIDR notation.
     [:source, :destination].each do |prop|
-      hash[prop] = Puppet::Util::IPCidr.new(hash[prop]).cidr unless hash[prop].nil?
+      if hash[prop] =~ /^(\d{1,3}\.){3}\d{1,3}(:?\/(\d+))?$/
+        notice(hash[prop])
+        hash[prop] = Puppet::Util::IPCidr.new(hash[prop]).cidr \
+      end
     end
 
     [:dport, :sport, :port, :state].each do |prop|
