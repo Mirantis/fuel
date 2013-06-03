@@ -389,6 +389,7 @@ Exec<| title == 'clocksync' |>->Service<| title == 'cinder-volume' |>
 Exec<| title == 'clocksync' |>->Service<| title == 'cinder-api' |>
 Exec<| title == 'clocksync' |>->Service<| title == 'cinder-scheduler' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'keystone-manage db_sync' |>
+Exec<| title == 'clocksync' |>->Exec<| title == 'keystone-manage pki_setup' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'glance-manage db_sync' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'nova-manage db sync' |>
 Exec<| title == 'clocksync' |>->Exec<| title == 'initial-db-sync' |>
@@ -479,9 +480,9 @@ class simple_controller (
     quantum_external_ipinfo => $external_ipinfo,
     tenant_network_type     => $tenant_network_type,
     segment_range           => $segment_range,
-    cinder                  => $is_cinder_node,
+    cinder                  => $cinder,
     cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
-    manage_volumes          => $manage_volumes,
+    manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
     nv_physical_volume      => $nv_physical_volume,
     use_syslog              => $use_syslog,
     nova_rate_limits        => $nova_rate_limits,
@@ -597,8 +598,8 @@ node /fuel-compute-[\d+]/ {
     verbose                => $verbose,
     segment_range          => $segment_range,
     cinder                 => $cinder,
-    manage_volumes         => $is_cinder_node ? { true => $manage_volumes, false => false},
-    nv_physical_volume      => $nv_physical_volume,
+    manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
+    nv_physical_volume     => $nv_physical_volume,
     cinder_iscsi_bind_addr => $cinder_iscsi_bind_addr,
     use_syslog             => $use_syslog,
     nova_rate_limits       => $nova_rate_limits,
