@@ -275,7 +275,7 @@ class openstack::controller_ha (
     $internal_vrid = $::deployment_id + 1
 
     class { 'keepalived':
-      require => [ Class['haproxy'], Class['::openstack::firewall']  ]
+      require => Class['haproxy'] ,
     }
 
     keepalived::instance { $public_vrid:
@@ -412,10 +412,8 @@ class openstack::controller_ha (
     }
     if $ha_provider == 'pacemaker' {
       if $use_unicast_corosync {
-      $unicast_addresses = $controller_internal_addresses
-      }
-      else
-      {
+        $unicast_addresses = $controller_internal_addresses
+      } else {
         $unicast_addresses = undef
       }
       class {'openstack::corosync':
