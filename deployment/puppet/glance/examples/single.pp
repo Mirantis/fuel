@@ -10,6 +10,7 @@ node glance {
 }
 
 node glance_keystone {
+  class { 'keystone::config::sqlite': }
   class { 'keystone':
     verbose  => true,
     debug    => true,
@@ -33,7 +34,9 @@ node glance_keystone_mysql {
   class { 'keystone::roles::admin': }
   class { 'role_glance_mysql': }
   class { 'glance::keystone::auth': }
-
+  class { 'keystone::config::mysql':
+    password => 'keystone'
+  }
 }
 
 node default {

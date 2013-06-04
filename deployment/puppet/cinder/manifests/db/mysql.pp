@@ -16,11 +16,7 @@ class cinder::db::mysql (
     Class['cinder::db::mysql'] -> Package['cinder-api']
   }
   Class['cinder::db::mysql'] -> Exec<| title == 'cinder-manage db_sync' |>
-  Database[$dbname] ~> Service<| title == 'cinder-manage db_sync' |>
-
-  Class['cinder::db::mysql'] -> Service<| title == 'cinder-scheduler' |>
-  Class['cinder::db::mysql'] -> Service<| title == 'cinder-volume' |>
-  Class['cinder::db::mysql'] -> Service<| title == 'cinder-api' |>
+  Database[$dbname] ~> Exec<| title == 'cinder-manage db_sync' |>
 
   mysql::db { $dbname:
     user         => $user,

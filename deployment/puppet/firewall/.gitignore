@@ -1,0 +1,5 @@
+*.swp
+pkg/
+.DS_Store
+
+coverage/

@@ -12,6 +12,8 @@ class quantum::keystone::auth (
   $region             = 'RegionOne'
 ) {
 
+  Keystone_user_role["${auth_name}@services"] ~> Service <| name == 'quantum-server' |>
+
   keystone_user { $auth_name:
     ensure   => present,
     password => $password,
@@ -22,9 +24,6 @@ class quantum::keystone::auth (
     ensure  => present,
     roles   => 'admin',
   }
-
-  Keystone_user_role["${auth_name}@services"] ~> Service <| name == 'quantum-server' |>
-
   keystone_service { $auth_name:
     ensure      => present,
     type        => $service_type,

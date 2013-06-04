@@ -3,4 +3,5 @@ class { 'nova::rabbitmq':
   password     => 'password',
   port         => '1234',
   virtual_host => 'my_queue',
+  install_repo => true,
 }

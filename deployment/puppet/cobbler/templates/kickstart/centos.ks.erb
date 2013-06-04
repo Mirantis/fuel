@@ -2,7 +2,7 @@
 install
 
 # INSTALLATION SOURCE (centos repository)
-$SNIPPET('url_proxy')
+url --url=$tree
 
 # ALTERNATIVE REPOSITORIES
 <% if ks_repo.kind_of?(Array)  %>
@@ -10,7 +10,7 @@ $SNIPPET('url_proxy')
 repo --name=<%= repo['name'] %> --baseurl=<%= repo['url'] %>
   <% end %>
 <% else %>
-  # No repos add
+  # No reopos add
   # in order to add repo declare the puppet "ks_repo" variable as Array
 <% end %>
 
@@ -24,6 +24,7 @@ timezone --utc <%= @ks_system_timezone %>
 # REBOOT AFTER INSTALLATION
 reboot
 
+network --onboot yes --device eth0 --bootproto=dhcp
 firewall --disable
 
 # SET ROOT PASSWORD DEFAULT IS r00tme
@@ -48,7 +49,7 @@ skipx
 # --driveorder=sda,hda
 # APPEND STRING TO KERNEL BOOT COMMAND
 # --append=""
-bootloader --location=mbr --driveorder=sda,hda --append=" crashkernel=auto edd=off"
+bootloader --location=mbr --driveorder=sda,hda --append=" crashkernel=auto"
 
 # PARTITIONING
 # CLEAN ANY INVALID PARTITION TABLE
@@ -57,7 +58,14 @@ zerombr
 # REMOVE ALL PARTITIONS BEFORE CREATING NEW ONES
 clearpart --all --initlabel
 
-$SNIPPET('main_partition_select')
+# AUTOMATICALLY CREATE / /boot AND swap PARTITIONS
+# autopart can't work together with autocreate LVS group for cinder
+# autopart
+part      /boot  --fstype ext3 --size=512 --asprimary
+part      pv.01  --size=1 --grow
+volgroup  sysvg  pv.01
+logvol    swap   --fstype swap --name=swap --vgname=sysvg --recommended
+logvol    /      --fstype ext3 --name=root --vgname=sysvg --size=1 --grow
 
 # COBBLER EMBEDDED SNIPPET: 'network_config'
 # CONFIGURES NETWORK INTERFACES DEPENDING ON
@@ -84,8 +92,6 @@ $SNIPPET('kickstart_start')
 # INTO /tmp/pre_install_network_config WHICH IS INCLUDED
 # INTO KICKSTART BY 'network_config' SNIPPET
 $SNIPPET('pre_install_network_config')
-
-$SNIPPET('pre_partition_select')
 
 
 # PACKAGES SECTION

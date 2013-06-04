@@ -16,13 +16,11 @@ Puppet::Type.newtype(:ring_object_device) do
     desc "mountpoints and weight "
   end
 
-  newproperty(:zone) do
-  end
+  newproperty(:zone)
 
   # Commit 103b68b removed weight but I don't know why.
 
-  newproperty(:meta) do
-  end
+  newproperty(:meta)
 
   [:id, :partitions, :balance].each do |param|
     newproperty(param) do
@@ -30,10 +28,6 @@ Puppet::Type.newtype(:ring_object_device) do
         raise(Puppet::Error, "#{param} is a read only property, cannot be assigned")
       end
     end
-  end
-
-  autorequire(:exec) do
-    ['create_object']
   end
 
 end

@@ -18,6 +18,8 @@
 # [nova_user_password] Nova service password.
 # [rabbit_password] Rabbit password.
 # [rabbit_user] Rabbit User.
+# [qpid_password] QPID password.
+# [qpid_user] QPID User.
 # [network_manager] Nova network manager to use.
 # [fixed_range] Range of ipv4 network for vms.
 # [floating_range] Floating ip range to create.
@@ -69,7 +71,7 @@ class openstack::controller (
   $private_interface,
   # Required Database
   $mysql_root_password     = 'sql_pass',
-  $custom_mysql_setup_class= undef,
+  $custom_mysql_setup_class = undef,
   $admin_email             = 'some_user@some_fake_email_address.foo',
   $admin_user              = 'admin',
   $admin_password          = 'ChangeMe',
@@ -86,14 +88,18 @@ class openstack::controller (
   # not sure if this works correctly
   $internal_address,
   $admin_address,
+  ## AMQP
+  $queue_provider          = 'rabbitmq',
   # Rabbit
   $rabbit_password         = 'rabbit_pw',
   $rabbit_user             = 'nova',
   $rabbit_cluster          = false,
   $rabbit_nodes            = [$internal_address],
-  $rabbit_node_ip_address  = undef,
-  $rabbit_ha_virtual_ip    = false, #Internal virtual IP for HA configuration
-  $rabbit_port             = '5672',
+  # Qpid
+  $qpid_password           = 'nova',
+  $qpid_user               = 'nova',
+  $qpid_cluster            = false,
+  $qpid_nodes              = [$internal_address],
   # network configuration
   # this assumes that it is a flat network manager
   $network_manager         = 'nova.network.manager.FlatDHCPManager',
@@ -137,53 +143,44 @@ class openstack::controller (
   $cinder_db_password      = 'cinder_db_pass',
   $cinder_db_user          = 'cinder',
   $cinder_db_dbname        = 'cinder',
-  $cinder_iscsi_bind_addr  = false,
-  $cinder_volume_group     = 'cinder-volumes',
+  $cinder_iscsi_bind_iface = false,
   #
   $quantum                 = false,
   $quantum_user_password   = 'quantum_pass',
   $quantum_db_password     = 'quantum_pass',
   $quantum_db_user         = 'quantum',
   $quantum_db_dbname       = 'quantum',
-  $quantum_network_node    = false,
-  $quantum_netnode_on_cnt  = false,
-  $quantum_gre_bind_addr   = undef,
-  $quantum_external_ipinfo = {},
   $segment_range           = '1:4094',
   $tenant_network_type     = 'gre',
   $enabled                 = true,
   $api_bind_address        = '0.0.0.0',
   $service_endpoint        = '127.0.0.1',
-  $galera_cluster_name     = 'openstack',
-  $primary_controller      = primary_controller,
-  $galera_node_address     = '127.0.0.1',
+  $galera_cluster_name = 'openstack',
+  $galera_master_ip = '127.0.0.1',
+  $galera_node_address = '127.0.0.1',
   $glance_backend          = 'file',
-  $galera_nodes            = ['127.0.0.1'],
+  $galera_nodes = ['127.0.0.1'],
   $mysql_skip_name_resolve = false,
   $manage_volumes          = false,
   $nv_physical_volume      = undef,
   $use_syslog              = false,
-  $horizon_use_ssl         = false,
-  $nova_rate_limits        = undef,
-  $cinder_rate_limits      = undef,
-  $ha_mode                 = false,
+  $nova_rate_limits = undef,
+  $cinder_rate_limits = undef
 ) {
-
 
   # Ensure things are run in order
   Class['openstack::db::mysql'] -> Class['openstack::keystone']
   Class['openstack::db::mysql'] -> Class['openstack::glance']
   Class['openstack::db::mysql'] -> Class['openstack::nova::controller']
-  if defined(Class['openstack::cinder']) {
-    Class['openstack::db::mysql'] -> Class['openstack::cinder']
-  }
-
   $rabbit_addresses = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
     $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
  
   
   nova_config {'DEFAULT/memcached_servers':    value => $memcached_addresses;
   }
+
+
+  include ntpd
 
   ####### DATABASE SETUP ######
   # set up mysql server
@@ -214,13 +211,14 @@ class openstack::controller (
       quantum_db_dbname      => $quantum_db_dbname,
       allowed_hosts          => $allowed_hosts,
       enabled                => $enabled,
-      galera_cluster_name    => $galera_cluster_name,
-      primary_controller     => $primary_controller,
-      galera_node_address    => $galera_node_address ,
-      galera_nodes           => $galera_nodes,
-      custom_setup_class     => $custom_mysql_setup_class,
-      mysql_skip_name_resolve => $mysql_skip_name_resolve,
-    }
+     galera_cluster_name => $galera_cluster_name,
+     galera_master_ip => $galera_master_ip ,
+     galera_node_address => $galera_node_address ,
+     galera_nodes        => $galera_nodes,
+     custom_setup_class => $custom_mysql_setup_class,
+     mysql_skip_name_resolve => $mysql_skip_name_resolve,
+
+   }
   }
   ####### KEYSTONE ###########
   class { 'openstack::keystone':
@@ -246,8 +244,8 @@ class openstack::controller (
     bind_host             => $api_bind_address,
     quantum_user_password => $quantum_user_password,
     enabled               => $enabled,
-    package_ensure        => $::openstack_keystone_version,
-    use_syslog            => $use_syslog,
+    package_ensure => $::openstack_keystone_version,
+    use_syslog              => $use_syslog,
   }
 
 
@@ -265,8 +263,8 @@ class openstack::controller (
     bind_host                 => $api_bind_address,
     enabled                   => $enabled,
     glance_backend            => $glance_backend,
-    registry_host             => $service_endpoint,
-    use_syslog                => $use_syslog,
+    registry_host     => $service_endpoint,
+    use_syslog              => $use_syslog,
   }
 
   ######## BEGIN NOVA ###########
@@ -284,6 +282,7 @@ class openstack::controller (
   } else {
     $enabled_apis = 'ec2,osapi_compute,osapi_volume'
   }
+
 
   class { 'openstack::nova::controller':
     # Database
@@ -308,25 +307,25 @@ class openstack::controller (
     quantum                 => $quantum,
     quantum_user_password   => $quantum_user_password,
     quantum_db_password     => $quantum_db_password,
-    quantum_network_node    => $quantum_network_node,
-    quantum_netnode_on_cnt  => $quantum_netnode_on_cnt,
-    quantum_gre_bind_addr   => $quantum_gre_bind_addr,
-    quantum_external_ipinfo => $quantum_external_ipinfo,
     segment_range           => $segment_range,
-    tenant_network_type     => $tenant_network_type,
+    tenant_network_type     => $tenant_network_type, 
     # Nova
     nova_user_password      => $nova_user_password,
     nova_db_password        => $nova_db_password,
     nova_db_user            => $nova_db_user,
     nova_db_dbname          => $nova_db_dbname,
+    ## AMQP
+    $queue_provider          = 'rabbitmq',
     # Rabbit
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
     rabbit_nodes            => $rabbit_nodes,
     rabbit_cluster          => $rabbit_cluster,
-    rabbit_node_ip_address  => $rabbit_node_ip_address,
-    rabbit_port             => $rabbit_port,
-    rabbit_ha_virtual_ip    => $rabbit_ha_virtual_ip,
+    # Qpid
+    qpid_user               = $qpid_user,
+    qpid_password           = $qpid_password,
+    qpid_cluster            = $qpid_cluster,
+    qpid_nodes              = [$internal_address],
     # Glance
     glance_api_servers      => $glance_api_servers,
     # General
@@ -337,27 +336,35 @@ class openstack::controller (
     api_bind_address        => $api_bind_address,
     ensure_package          => $::openstack_version['nova'],
     use_syslog              => $use_syslog,
-    nova_rate_limits        => $nova_rate_limits,
+    nova_rate_limits => $nova_rate_limits
   }
 
   ######### Cinder Controller Services ########
   if ($cinder) {
+    if ($cinder_iscsi_bind_iface) {
+      $cinder_iscsi_bind_addr = getvar("::ipaddress_${cinder_iscsi_bind_iface}")
+    } else {
+      $cinder_iscsi_bind_addr = $api_bind_address
+    }
     class {'openstack::cinder':
-      sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
-      rabbit_password      => $rabbit_password,
-      rabbit_host          => false,
-      rabbit_nodes         => $rabbit_nodes,
-      volume_group         => $cinder_volume_group,
-      physical_volume      => $nv_physical_volume,
-      manage_volumes       => $manage_volumes,
-      enabled              => true,
-      auth_host            => $service_endpoint,
-      bind_host            => $api_bind_address,
-      iscsi_bind_host      => $cinder_iscsi_bind_addr,
-      cinder_user_password => $cinder_user_password,
-      use_syslog           => $use_syslog,
-      cinder_rate_limits   => $cinder_rate_limits,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      sql_connection  => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+      queue_provider  => $queue_provider,
+      rabbit_password => $rabbit_password,
+      rabbit_host     => false,
+      rabbit_nodes    => $rabbit_nodes,
+      qpid_password => $qpid_password,
+      qpid_host     => false,
+      qpid_nodes    => $qpid_nodes,
+      volume_group    => 'cinder-volumes',
+      physical_volume => $physical_volume,
+      manage_volumes  => $manage_volumes,
+      enabled         => true,
+      auth_host       => $service_endpoint,
+      bind_host       => $api_bind_address,
+      iscsi_bind_host => $cinder_iscsi_bind_addr,
+      cinder_user_password    => $cinder_user_password,
+      use_syslog              => $use_syslog,
+      cinder_rate_limits => $cinder_rate_limits
     }
   } else {
     if $manage_volumes {
@@ -368,6 +375,7 @@ class openstack::controller (
       }   
 
       class { 'nova::volume::iscsi':
+        volume_group     => $nova_volume,
         iscsi_ip_address => $api_bind_address,
         physical_volume  => $nv_physical_volume,
       }   
@@ -375,25 +383,24 @@ class openstack::controller (
     # Set up nova-volume
   }
 
-  if !defined(Class['memcached']){
-    class { 'memcached':
-      #listen_ip => $api_bind_address,
-    } 
-  }
+ if !defined(Class['memcached']){
+  class { 'memcached':
+    #    listen_ip => $api_bind_address,
+  } 
+ }
+
 
   ######## Horizon ########
   class { 'openstack::horizon':
     secret_key        => $secret_key,
     cache_server_ip   => $cache_server_ip,
-    package_ensure    => $::openstack_version['horizon'],
-    bind_address      => $api_bind_address,
+    package_ensure => $::openstack_version['horizon'],
+    bind_address => $api_bind_address,
     cache_server_port => $cache_server_port,
     swift             => $swift,
     quantum           => $quantum,
     horizon_app_links => $horizon_app_links,
-    keystone_host     => $service_endpoint,
-    use_ssl           => $horizon_use_ssl,
+    keystone_host => $service_endpoint,
   }
 
 }
-

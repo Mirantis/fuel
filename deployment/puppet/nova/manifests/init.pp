@@ -44,6 +44,7 @@ class nova(
   # these glance params should be optional
   # this should probably just be configured as a glance client
   $glance_api_servers = 'localhost:9292',
+  $queue_provider = 'rabbitmq',
   # for use rabbitmq in HA mode
   $rabbit_nodes = false,
   $rabbit_host = 'localhost',
@@ -51,7 +52,10 @@ class nova(
   $rabbit_port='5672',
   $rabbit_userid='guest',
   $rabbit_virtual_host='/',
-  $rabbit_ha_virtual_ip = false,
+  $qpid_hostname='localhost',
+  $qpid_username='guest',
+  $qpid_password='guest',
+  $qpid_port='5672',
   $auth_strategy = 'keystone',
   $service_down_time = 60,
   $logdir = '/var/log/nova',
@@ -96,6 +100,13 @@ class nova(
     require => Package['python-greenlet']
   }
 
+  if ($queue_provider == 'qpid') {
+     package { ['python-qpid', 'python-anyjson', 'python-amqp']:
+       ensure => present
+     }
+  }
+  else
+ {
   # turn on rabbitmq ha/cluster mode
   if $rabbit_nodes {
 
@@ -110,6 +121,7 @@ class nova(
   {
     Exec['update-kombu'] -> Nova::Generic_service<||>
   }
+}
   package { 'nova-common':
     name    => $::nova::params::common_package_name,
     ensure  => $ensure_package,
@@ -145,36 +157,24 @@ nova_config
  value =>'%(levelname)s %(name)s [-] %(instance)s %(message)s';
 }
 
-file {"nova-logging.conf":
-  content => template('nova/logging.conf.erb'),
-  path => "/etc/nova/logging.conf",
-  owner => "nova",
-  group => "nova",
-  require => [Package['nova-common']]
+file {"nova-logging.conf": 
+source=>"puppet:///modules/nova/logging.conf",
+path => "/etc/nova/logging.conf",
+owner => "nova",
+group => "nova",
+require => [Package['nova-common']]
 }
 
 ##TODO: Add rsyslog module for nova logging to <splunkhost>
+  
+}
 
-}
-else {
-  nova_config {
-   'DEFAULT/log_config': ensure=>absent;
-   'DEFAULT/use_syslog': value =>"False";
-  }
-}
   file { $logdir:
     ensure  => directory,
     mode    => '0751',
     require => Package['nova-common'],
     owner   => 'nova',
     group   => 'nova',
-  }
-  file { "${logdir}/nova.log":
-      ensure => present,
-      mode  => '0640',
-      require => [Package['nova-common'], File[$logdir]],
-      owner   => 'nova',
-      group   => 'nova',
   }
   file { '/etc/nova/nova.conf':
     mode  => '0640',
@@ -187,7 +187,7 @@ else {
   # interfaces based on /etc/network/interfaces
   exec { "networking-refresh":
     command     => "/sbin/ifdown -a ; /sbin/ifup -a",
-    refreshonly => true,
+    refreshonly => "true",
   }
 
 
@@ -203,21 +203,19 @@ else {
     } else {
       fail("Invalid db connection ${sql_connection}")
     }
-    if !defined(Nova_config['DEFAULT/sql_connection']) {
-      nova_config { 'DEFAULT/sql_connection': value => $sql_connection }
-    }
+    nova_config { 'DEFAULT/sql_connection': value => $sql_connection }
   } else {
     Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'sql_connection' |>>
   }
   nova_config { 'DEFAULT/allow_resize_to_same_host': value => 'True' }
   nova_config { 'DEFAULT/image_service': value => $image_service }
-
+   
   if $image_service == 'nova.image.glance.GlanceImageService' {
     if $glance_api_servers {
       nova_config { 'DEFAULT/glance_api_servers': value => $glance_api_servers }
     } else {
       # TODO this only supports setting a single address for the api server
-      Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'glance_api_servers' |>>
+      Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == glance_api_servers |>>
     }
   }
 
@@ -230,11 +228,19 @@ else {
 #     Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'rabbit_host' |>>
 #  }
 
-
-  if $rabbit_nodes and !$rabbit_ha_virtual_ip {
+  if ($queue_provider == 'qpid') {
+    Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'qpid_hostname' |>>
+    nova_config {
+    'DEFAULT/qpid_password':     value => $qpid_password;
+    'DEFAULT/qpid_port':         value => $qpid_port;
+    'DEFAULT/qpid_username':       value => $qpid_username;
+    'DEFAULT/rpc_backend': value => 'nova.openstack.common.rpc.impl_qpid';
+  }
+  }
+  else
+ {
+  if $rabbit_nodes {
     nova_config { 'DEFAULT/rabbit_hosts': value => inline_template("<%= @rabbit_nodes.map {|x| x+':5672'}.join ',' %>") }
-  } elsif $rabbit_ha_virtual_ip{
-    nova_config { 'DEFAULT/rabbit_hosts': value => "${rabbit_ha_virtual_ip}:5672" }
   } else {
     Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'rabbit_hosts' |>>
   }
@@ -246,6 +252,7 @@ else {
     'DEFAULT/rabbit_virtual_host': value => $rabbit_virtual_host;
     'DEFAULT/rpc_backend': value => 'nova.rpc.impl_kombu';
   }
+}
 
   nova_config {
     'DEFAULT/verbose':           value => $verbose;
@@ -264,11 +271,13 @@ else {
     'DEFAULT/osapi_volume_listen':  value => $api_bind_address;
   }
 
+if ($queue_provider == 'rabbitmq') {
   if $monitoring_notifications {
     nova_config {
       'DEFAULT/notification_driver': value => 'nova.notifier.rabbit_notifier'
     }
   }
+}
 
 
   exec { 'post-nova_config':

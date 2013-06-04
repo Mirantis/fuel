@@ -90,11 +90,6 @@ if $use_syslog
  glance_api_config {'DEFAULT/log_config': value => "/etc/glance/logging.conf";}
 
 }
-else
-{
-
- glance_api_config {'DEFAULT/log_config': ensure => absent;}
-}
 
   # basic service config
   glance_api_config {

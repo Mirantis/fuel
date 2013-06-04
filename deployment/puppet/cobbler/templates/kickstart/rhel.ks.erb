@@ -24,6 +24,7 @@ timezone --utc <%= @ks_system_timezone %>
 # REBOOT AFTER INSTALLATION
 reboot
 
+network --onboot yes --device eth0 --bootproto=dhcp
 firewall --disable
 
 # SET ROOT PASSWORD DEFAULT IS r00tme
@@ -57,7 +58,14 @@ zerombr
 # REMOVE ALL PARTITIONS BEFORE CREATING NEW ONES
 clearpart --all --initlabel
 
-$SNIPPET('main_partition_select')
+# AUTOMATICALLY CREATE / /boot AND swap PARTITIONS
+# autopart can't work together with autocreate LVS group for cinder
+# autopart
+part     /boot --fstype ext3 --size=512 --asprimary
+part     pv.01 --size=1 --grow
+volgroup sysvg pv.01
+logvol   swap  --fstype swap --name=swap --vgname=sysvg --recommended
+logvol   /     --fstype ext3 --name=root --vgname=sysvg --size=1 --grow
 
 # COBBLER EMBEDDED SNIPPET: 'network_config'
 # CONFIGURES NETWORK INTERFACES DEPENDING ON
@@ -85,7 +93,6 @@ $SNIPPET('kickstart_start')
 # INTO KICKSTART BY 'network_config' SNIPPET
 $SNIPPET('pre_install_network_config')
 
-$SNIPPET('pre_partition_select')
 
 # PACKAGES SECTION
 # HERE ARE LIST OF PACKAGES THAT WILL BE INSTALLED

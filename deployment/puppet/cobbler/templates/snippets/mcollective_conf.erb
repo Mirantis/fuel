@@ -4,10 +4,14 @@ cat <<EOCONF > /etc/mcollective/server.cfg
 topicprefix = /topic/
 main_collective = mcollective
 collectives = mcollective
+    #if $breed == "redhat"
 libdir = /usr/libexec/mcollective
+    #elif $breed == "debian" or $breed == "ubuntu"
+libdir = /usr/share/mcollective/plugins
+    #end if
 logfile = /var/log/mcollective.log
 loglevel = info
-daemonize = 0
+daemonize = 1
 direct_addressing = 1
 
 # Plugins
@@ -26,11 +30,6 @@ factsource = yaml
 plugin.yaml = /etc/mcollective/facts.yaml
 EOCONF
 
-cat <<EOCONF >> /etc/supervisord.conf
-[program:mcollective]
-command=/usr/sbin/mcollectived --config=/etc/mcollective/server.cfg
-autostart=true
-EOCONF
 
 cat <<EOCONF > /usr/libexec/mcollective/mcollective/agent/puppetd.ddl
 metadata    :name        => "puppetd",
@@ -39,7 +38,7 @@ metadata    :name        => "puppetd",
             :license     => "Apache License 2.0",
             :version     => "1.8",
             :url         => "https://github.com/puppetlabs/mcollective-plugins",
-            :timeout     => 2400
+            :timeout     => 1800
 
 action "last_run_summary", :description => "Get a summary of the last puppet run" do
     display :always
@@ -154,7 +153,6 @@ module MCollective
 
       action "last_run_summary" do
         last_run_summary
-        set_status
       end
 
       action "enable" do
@@ -175,20 +173,9 @@ module MCollective
 
       private
       def last_run_summary
-        # wrap into begin..rescue: fixes PRD-252
-        begin
-          summary = YAML.load_file(@last_summary)
-        rescue
-          summary = {}
-        end
+        summary = YAML.load_file(@last_summary)
 
-        # It should be empty hash, if 'resources' key is not defined, because otherwise merge will fail with TypeError
-        summary["resources"] ||= {}
-        # Astute relies on last_run, so we must set last_run
-        summary["time"] ||= {}
-        summary["time"]["last_run"] ||= 0
-        # if 'failed' is not provided, it means something is wrong. So default value is 1.
-        reply[:resources] = {"failed"=>1, "changed"=>0, "total"=>0, "restarted"=>0, "out_of_sync"=>0}.merge(summary["resources"])
+        reply[:resources] = {"failed"=>0, "changed"=>0, "total"=>0, "restarted"=>0, "out_of_sync"=>0}.merge(summary["resources"])
 
         ["time", "events", "changes", "version"].each do |dat|
           reply[dat.to_sym] = summary[dat]
@@ -203,8 +190,7 @@ module MCollective
         reply[:stopped] = reply[:status] == 'stopped'  ? 1 : 0
         reply[:lastrun] = 0
         reply[:lastrun] = File.stat(@statefile).mtime.to_i if File.exists?(@statefile)
-        reply[:runtime] = Time.now.to_i - reply[:lastrun]
-        reply[:output]  = "Currently #{reply[:status]}; last completed run #{reply[:runtime]} seconds ago"
+        reply[:output]  = "Currently #{reply[:status]}; last completed run #{Time.now.to_i - reply[:lastrun]} seconds ago"
       end
 
       def puppet_daemon_status
@@ -259,7 +245,7 @@ module MCollective
       end
 
       def runonce_background
-        cmd = [@puppetd, "--onetime", "--logdest", 'syslog']
+        cmd = [@puppetd, "--test"]
 
         unless request[:forcerun]
           if @splaytime && @splaytime > 0
@@ -311,15 +297,15 @@ end
 # vi:tabstop=2:expandtab:ai:filetype=ruby
 EOCONF
 
-# turn off ttl check in mcollective
-find / -name message.rb | grep mcollective | xargs sed -i 's/msg_age = Time.now.utc.to_i - msgtime/msg_age = 0 #Time.now.utc.to_i - msgtime/g'
-
 #end if
 
 #if $str($getVar('mco_enable', '')) == "1"
 ## turn on mcollective service after reboot
-## /sbin/chkconfig mcollective on
-## service mcollective restart
-/sbin/chkconfig mcollective off
-/sbin/chkconfig supervisord on
+    #if $breed == "redhat"
+/sbin/chkconfig mcollective on
+gem install json_pure
+service mcollective restart
+    #elif $breed == "debian" or $breed == "ubuntu"
+/usr/sbin/update-rc.d mcollective defaults
+    #end if
 #end if

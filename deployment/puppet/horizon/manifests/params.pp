@@ -6,47 +6,30 @@ class horizon::params {
 
   case $::osfamily {
     'RedHat': {
-      $http_service              = 'httpd'
-      $vhosts_file               = '/etc/httpd/conf.d/ssl.conf'
-      $http_modwsgi              = 'mod_wsgi'
-      $package_name              = 'openstack-dashboard'
-      $httpd_listen_config_file  = '/etc/httpd/conf.d/ports.conf'
-      $local_settings_path       = '/etc/openstack-dashboard/local_settings'
-      $root_url                  = '/dashboard'
-      $apache_user               = 'apache'
-      $apache_group              = 'apache'
-      $apache_confdir            = ['/etc/httpd', '/etc/httpd/conf.d']
-      $ssl_key_group             = 'root'
-      $ssl_cert_file             = '/etc/pki/tls/certs/localhost.crt'
-      $ssl_key_file              = '/etc/pki/tls/private/localhost.key'
-      $ssl_cert_type             = 'crt'
+      $http_service                = 'httpd'
+      $http_modwsgi                = 'mod_wsgi'
+      $package_name                = 'openstack-dashboard'
+      $httpd_listen_config_file    = '/etc/httpd/conf/httpd.conf'
+      $config_file                 = '/etc/httpd/conf.d/openstack-dashboard.conf'
+      $local_settings_path         = '/etc/openstack-dashboard/local_settings'
     }
     'Debian': {
-      $http_service              = 'apache2'
-      $vhosts_file               = '/etc/apache2/sites-available/openstack-dashboard.conf'
-      $local_settings_path       = '/etc/openstack-dashboard/local_settings.py'
-      $httpd_listen_config_file  = '/etc/apache2/ports.conf'
-      $http_modwsgi              = 'libapache2-mod-wsgi'
-      $root_url                  = '/horizon'
-      $apache_user               = 'www-data'
-      $apache_group              = 'www-data'
-      $apache_confdir            = '/etc/apache2'
-      $ssl_key_group             = 'ssl-cert'
-      $ssl_cert_file             = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
-      $ssl_key_file              = '/etc/ssl/private/ssl-cert-snakeoil.key'
-      $ssl_cert_type             = 'pem'
+      $http_service                = 'apache2'
+      $config_file                 = '/etc/apache2/conf.d/openstack-dashboard.conf'
+      $httpd_listen_config_file    = '/etc/apache2/ports.conf'
+      $http_modwsgi                = 'libapache2-mod-wsgi'
       case $::operatingsystem {
         'Debian': {
-            $package_name        = 'openstack-dashboard-apache'
+            $package_name          = 'openstack-dashboard-apache'
         }
         default: {
-            $package_name        = 'openstack-dashboard'
+            $package_name          = 'openstack-dashboard'
         }
       }
+      $local_settings_path         = '/etc/openstack-dashboard/local_settings.py'
     }
     default: {
       fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat and Debian")
     }
   }
-
 }

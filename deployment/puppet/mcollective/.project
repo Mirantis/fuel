@@ -3,7 +3,7 @@
 	<name>mcollective</name>
 	<comment></comment>
 	<projects>
-		<project>ntp</project>
+		<project>ntpd</project>
 		<project>openstack</project>
 		<project>rabbitmq</project>
 		<project>stdlib</project>

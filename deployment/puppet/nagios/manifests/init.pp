@@ -11,11 +11,8 @@ $servicegroups     = false,
 $hostgroup         = false,
 $proj_name         = 'nrpe.d',
 $whitelist         = '127.0.0.1',
-$nrpepkg           = $nagios::params::nrpepkg,
-$nrpeservice       = $nagios::params::nrpeservice,
 ) inherits nagios::params  {
 
-  $master_proj_name = "${proj_name}_master"
   validate_array($services)
 
   include nagios::common
@@ -25,54 +22,38 @@ $nrpeservice       = $nagios::params::nrpeservice,
     include_dir => "/etc/nagios/${proj_name}",
   }
 
-  package {$nrpepkg:}
-
-  if inline_template("<%= !(services & ['swift-proxy', 'swift-account',
-    'swift-container', 'swift-object', 'swift-ring']).empty? -%>") == 'true' {
-    package {'nagios-plugins-os-swift':
-      require => Package[$nrpepkg],
-    }
-  }
-
-  if member($services, 'libvirt') == true {
-    package {'nagios-plugins-os-libvirt':
-      require => Package[$nrpepkg],
-    }
-  }
-
-  File {
+  file { "/etc/nagios/${proj_name}":
     force   => true,
     purge   => true,
     recurse => true,
     owner   => root,
     group   => root,
     mode    => '0644',
-  }
-
-  file { "/etc/nagios/${proj_name}/openstack.cfg":
-    content => template('nagios/openstack/openstack.cfg.erb'),
-    notify  => Service[$nrpeservice],
-    require => Package[$nrpepkg],
-  }
-
-  file { "/etc/nagios/${proj_name}/commands.cfg":
-    content => template('nagios/common/etc/nagios/nrpe.d/commands.cfg.erb'),
-    notify  => Service[$nrpeservice],
-    require => Package[$nrpepkg],
-  }
-
-  file { "/etc/nagios/${proj_name}":
+    notify  => Service['nagios-nrpe-server'],
     source  => 'puppet:///modules/nagios/common/etc/nagios/nrpe.d',
-    notify  => Service[$nrpeservice],
-    require => Package[$nrpepkg],
+    require => Package['nagios-nrpe-server'],
   }
 
-  file { "/usr/local/lib/nagios":
+  file { '/usr/local/lib/nagios':
+    force   => true,
+    purge   => true,
+    recurse => true,
+    owner   => root,
+    group   => staff,
     mode    => '0755',
     source  => 'puppet:///modules/nagios/common/usr/local/lib/nagios',
   }
 
-  service {$nrpeservice:
+  package { [
+    'binutils',
+    'libnagios-plugin-perl',
+    'nagios-nrpe-server',
+    'nagios-plugins-basic',
+    'nagios-plugins-standard' ]:
+    ensure => present,
+  }
+
+  service { 'nagios-nrpe-server':
     ensure     => running,
     enable     => true,
     hasrestart => true,
@@ -80,7 +61,7 @@ $nrpeservice       = $nagios::params::nrpeservice,
     pattern    => 'nrpe',
     require    => [
       File['nrpe.cfg'],
-      Package[$nrpepkg]
+      Package['nagios-nrpe-server']
     ],
   }
 }

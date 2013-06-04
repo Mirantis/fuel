@@ -22,7 +22,10 @@ class nova::compute::libvirt (
       command => "/bin/ln -sf /usr/libexec/qemu-kvm /usr/bin/qemu-system-x86_64",
     } 
                    
-    stdlib::safe_package {'dnsmasq-utils':}
+
+    package {'dnsmasq-utils':
+      ensure => present
+    }
 
     package { 'avahi':
       ensure => present;
@@ -47,7 +50,7 @@ class nova::compute::libvirt (
   if($::nova::params::compute_package_name and $::operatingsystem=='Ubuntu') {
     package { "nova-compute-${libvirt_type}":
       ensure => present,
-      before => Package[$::nova::params::compute_package_name],
+      before => Package['nova-compute'],
     }
   }
 
@@ -67,7 +70,7 @@ class nova::compute::libvirt (
     'kvm': {
       package { $::nova::params::libvirt_type_kvm:
         ensure => present,
-        before => Package[$::nova::params::compute_package_name],
+        before => Package['nova-compute'],
       }
     }
   }

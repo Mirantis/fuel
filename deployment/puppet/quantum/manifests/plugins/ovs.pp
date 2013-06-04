@@ -15,6 +15,7 @@ class quantum::plugins::ovs (
 ) {
 
   include 'quantum::params'
+  require 'vswitch::ovs'
 
   Package['quantum'] -> Package['quantum-plugin-ovs']
   Package['quantum-plugin-ovs'] -> Quantum_plugin_ovs<||>
@@ -79,11 +80,9 @@ class quantum::plugins::ovs (
         'OVS/bridge_mappings':      value => $br_map_str;
       }
 
-      if ! (defined(Package["$::quantum::params::vlan_package"]) or defined(Package["$::l23network::params::lnx_vlan_tools"])) {
-        package {"$::l23network::params::lnx_vlan_tools":
-          name    => "$::l23network::params::lnx_vlan_tools",
-          ensure  => latest,
-        }
+      package { 'vconfig':
+        name    => $::quantum::params::vlan_package,
+        ensure  => latest,
       }
     } 
   }

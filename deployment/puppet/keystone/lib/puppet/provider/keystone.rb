@@ -47,29 +47,16 @@ class Puppet::Provider::Keystone < Puppet::Provider
   end
 
   def self.auth_keystone(*args)
-    rv = nil
-    retries = 60
-    loop do
-      begin
-        rv = keystone('--token', admin_token, '--endpoint', admin_endpoint, args)
-        break
-      rescue Exception => e
-        if e.message =~ /(\(HTTP\s+400\))|(\[Errno 111\]\s+Connection\s+refused)|(503\s+Service\s+Unavailable)|(Max\s+retries\s+exceeded)/
-          notice("Can't connect to keystone backend. Waiting for retry...")
-          retries -= 1
-          sleep 2
-          if retries <= 1
-            notice("Can't connect to keystone backend. No more retries, auth failed")
-            raise(e)
-            #break
-          end
-        else
-          raise(e)
-          #break
-        end
+    begin
+      keystone('--token', admin_token, '--endpoint', admin_endpoint, args)
+    rescue Exception => e
+      if e.message =~ /\(HTTP 400\)/
+       sleep 10
+       keystone('--token', admin_token, '--endpoint', admin_endpoint, args)
+      else
+        raise(e)
       end
     end
-    return rv
   end
 
   def auth_keystone(*args)
@@ -82,8 +69,7 @@ class Puppet::Provider::Keystone < Puppet::Provider
       # this assumes that all returned objects are of the form
       # id, name, enabled_state, OTHER
       # number_columns can be a Fixnum or an Array of possible values that can be returned
-      list = (auth_keystone("#{type}-list", args).split("\n")[3..-2] || []).select{ |line| line =~ /^\|.*\|$/ }.reject{ |line| line =~ /^\|\s+id\s+.*\|$/}.collect do |line|
-
+      list = (auth_keystone("#{type}-list", args).split("\n")[3..-2] || []).collect do |line|
         row = line.split(/\|/)[1..-1]
         row = row.map {|x| x.strip }
         # if both checks fail then we have a mismatch between what was expected and what was received
@@ -92,7 +78,6 @@ class Puppet::Provider::Keystone < Puppet::Provider
         end
         row
       end
-	debug(list.inspect)
       list
     end
     def self.get_keystone_object(type, id, attr)

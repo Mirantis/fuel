@@ -26,7 +26,6 @@ class openstack::nova::controller (
   $private_interface,
   # Database Required
   $db_host,
-  # Rabbit Required
   $rabbit_password,
   # Nova Required
   $nova_user_password,
@@ -50,19 +49,22 @@ class openstack::nova::controller (
   $quantum_db_password       = 'quantum_pass',
   $quantum_user_password     = 'quantum_pass',
   #$quantum_l3_enable         = true,
-  $quantum_network_node      = false,
-  $quantum_netnode_on_cnt    = false,
-  $quantum_gre_bind_addr     = $internal_address,
-  $quantum_external_ipinfo   = {},
   $segment_range             = '1:4094',
   $tenant_network_type       = 'gre',
   # Nova
   $nova_db_user              = 'nova',
   $nova_db_dbname            = 'nova',
+  #AMQP
+  $queue_provider            = 'rabbitmq',
   # Rabbit
   $rabbit_user               = 'nova',
-  $rabbit_node_ip_address    = undef,
-  $rabbit_port               = '5672',
+  $rabbit_nodes     = [$internal_address],
+  $rabbit_cluster   = false,
+  # QPID
+  $qpid_user               = 'nova',
+  $qpid_password           = 'nova',
+  $qpid_nodes     = [$internal_address],
+  $qpid_cluster   = false,
   # Database
   $db_type                   = 'mysql',
   # Glance
@@ -74,14 +76,11 @@ class openstack::nova::controller (
   $verbose                   = 'False',
   $enabled                   = true,
   $exported_resources        = true,
-  $rabbit_nodes              = [$internal_address],
-  $rabbit_cluster            = false,
-  $rabbit_ha_virtual_ip      = false,
-  $ensure_package            = present,
-  $enabled_apis              = 'ec2,osapi_compute',
-  $api_bind_address          = '0.0.0.0',
-  $use_syslog                = false,
-  $nova_rate_limits          = undef,
+  $ensure_package   = present,
+  $enabled_apis     = 'ec2,osapi_compute',
+  $api_bind_address = '0.0.0.0',
+  $use_syslog              = false,
+  $nova_rate_limits = undef
 ) {
 
   # Configure the db string
@@ -96,24 +95,19 @@ class openstack::nova::controller (
   } else {
     $real_glance_api_servers = $glance_api_servers
   }
-  # Change the pool of rabbit server nodes for clients to single virtual IP for HA mode
-    if $rabbit_ha_virtual_ip {
-      if $quantum and $quantum_netnode_on_cnt {
-        $rabbit_hosts = "${rabbit_ha_virtual_ip}"
-      } else {
-        $rabbit_hosts = "${rabbit_ha_virtual_ip}:5672"
-      }
-    } else {
-      $rabbit_hosts = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
-    }
+    $rabbit_hosts = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
   if ($exported_resources) {
     # export all of the things that will be needed by the clients
 #    @@nova_config { 'DEFAULT/rabbit_host': value => $internal_address }
 #    Nova_config <| title == 'rabbit_host' |>
 
-    @@nova_config { 'DEFAULT/rabbit_hosts': value => $rabbit_hosts }
-    Nova_config <| title == 'rabbit_hosts' |>
-
+    if ($queue_proivder == 'qpid') {
+      @@nova_config { 'DEFAULT/rabbit_hosts': value => $rabbit_hosts }
+      Nova_config <| title == 'rabbit_hosts' |>
+    } else
+      @@nova_config { 'DEFAULT/qpid_hosts': value => $qpid_hosts }
+      Nova_config <| title == 'qpid_hosts' |>
+    }
     @@nova_config { 'DEFAULT/sql_connection': value => $nova_db }
     Nova_config <| title == 'sql_connection' |>
 
@@ -129,55 +123,84 @@ class openstack::nova::controller (
     $rabbit_connection = $internal_address
   }
 
-  # Install / configure rabbitmq
-  class { 'nova::rabbitmq':
-    userid                 => $rabbit_user,
-    password               => $rabbit_password,
-    enabled                => $enabled,
-    cluster                => $rabbit_cluster,
-    cluster_nodes          => $rabbit_nodes, #Real node names to install RabbitMQ server onto
-    rabbit_node_ip_address => $rabbit_node_ip_address,
-    port                   => $rabbit_port,
-  }
-  if ($rabbit_nodes) {
-    # Configure Nova
-    class { 'nova':
-      sql_connection       => $sql_connection,
-      rabbit_userid        => $rabbit_user,
-      rabbit_password      => $rabbit_password,
-      image_service        => 'nova.image.glance.GlanceImageService',
-      glance_api_servers   => $glance_connection,
-      verbose              => $verbose,
-      rabbit_nodes         => $rabbit_nodes,
-      ensure_package       => $ensure_package,
-      api_bind_address     => $api_bind_address,
-      use_syslog           => $use_syslog,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+  if ($queue_provider == 'qpid') {
+    # Install / configure qpid
+    class { 'qpid::server': }
+  
+    qpid_user { 'nova':
+      password  => 'nova',
+      file  => '/var/lib/qpidd/qpidd.sasldb',
+      realm  => 'QPID',
+      provider => 'saslpasswd2',
+      require   => Class['qpid::server'],
     }
-  } else {
+    #TODO: Change to qpid_hosts => $qpid_hosts for grizzly
     class { 'nova':
       sql_connection     => $sql_connection,
-      rabbit_userid      => $rabbit_user,
-      rabbit_password    => $rabbit_password,
+      qpid_username      => $qpid_user,
+      qpid_password      => $qpid_password,
+      qpid_hostname      => $rabbit_connection,
       image_service      => 'nova.image.glance.GlanceImageService',
       glance_api_servers => $glance_connection,
       verbose            => $verbose,
-      rabbit_host        => $rabbit_connection,
       ensure_package     => $ensure_package,
       api_bind_address   => $api_bind_address,
       use_syslog         => $use_syslog,
     }
   }
+  else
+  { 
+    # Install / configure rabbitmq
+    class { 'nova::rabbitmq':
+      userid   => $rabbit_user,
+      password => $rabbit_password,
+      enabled  => $enabled,
+      cluster  => $rabbit_cluster,
+      cluster_nodes => $rabbit_nodes,
+  }
+if ($rabbit_nodes)
+{
+  # Configure Nova
+  class { 'nova':
+    sql_connection     => $sql_connection,
+    rabbit_userid      => $rabbit_user,
+    rabbit_password    => $rabbit_password,
+    image_service      => 'nova.image.glance.GlanceImageService',
+    glance_api_servers => $glance_connection,
+    verbose            => $verbose,
+    rabbit_nodes       => $rabbit_nodes,
+    ensure_package     => $ensure_package,
+    api_bind_address   => $api_bind_address,
+    use_syslog              => $use_syslog,
+  }
+ }
+ else
+ {
+  class { 'nova':
+    sql_connection     => $sql_connection,
+    rabbit_userid      => $rabbit_user,
+    rabbit_password    => $rabbit_password,
+    image_service      => 'nova.image.glance.GlanceImageService',
+    glance_api_servers => $glance_connection,
+    verbose            => $verbose,
+    rabbit_host        => $rabbit_connection,
+    ensure_package     => $ensure_package,
+    api_bind_address   => $api_bind_address,
+    use_syslog              => $use_syslog,
+  }
+ 
+ }
+}
   class {'nova::quota':
-    quota_instances                       => 100,
-    quota_cores                           => 100,
-    quota_volumes                         => 100,
-    quota_gigabytes                       => 1000,
-    quota_floating_ips                    => 100,
-    quota_metadata_items                  => 1024,
-    quota_max_injected_files              => 50,
+    quota_instances => 100,
+    quota_cores => 100,
+    quota_volumes => 100,
+    quota_gigabytes => 1000,
+    quota_floating_ips => 100,
+    quota_metadata_items => 1024,
+    quota_max_injected_files => 50,
     quota_max_injected_file_content_bytes => 102400,
-    quota_max_injected_file_path_bytes    => 4096
+    quota_max_injected_file_path_bytes => 4096
   }
 
   if $enabled {
@@ -219,35 +242,49 @@ class openstack::nova::controller (
     }
   } else {
     # Set up Quantum
-    $enable_tunneling       = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
     $quantum_sql_connection = "$db_type://${quantum_db_user}:${quantum_db_password}@${db_host}/${quantum_db_dbname}?charset=utf8"
+    $enable_tunneling       = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
+
+    class { '::quantum':
+      bind_host       => $api_bind_address,
+      queue_provider  => $queue_provider,
+      rabbit_user     => $rabbit_user,
+      rabbit_password => $rabbit_password,
+      rabbit_host     => $rabbit_nodes,
+      qpid_user     => $qpid_user,
+      qpid_password => $qpid_password,
+      qpid_host     => $qpid_nodes,
+      #sql_connection  => $quantum_sql_connection,
+      verbose         => $verbose,
+      debug           => $verbose,
+    }
 
     class { 'quantum::server':
       auth_host     => $internal_address,
       auth_password => $quantum_user_password,
     }
-    if $quantum and !$quantum_network_node {
-      class { '::quantum':
-        bind_host            => $api_bind_address,
-        rabbit_user          => $rabbit_user,
-        rabbit_password      => $rabbit_password,
-        rabbit_host          => $rabbit_nodes,
-        rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-       #sql_connection       => $quantum_sql_connection,
-        verbose              => $verbose,
-        debug                => $verbose,
-        use_syslog           => $use_syslog,
-      }
-   }
-     class { 'nova::network::quantum':
-        quantum_admin_password    => $quantum_user_password,
-        quantum_auth_strategy     => 'keystone',
-        quantum_url               => "http://${keystone_host}:9696",
-        quantum_admin_tenant_name => 'services',
-        quantum_admin_username    => 'quantum',
-        quantum_admin_auth_url    => "http://${keystone_host}:35357/v2.0",
-        public_interface          => $public_interface,
-      }
+
+    class { 'quantum::plugins::ovs':
+      bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
+      network_vlan_ranges => "physnet1,physnet2:${segment_range}",
+      tunnel_id_ranges    => "${segment_range}",
+      sql_connection      => $quantum_sql_connection,
+      tenant_network_type => $tenant_network_type,
+      enable_tunneling    => $enable_tunneling,
+    }
+
+    class { 'nova::network::quantum':
+    #$fixed_range,
+      quantum_admin_password    => $quantum_user_password,
+    #$use_dhcp                  = 'True',
+    #$public_interface          = undef,
+      quantum_connection_host   => $quantum_host, 
+      quantum_auth_strategy     => 'keystone',
+      quantum_url               => "http://${keystone_host}:9696",
+      quantum_admin_tenant_name => 'services',
+      quantum_admin_username    => 'quantum',
+      quantum_admin_auth_url    => "http://${keystone_host}:35357/v2.0",
+    }
   }
 
   # Configure nova-api
@@ -281,8 +318,8 @@ class openstack::nova::controller (
 
   if $vnc_enabled {
     class { 'nova::vncproxy':
-      host           => $public_address,
-      enabled        => $enabled,
+      host    => $public_address,
+      enabled => $enabled,
       ensure_package => $ensure_package
     }
   }

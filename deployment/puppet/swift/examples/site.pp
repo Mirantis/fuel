@@ -1,7 +1,7 @@
 Exec { logoutput => true, path => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'] }
 
 stage {'openstack-custom-repo': before => Stage['main']}
-$mirror_type="default"
+$mirror_type="external"
 class { 'openstack::mirantis_repos': stage => 'openstack-custom-repo', type=>$mirror_type }
 
 
@@ -76,8 +76,8 @@ node keystone {
 
   # set up keystone database
   # set up the keystone config for mysql
-  class { 'openstack::db::mysql':
-    keystone_db_password => $keystone_db_password,
+  class { 'keystone::config::mysql':
+    password => $keystone_db_password,
   }
   # set up keystone admin users
   class { 'keystone::roles::admin':

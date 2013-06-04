@@ -20,8 +20,6 @@ class quantum (
   $rabbit_port            = '5672',
   $rabbit_user            = 'guest',
   $rabbit_virtual_host    = '/',
-  $rabbit_ha_virtual_ip   = false,
-  $server_ha_mode         = false,
   $use_syslog = false
 ) {
   include 'quantum::params'
@@ -43,11 +41,7 @@ class quantum (
   }
 
   if is_array($rabbit_host) and size($rabbit_host) > 1 {
-    if $rabbit_ha_virtual_ip {
-      $rabbit_hosts = "${rabbit_ha_virtual_ip}:${rabbit_port}"
-    } else {
-      $rabbit_hosts = inline_template("<%= @rabbit_host.map {|x| x + ':' + @rabbit_port}.join ',' %>")
-    }
+    $rabbit_hosts = inline_template("<%= @rabbit_host.map {|x| x + ':5672'}.join ',' %>")
     Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-server' |>
     Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-plugin-ovs-service' |>
     Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-l3' |>
@@ -56,23 +50,19 @@ class quantum (
       'DEFAULT/rabbit_ha_queues': value => 'True';
       'DEFAULT/rabbit_hosts':     value => $rabbit_hosts;
     }
+
   } else {
     quantum_config {
       'DEFAULT/rabbit_host': value => is_array($rabbit_host) ? { false => $rabbit_host, true => join($rabbit_host) };
       'DEFAULT/rabbit_port': value => $rabbit_port;
     }
-  }
 
-  if $server_ha_mode {
-    $real_bind_host = $bind_host
-  } else {
-    $real_bind_host = '0.0.0.0'
   }
 
   quantum_config {
     'DEFAULT/verbose':                value => $verbose;
     'DEFAULT/debug':                  value => $debug;
-    'DEFAULT/bind_host':              value => $real_bind_host;
+    'DEFAULT/bind_host':              value => $bind_host;
     'DEFAULT/bind_port':              value => $bind_port;
     'DEFAULT/auth_strategy':          value => $auth_strategy;
     'DEFAULT/core_plugin':            value => $core_plugin;
@@ -87,19 +77,17 @@ class quantum (
     'DEFAULT/rabbit_password':        value => $rabbit_password;
     'DEFAULT/rabbit_virtual_host':    value => $rabbit_virtual_host;
   }
+  if $use_syslog
+  {
+ quantum_config {'DEFAULT/log_config': value => "/etc/quantum/logging.conf";}
+file {"quantum-logging.conf":
+    source=>"puppet:///modules/quantum/logging.conf",
+    path => "/etc/quantum/logging.conf",
+    owner => "quantum",
+    group => "quantum",
+}
 
-  if $use_syslog {
-    quantum_config {'DEFAULT/log_config': value => "/etc/quantum/logging.conf";}
-    file { "quantum-logging.conf":
-      content => template('quantum/logging.conf.erb'),
-      path => "/etc/quantum/logging.conf",
-      owner => "quantum",
-      group => "quantum",
-    }
-  } else {
-    quantum_config {'DEFAULT/log_config': ensure=> absent;}
-  }
-
+}
   # SELINUX=permissive
   if !defined(Class['selinux']) and ($::osfamily == 'RedHat') {
     class { 'selinux' : }

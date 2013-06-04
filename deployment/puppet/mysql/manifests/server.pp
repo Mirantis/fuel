@@ -23,7 +23,7 @@ class mysql::server (
   $config_hash      = {},
   $enabled          = true,
   $galera_cluster_name = undef,
-  $primary_controller = primary_controller,
+  $galera_master_ip = undef,
   $galera_node_address = undef,
   $galera_nodes = undef,
   $mysql_skip_name_resolve = false,
@@ -40,18 +40,15 @@ class mysql::server (
 #      before => Package["mysql-server"],
 #      logoutput => true,
 #    }
-    if !defined(Package[mysql-client]) {
-      package { 'mysql-client':
-        name   => $package_name,
-       #ensure => $mysql::params::client_version,
-      }
-    }
     package { 'mysql-server':
       name   => $package_name,
-     #ensure => $mysql::params::server_version,
-     #require=> Package['mysql-shared'],
+      ensure => $mysql::params::server_version,
+#      require=> Package['mysql-shared'],
     }
-    Package[mysql-client] -> Package[mysql-server]
+#    package { 'mysql-client':
+#      name   => $package_name,
+#      ensure => $mysql::params::client_version,
+#    }
  
     service { 'mysqld':
       name     => $service_name,
@@ -65,7 +62,7 @@ class mysql::server (
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
 	    cluster_name => $galera_cluster_name,
-	    primary_controller => $primary_controller,
+	    master_ip => $galera_master_ip,
 	    node_address => $galera_node_address,
       node_addresses => $galera_nodes,
         skip_name_resolve => $mysql_skip_name_resolve,

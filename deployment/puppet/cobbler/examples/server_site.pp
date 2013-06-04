@@ -15,7 +15,7 @@ $cobbler_user        = 'cobbler'
 $cobbler_password    = 'cobbler'
 $pxetimeout          = '0'
 $dhcp_interface      = 'eth1'
-$mirror_type         = 'default'
+$mirror_type         = 'internal'
 
 stage { 'openstack-custom-repo': before => Stage['main'] }
 class { 'openstack::mirantis_repos': stage => 'openstack-custom-repo', type=>$mirror_type }
@@ -50,33 +50,14 @@ node fuel-cobbler {
 
     class { cobbler::distro::centos63_x86_64:
       http_iso => "http://172.18.67.168/CentOS-6.3-x86_64-minimal.iso",
-      ks_url   => "http://172.18.67.168/centos-repo/centos-6.3",
+      ks_url   => "cobbler",
     }
 
 
     Class[cobbler::distro::centos63_x86_64] ->
     Class[cobbler::profile::centos63_x86_64]
 
-    class { cobbler::profile::centos63_x86_64:
-      ks_repo => [
-        {
-        "name" => "Puppet",
-        "url"  => "http://yum.puppetlabs.com/el/6/products/x86_64",
-        },
-        {
-        "name" => "PuppetDeps",
-        "url"  => "http://yum.puppetlabs.com/el/6/dependencies/x86_64",
-        },
-        {
-        "name" => "Centos-archive-base",
-        "url"  => "http://172.18.67.168/centos-repo/centos-6.3",
-        },
-        {
-        "name" => "Epel",
-        "url"  => "http://172.18.67.168/centos-repo/epel",
-        }
-      ]
-    }
+    class { cobbler::profile::centos63_x86_64: }
 
     # UBUNTU distribution
       Class[cobbler::distro::ubuntu_1204_x86_64] ->
@@ -99,8 +80,14 @@ node fuel-cobbler {
           {
             "name" => "Canonical",
             "url"  => "http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu/",
-            "release" => "precise-updates/folsom",
-            "repos" => "main",
+            "release" => "precise",
+            "repos" => "main universe multiverse restricted",
+          },
+          {
+            "name" => "Yandex",
+            "url"  => "http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu",
+            "release" => "precise",
+            "repos" => "main universe multiverse restricted",
           },
         ],
       }

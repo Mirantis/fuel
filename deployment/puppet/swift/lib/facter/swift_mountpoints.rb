@@ -2,6 +2,7 @@
 
 $result = ""
 
+
 # File.open('/proc/self/mounts').each do |line|
 #
 #   if line.split()[0]!='none'
@@ -20,7 +21,8 @@ mounted_devs.split("\n").each do |mountpoint|
 end
 
 Facter.add("swift_mountpoints") do
-  setcode do
-    $result
-  end
+
+ setcode do
+   $result
+   end
 end

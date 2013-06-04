@@ -6,12 +6,17 @@
 class cinder::base (
   $rabbit_password,
   $sql_connection,
-  $rpc_backend            = 'cinder.openstack.common.rpc.impl_kombu',
   $rabbit_host            = false,
   $rabbit_hosts           = ['127.0.0.1'],
   $rabbit_port            = 5672,
   $rabbit_virtual_host    = '/',
   $rabbit_userid          = 'nova',
+  $qpid_host              = false,
+  $qpid_hosts             = false,
+  $qpid_port              = 5672,
+  $qpid_virtual_host      = '/',
+  $qpid_userid            = 'nova',
+ 
   $package_ensure         = 'present',
   $verbose                = 'True',
   $use_syslog             = false
@@ -30,16 +35,13 @@ class cinder::base (
   }
 
 if $use_syslog {
-  cinder_config {'DEFAULT/log_config': value => "/etc/cinder/logging.conf";}
-  file { "cinder-logging.conf":
-    content => template('cinder/logging.conf.erb'),
-	path => "/etc/cinder/logging.conf",
-	owner => "cinder",
-	group => "cinder",
-  }
-}
-else {
-	cinder_config {'DEFAULT/log_config': ensure=>absent;}
+	cinder_config {'DEFAULT/log_config': value => "/etc/cinder/logging.conf";}
+	file { "cinder-logging.conf":
+	    source=>"puppet:///modules/cinder/logging.conf",
+	    path => "/etc/cinder/logging.conf",
+	    owner => "cinder",
+	    group => "cinder",
+	}
 }
   File {
     ensure  => present,
@@ -70,29 +72,46 @@ else {
     'DEFAULT/rabbit_hosts':         value => $rabbit_hosts;
     }
   }
-  cinder_config {
-    'DEFAULT/rpc_backend':         value => $rpc_backend;
-    'DEFAULT/rabbit_password':     value => $rabbit_password;
-    'DEFAULT/rabbit_port':         value => $rabbit_port;
-    'DEFAULT/rabbit_virtual_host': value => $rabbit_virtual_host;
-    'DEFAULT/rabbit_userid':       value => $rabbit_userid;
+  if $qpid_host
+  {
+    cinder_config {
+    'DEFAULT/qpid_host':         value => $qpid_host;
+    }
+  }
+  if $qpid_hosts
+  {
+    cinder_config {
+    'DEFAULT/qpid_hosts':         value => $qpid_hosts;
+    }
+  }
+
+  if ( $queue_provider == "rabbitmq" ) {
+    $rpc_backend            = 'cinder.openstack.common.rpc.impl_kombu',
+    cinder_config {
+      'DEFAULT/rpc_backend':         value => $rpc_backend;
+      'DEFAULT/rabbit_password':     value => $rabbit_password;
+      'DEFAULT/rabbit_port':         value => $rabbit_port;
+      'DEFAULT/rabbit_virtual_host': value => $rabbit_virtual_host;
+      'DEFAULT/rabbit_userid':       value => $rabbit_userid;
+    }
+  }
+  if ( $queue_provider == 'qpid' ) {
+      $rpc_backend            = 'cinder.openstack.common.rpc.impl_qpid',
+      'DEFAULT/rpc_backend':         value => $rpc_backend;
+      'DEFAULT/qpid_password':       value => $qpid_password;
+      'DEFAULT/qpid_port':           value => $qpid_port;
+  }
     'DEFAULT/sql_connection':      value => $sql_connection;
     'DEFAULT/verbose':             value => $verbose;
     'DEFAULT/api_paste_config':    value => '/etc/cinder/api-paste.ini';
   }
-  exec { 'cinder-manage db_sync':
+ exec { 'cinder-manage db_sync':
     command     => $::cinder::params::db_sync_command,
     path        => '/usr/bin',
     user        => 'cinder',
     refreshonly => true,
     logoutput   => 'on_failure',
-    tries       => 10,
-    try_sleep   => 3,
   }
-  Cinder_config<||> -> Exec['cinder-manage db_sync']
-  Nova_config<||> -> Exec['cinder-manage db_sync']
-  Cinder_api_paste_ini<||> -> Exec['cinder-manage db_sync']
- Exec['cinder-manage db_sync'] -> Service<| title == 'cinder-api' |>
- Exec['cinder-manage db_sync'] -> Service<| title == 'cinder-volume' |>
- Exec['cinder-manage db_sync'] -> Service<| title == 'cinder-scheduler' |>
+
+
 }

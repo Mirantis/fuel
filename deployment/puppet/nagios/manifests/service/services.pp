@@ -5,10 +5,10 @@ $group   = false,
 
   @@nagios_service { "${::hostname}_${name}":
     ensure              => present,
-    hostgroup_name      => $nagios::hostgroup,
+    hostgroup_name      => $hostgroup,
     check_command       => $command,
     service_description => $name,
-    host_name           => $::fqdn,
-    target              => "/etc/${nagios::params::masterdir}/${nagios::master_proj_name}/${::hostname}_services.cfg",
+    hostname            => $::fqdn,
+    target              => "/etc/nagios3/${proj_name}/${::hostname}_services.cfg",
   }
 }

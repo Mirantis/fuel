@@ -65,19 +65,19 @@ class keystone(
   Keystone_config<||> ~> Exec<| title == 'keystone-manage db_sync'|>
 
   # TODO implement syslog features
-  if $use_syslog {
-    keystone_config {'DEFAULT/log_config': value => "/etc/keystone/logging.conf";}
-    file {"keystone-logging.conf":
-      content => template('keystone/logging.conf.erb'),
-      path => "/etc/keystone/logging.conf",
-      owner => "keystone",
-      group => "keystone",
-      require => [User['keystone'],Group['keystone'],File['/etc/keystone']]
-    }
+  if $use_syslog
+  {
+ keystone_config {'DEFAULT/log_config': value => "/etc/keystone/logging.conf";}
+file {"keystone-logging.conf":
+    source=>"puppet:///modules/keystone/logging.conf",
+    path => "/etc/keystone/logging.conf",
+    owner => "keystone",
+    group => "keystone",
+    require => [User['keystone'],Group['keystone'],File['/etc/keystone']]
+}
 ##TODO add rsyslog module config
-  } else  {
-    keystone_config {'DEFAULT/log_config': ensure=> absent;}
   }
+ 
 
   include 'keystone::params'
 
@@ -86,9 +86,10 @@ class keystone(
     owner   => 'keystone',
     group   => 'keystone',
     mode    => '0644',
-   #require => Package['keystone'],
+#    require => Package['keystone'],
     notify  => Service['keystone'],
   }
+
 
   package { 'keystone':
     name   => $::keystone::params::package_name,

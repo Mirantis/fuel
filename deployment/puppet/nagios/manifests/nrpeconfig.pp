@@ -8,8 +8,8 @@ $include_dir = '/etc/nagios/nrpe.d',
     group   => root,
     mode    => '0644',
     alias   => 'nrpe.cfg',
-    notify  => Service[$nagios::params::nrpeservice],
+    notify  => Service['nagios-nrpe-server'],
     content => template('nagios/common/etc/nagios/nrpe.cfg.erb'),
-    require => Package[$nagios::params::nrpepkg],
+    require => Package['nagios-nrpe-server'],
   }
 }

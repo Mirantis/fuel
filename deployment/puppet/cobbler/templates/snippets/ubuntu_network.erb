@@ -23,7 +23,6 @@
 ## configuring /etc/network/interfaces
 #######################################
 #set $script += "### configuring interfaces ###\n"
-#set $dhclient_file = "/etc/dhcp/dhclient.conf"
 #set $interfaces_file = "/etc/network/interfaces"
 #set $script += "echo > %s\n" % $interfaces_file
 #set $script += "echo auto lo >> %s\n" % $interfaces_file
@@ -52,31 +51,29 @@
         #end for
         #set $gateway = $getVar("gateway", "")
         #if $gateway != ""
-            #if $iip !=""
-              #if $inetmask != ""
-                #set $network_address = ipaddr.IPv4Network("%s/%s" % ($iip, $inetmask))
-              #else
-                #set $network_address = ipaddr.IPv4Network("%s" % $iip)
-              #end if
-              #set $gateway_address = ipaddr.IPv4Address($gateway)
-              #if $gateway_address in $network_address
+            #set $network_address = ipaddr.IPv4Network("%s/%s" % ($iip, $inetmask))
+            #set $gateway_address = ipaddr.IPv4Address($gateway)
+            #if $gateway_address in $network_address
                 #set $script += "echo gateway %s >> %s\n" % ($gateway, $interfaces_file)
-              #end if
+                #if $nss != ""
+                    #set $script += "echo dns-nameservers %s >> %s\n" % ($nss, $interfaces_file)
+                #end if
+                #set $nssearch = ""
+                #for $nsrch in $getVar("name_servers_search", [])
+                    #set $nssearch += " %s" % $nsrch
+                #end for
+                #if $nssearch
+                    #set $script += "echo dns-search %s >> %s\n" % ($nssearch, $interfaces_file)
+                #end if
+            #end if
+        #end if
+        #if $idata.get("management", "0") in ("1", True, "true")
+            #if $nss != ""
+                #set $script += "echo dns-nameservers %s >> %s\n" % ($nss, $interfaces_file)
             #end if
         #end if
     #else
         #set $script += "echo iface %s inet dhcp >> %s\n" % ($iname, $interfaces_file)
-        #if $name_servers
-          #set $script += "echo >> %s\n" % $dhclient_file
-          #set $script += "echo interface \\\"%s\\\" {>> %s\n" % ($iname, $dhclient_file)
-          #set $script += "echo -n 'prepend domain-name-servers ' >> %s\n" % $dhclient_file
-          #for $nameserver in $name_servers
-            #set $script += "echo -n '%s ' >> %s\n" % ($nameserver, $dhclient_file)
-          #end for
-          #set $script += "echo '; ' >> %s\n" % $dhclient_file
-          #set $script += "echo 'request subnet-mask, broadcast-address, time-offset, routers, domain-name, domain-search, host-name, netbios-name-servers, netbios-scope, interface-mtu, rfc3442-classless-static-routes, ntp-servers;' >> %s\n" % $dhclient_file
-          #set $script += "echo '}'>> %s\n" % $dhclient_file
-        #end if
     #end if
     #set $script += "echo >> %s\n" % $interfaces_file
 #end for
@@ -100,22 +97,4 @@
         #end if
     #end if
 #end for
-#######################################
-## configuring domain name
-#######################################
-#set $script += "### configuring /etc/hosts ###\n"
-#set $resolvconf = "/etc/resolv.conf"
-#set $resolvhead = "/etc/resolvconf/resolv.conf.d/head"
-#set $num_ns_search = $len($name_servers_search)
-#if $num_ns_search > 0
-  #set $domdom = $name_servers_search[0]
-  #set $script += "echo domain %s >> %s\n" % ($domdom,$resolvconf)
-  #set $script += "echo domain %s >> %s\n" % ($domdom,$resolvhead)
-#end if
-#if $name_servers
-  #for $nameserver in $name_servers
-      #set $script += "echo nameserver %s >> %s\n" % ($nameserver, $resolvconf)
-      #set $script += "echo nameserver %s >> %s\n" % ($nameserver, $resolvhead)
-  #end for
-#end if
 in-target $late_command.late_command($script, source_method="content") \

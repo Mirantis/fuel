@@ -1,7 +1,4 @@
-class nagios::contact(
-  $contacts     = $nagios::master::contacts,
-  $contactgroups = $nagios::master::contactgroups,
-) inherits nagios::master {
+class nagios::contact inherits nagios::master {
 
   nagios::contact::contacts { $contacts[user]:
     alias   => $contacts[alias],

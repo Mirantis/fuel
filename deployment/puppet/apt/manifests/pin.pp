@@ -7,40 +7,26 @@ define apt::pin(
   $priority   = 0,
   $release    = '',
   $origin     = '',
-  $originator = '',
-  $version    = '',
-  $order ='',
-  $releasecustom = ''
+  $originator = ''
 ) {
 
   include apt::params
 
   $preferences_d = $apt::params::preferences_d
-  if $releasecustom != '' {
-    $pin = "release $releasecustom"
-  }
-  elsif $release != '' {
+
+  if $release != '' {
     $pin = "release a=${release}"
   } elsif $origin != '' {
     $pin = "origin \"${origin}\""
   } elsif $originator != '' {
     $pin = "release o=${originator}"
-  } elsif $version != ''
-  {
-    $pin = "version ${version}"
-  }
-  else {
+  } else {
     $pin = "release a=${name}"
-  }
-
-  $path = $order ? {
-    '' => "${preferences_d}/${name}.pref",
-    default => "${preferences_d}/${order}-${name}.pref",
   }
 
   file { "${name}.pref":
     ensure  => $ensure,
-    path    => $path,
+    path    => "${preferences_d}/${name}.pref",
     owner   => root,
     group   => root,
     mode    => '0644',
