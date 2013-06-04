@@ -55,6 +55,12 @@ class openstack::mirantis_repos (
           # key_server => 'keys.gnupg.net',
           include_src => false,
         }
+        apt::source { 'ceph':
+          location   => 'http://ceph.com/debian-argonaut/',
+          repos      => 'precise main',
+          key_source =>  'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
+        }
+                                                 
 
         apt::source { 'precise-fuel-folsom':
           location    => 'http://download.mirantis.com/precise-fuel-folsom',
