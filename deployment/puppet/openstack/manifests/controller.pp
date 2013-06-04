@@ -315,17 +315,17 @@ class openstack::controller (
     nova_db_user            => $nova_db_user,
     nova_db_dbname          => $nova_db_dbname,
     ## AMQP
-    $queue_provider          = 'rabbitmq',
+    queue_provider          => 'rabbitmq',
     # Rabbit
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
     rabbit_nodes            => $rabbit_nodes,
     rabbit_cluster          => $rabbit_cluster,
     # Qpid
-    qpid_user               = $qpid_user,
-    qpid_password           = $qpid_password,
-    qpid_cluster            = $qpid_cluster,
-    qpid_nodes              = [$internal_address],
+    qpid_user               => $qpid_user,
+    qpid_password           => $qpid_password,
+    qpid_cluster            => $qpid_cluster,
+    qpid_nodes              => [$internal_address],
     # Glance
     glance_api_servers      => $glance_api_servers,
     # General
