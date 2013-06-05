@@ -140,7 +140,7 @@ class openstack::nova::controller (
       queue_provider     => $queue_provider,
       qpid_userid        => $qpid_user,
       qpid_password      => $qpid_password,
-      qpid_hostname      => $rabbit_connection,
+      qpid_host          => $rabbit_connection,
       image_service      => 'nova.image.glance.GlanceImageService',
       glance_api_servers => $glance_connection,
       verbose            => $verbose,
