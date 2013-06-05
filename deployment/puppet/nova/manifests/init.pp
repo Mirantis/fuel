@@ -230,7 +230,12 @@ require => [Package['nova-common']]
 #  }
 
   if ($queue_provider == 'qpid') {
-    Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'qpid_hostname' |>>
+    if $qpid_nodes {
+      nova_config { 'DEFAULT/qpid_hosts': value => inline_template("<%= @qpid_nodes.map {|x| x+':5672'}.join ',' %>") }
+    } else {
+      nova_config { 'DEFAULT/qpid_hostname': value => $qpid_host }
+    }
+
     nova_config {
     'DEFAULT/qpid_password':     value => $qpid_password;
     'DEFAULT/qpid_port':         value => $qpid_port;
@@ -287,3 +292,4 @@ if ($queue_provider == 'rabbitmq') {
   }
 
 }
+
