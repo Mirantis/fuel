@@ -137,7 +137,8 @@ class openstack::nova::controller (
     #TODO: Change to qpid_hosts => $qpid_hosts for grizzly
     class { 'nova':
       sql_connection     => $sql_connection,
-      qpid_username      => $qpid_user,
+      queue_provider     => $queue_provider,
+      qpid_userid        => $qpid_user,
       qpid_password      => $qpid_password,
       qpid_hostname      => $rabbit_connection,
       image_service      => 'nova.image.glance.GlanceImageService',
