@@ -234,9 +234,11 @@ require => [Package['nova-common']]
     #if $qpid_nodes {
     #  nova_config { 'DEFAULT/qpid_hosts': value => inline_template("<%= @qpid_nodes.map {|x| x+':5672'}.join ',' %>") }
     #} else {
-      nova_config { 'DEFAULT/qpid_hostname': value => $qpid_host }
+    #  nova_config { 'DEFAULT/qpid_hostname': value => $qpid_host }
     #}
-
+    ## TODO: Remove this next line for grizzly
+    nova_config { 'DEFAULT/qpid_hostname': value =>  inline_template("<%= @qpid_nodes.map {|x| x}.join ',' %>") }
+ 
     nova_config {
     'DEFAULT/qpid_password':     value => $qpid_password;
     'DEFAULT/qpid_port':         value => $qpid_port;
