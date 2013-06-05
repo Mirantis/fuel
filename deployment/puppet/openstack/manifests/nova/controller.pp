@@ -101,7 +101,7 @@ class openstack::nova::controller (
 #    @@nova_config { 'DEFAULT/rabbit_host': value => $internal_address }
 #    Nova_config <| title == 'rabbit_host' |>
 
-    if ($queue_proivder == 'qpid') {
+    if ($queue_provider == 'rabbitmq') {
       @@nova_config { 'DEFAULT/rabbit_hosts': value => $rabbit_hosts }
       Nova_config <| title == 'rabbit_hosts' |>
     } else {
