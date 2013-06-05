@@ -29,11 +29,12 @@ class qpid::server(
  
   file { $config_file:
     ensure  => present,
-    owner   => 'root',
-    group   => 'root',
-    mode    => 644,
+    owner   => 'qpidd',
+    group   => 'qpidd',
+    mode    => 600,
     content => template('qpid/qpidd.conf.erb'),
-    subscribe => Package[$package_name]
+    subscribe => Package[$package_name],
+    require => Package[$package_name]
   }
 
   if $log_to_file != 'UNSET' {
@@ -42,18 +43,18 @@ class qpid::server(
       owner => 'qpidd',
       group => 'qpidd',
       mode => 644,
-      notify => Service[$service_name]
+      notify => Service[$service_name],
+      require => Package[$package_name]
     }
   }
 
   service { $service_name:
+    enable => true,
     ensure => $service_ensure,
+    hasstatus  => true,
+    hasrestart => true,
     subscribe => [Package[$package_name], File[$config_file]]
   }
 
-#  exec { 'qpid_nova_user' :
-#    command => 'echo $qpid_password | saslpasswd2 -f /var/lib/qpidd/qpidd.sasldb -p -u $realm nova',
-#    path => '/usr/bin:/usr/local/bin:/usr/sbin:/sbin',
-#    unless => "/usr/sbin/sasldblistusers2 -f /var/lib/qpidd/qpidd.sasldb | /bin/grep -q userPassword"
-#  }
 }
+
