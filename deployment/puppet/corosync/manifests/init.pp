@@ -138,7 +138,7 @@ class corosync (
     require => Package['corosync']
   }
 
-  if $::osfamily == 'RedHat' {
+  if $::osfamily == "RedHat" {
     file { '/var/lib/pacemaker/cores/root':
       ensure  => directory,
       mode    => '0750',
