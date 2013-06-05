@@ -13,14 +13,18 @@ from fuel_test.root import root
 from fuel_test.settings import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE
 
 class Prepare(object):
-    def __init__(self, public_ip=None, internal_ip=None):
-        ci_public, ci_internal = self._get_ci_ips()
-        self.public_ip = public_ip or ci_public
-        self.internal_ip = internal_ip or ci_internal
+    def __init__(self, public_ip=None, internal_ip=None, ci=False, mode=False):
+        if not ci:
+            self.public_ip = public_ip
+            self.internal_ip = internal_ip
+        else:
+            ci_public, ci_internal = self._get_ci_ips(ha=mode)
+            self.public_ip = ci_public
+            self.internal_ip = ci_internal
 
-    def _get_ci_ips(self):
+    def _get_ci_ips(self, ha=True):
         self.controllers = self.ci().nodes().controllers
-        if len(self.controllers) == 1:
+        if not ha:
             public_ip = self.controllers[0].get_ip_address_by_network_name('public')
             internal_ip = self.controllers[0].get_ip_address_by_network_name('internal')
         else:
@@ -382,16 +386,17 @@ class Prepare(object):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-b", "--branch", help="branch for preparing", default="grizzly")
-    parser.add_argument("-p", "--public_ip", help="public ip of first controller", default=None)
-    parser.add_argument("-i", "--internal_ip", help="internal ip of first controller", default=None)
-
+    parser.add_argument("-b", "--release", help="openstack release under test", default="grizzly")
+    parser.add_argument("-p", "--public_ip", help="public or virtual ip of controller", default=None)
+    parser.add_argument("-i", "--internal_ip", help="internal or virtual ip of controller", default=None)
+    parser.add_argument("-c", "--ci", default=False)
+    parser.add_argument("-s", "--simple", default=False)
     args = vars(parser.parse_args())
 
     if args.branch == "grizzly":
-        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip).prepare_tempest_grizzly_simple()
+        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip, mode=args.simple, ci=args.ci).prepare_tempest_grizzly_simple()
     else:
-        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip).prepare_tempest_folsom()
+        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip, mode=args.simple, ci=args.ci).prepare_tempest_folsom()
 
 if __name__ == '__main__':
     main()
