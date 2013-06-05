@@ -1,3 +1,4 @@
+import argparse
 import subprocess
 from time import sleep
 from devops.helpers.helpers import ssh
@@ -11,17 +12,21 @@ from fuel_test.helpers import load, retry, install_packages, switch_off_ip_table
 from fuel_test.root import root
 from fuel_test.settings import ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_TENANT_ESSEX, ADMIN_TENANT_FOLSOM, OS_FAMILY, CIRROS_IMAGE
 
-
 class Prepare(object):
-    def __init__(self):
+    def __init__(self, public_ip=None, internal_ip=None):
+        ci_public, ci_internal = self._get_ci_ips()
+        self.public_ip = public_ip or ci_public
+        self.internal_ip = internal_ip or ci_internal
+
+    def _get_ci_ips(self):
         self.controllers = self.ci().nodes().controllers
         if len(self.controllers) == 1:
-            self.public_ip = self.controllers[0].get_ip_address_by_network_name('public')
-            self.internal_ip = self.controllers[0].get_ip_address_by_network_name('internal')
+            public_ip = self.controllers[0].get_ip_address_by_network_name('public')
+            internal_ip = self.controllers[0].get_ip_address_by_network_name('internal')
         else:
-            self.public_ip = self.ci().public_virtual_ip()
-            print "public", self.public_ip
-            self.internal_ip = self.ci().public_virtual_ip()
+            public_ip = self.ci().public_virtual_ip()
+            internal_ip = self.ci().public_virtual_ip()
+        return public_ip, internal_ip
 
     def remote(self):
         return ssh(self.public_ip,
@@ -375,6 +380,18 @@ class Prepare(object):
             self.tempest_mount_glance_images(remote, nfs_server)
         sleep(20)
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-b", "--branch", help="branch for preparing", default="grizzly")
+    parser.add_argument("-p", "--public_ip", help="public ip of first controller", default=None)
+    parser.add_argument("-i", "--internal_ip", help="internal ip of first controller", default=None)
+
+    args = vars(parser.parse_args())
+
+    if args.branch == "grizzly":
+        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip).prepare_tempest_grizzly_simple()
+    else:
+        Prepare(public_ip=args.public_ip, internal_ip=args.internal_ip).prepare_tempest_folsom()
 
 if __name__ == '__main__':
-    Prepare().prepare_tempest_grizzly_simple()
+    main()
