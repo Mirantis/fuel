@@ -315,7 +315,7 @@ class openstack::controller (
     nova_db_user            => $nova_db_user,
     nova_db_dbname          => $nova_db_dbname,
     ## AMQP
-    queue_provider          => 'rabbitmq',
+    queue_provider          => $queue_provider,
     # Rabbit
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,

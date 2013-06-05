@@ -24,8 +24,10 @@ $keystone_hash = parsejson($keystone)
 $swift_hash    = parsejson($swift)
 $access_hash    = parsejson($access)
 
-$rabbit_user   = 'nova'
+$queue_provider = 'qpid'
+$rabbit_user    = 'nova'
 
+$qpid_user      = 'nova'
 $sql_connection           = "mysql://nova:${nova_hash[db_password]}@${controller_node_address}/nova"
 $mirror_type = 'external'
 
@@ -62,8 +64,11 @@ Exec { logoutput => true }
         glance_user_password    => $glance_hash[user_password],
         nova_db_password        => $nova_hash[db_password],
         nova_user_password      => $nova_hash[user_password],
+        queue_provider          => $queue_provider,
         rabbit_password         => $rabbit_hash[password],
         rabbit_user             => $rabbit_user,
+        qpid_password           => $rabbit_hash[password],
+        qpid_user               => $qpid_user,
         export_resources        => false,
         quantum                 => $quantum,
         cinder                  => $cinder,
@@ -107,9 +112,13 @@ Exec { logoutput => true }
         multi_host             => $multi_host,
         sql_connection         => $sql_connection,
         nova_user_password     => $nova_hash[user_password],
+        queue_provider         => $queue_provider,
         rabbit_nodes           => [$controller_node_address],
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,
+        qpid_nodes             => [$controller_node_address],
+        qpid_password          => $rabbit_hash[password],
+        qpid_user              => $qpid_user,
         glance_api_servers     => "${controller_node_address}:9292",
         vncproxy_host          => $controller_node_public,
         vnc_enabled            => true,
