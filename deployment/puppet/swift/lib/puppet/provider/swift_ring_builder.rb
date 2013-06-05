@@ -59,7 +59,7 @@ class Puppet::Provider::SwiftRingBuilder < Puppet::Provider
       notice("*** create device: #{mountpoint}")
       swift_ring_builder(builder_file_path,
         'add',
-        "z#{resource[:zone]}-#{resource[:name]}/#{mountpoint}",
+        "r#{resource[:region]}z#{resource[:zone]}-#{resource[:name]}/#{mountpoint}",
         available_devs[mountpoint]
       )
     end

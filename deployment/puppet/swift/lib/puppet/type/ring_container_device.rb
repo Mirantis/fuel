@@ -19,7 +19,10 @@ Puppet::Type.newtype(:ring_container_device) do
   newproperty(:zone) do
   end
 
-  # Commit 103b68b removed weight but I don't know why.
+  newproperty(:region) do
+  end
+
+# weight automaticaly calculated from facter - swift_mountpoints.rb
 
   newproperty(:meta) do
   end
