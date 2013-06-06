@@ -58,7 +58,9 @@ class openstack::mirantis_repos (
         apt::source { 'ceph':
           location   => 'http://ceph.com/debian-cuttlefish/',
           repos      => 'main',
-          key_source =>  'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
+          key	     => '17ED316D',
+          key_source =>  'http://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
+          include_src => false,
         }
                                                  
 
