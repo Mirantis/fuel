@@ -25,7 +25,13 @@ class ceph::osd (
 
   include 'ceph::package'
 
-  package { ['xfsprogs', 'parted']:}
+  package { ['xfsprogs']:}
+    
+    case $::operatingsystem {
+	'ubuntu', 'debian': {
+	    package { ['btrfs-tools']:}
+	}
+    }
 
   Package['ceph'] -> Ceph::Key <<| title == 'admin' |>>
 

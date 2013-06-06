@@ -56,8 +56,8 @@ class openstack::mirantis_repos (
           include_src => false,
         }
         apt::source { 'ceph':
-          location   => 'http://ceph.com/debian-argonaut/',
-          repos      => 'precise main',
+          location   => 'http://ceph.com/debian-cuttlefish/',
+          repos      => 'main',
           key_source =>  'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
         }
                                                  

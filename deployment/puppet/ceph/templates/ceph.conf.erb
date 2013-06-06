@@ -20,7 +20,7 @@
   filestore flusher = false
   osd data = <%= @osd_data %>
   osd journal = <%= @osd_journal_real %>
-  osd mkfs type = xfs
+  osd mkfs type = <%= osd_fs %>
   keyring = <%= @osd_data %>/keyring
 
 [mds]

@@ -19,6 +19,11 @@ Facter.add(:ceph_admin_key) do
 end
 
 
+#Facter.add(:fsid) do
+#  setcode do
+#    Facter::Util::Resolution.exec("uuidgen")
+#  end
+#end
 ## blkid_uuid_#{device} / ceph_osd_id_#{device}
 ## Facts that export partitions uuids & ceph osd id of device
 

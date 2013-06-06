@@ -71,11 +71,13 @@ define ceph::mon (
 
   service { "ceph-mon.${name}":
     ensure  => running,
-    start   => "service ceph start mon.${name}",
-    stop    => "service ceph stop mon.${name}",
-    status  => "service ceph status mon.${name}",
+    start   => "/etc/init.d/ceph start mon.${name}",
+    stop    => "/etc/init.d/ceph stop mon.${name}",
+    status  => "/etc/init.d/ceph status mon.${name}",
+    binary  => "/etc/init.d/ceph",
+    provider => base,
     require => Exec['ceph-mon-mkfs'],
-  }
+ }
 
   exec { 'ceph-admin-key':
     command => "ceph-authtool /etc/ceph/keyring \

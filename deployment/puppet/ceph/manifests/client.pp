@@ -45,7 +45,7 @@ define ceph::client (
 	exec { "ceph-pool-set-replicas-${name}":
 	    command => "ceph osd pool set ${name} size ${replicas}",
 	    require => [Package['ceph'],Exec["ceph-pool-create-${name}"]],
+	}
     }
-    
     ceph::conf::client { $name: }
 }

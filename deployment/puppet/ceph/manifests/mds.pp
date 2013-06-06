@@ -56,11 +56,13 @@ define ceph::mds (
 
   service { "ceph-mds.${name}":
     ensure  => running,
-    start   => "service ceph start mds.${name}",
-    stop    => "service ceph stop mds.${name}",
-    status  => "service ceph status mds.${name}",
+    start   => "/etc/init.d/ceph start mds.${name}",
+    stop    => "/etc/init.d/ceph stop mds.${name}",
+    status  => "/etc/init.d/ceph status mds.${name}",
+    binary  => "/etc/init.d/ceph",
+    provider => base,
     require => Exec['ceph-mds-keyring'],
-  }
+ }
   ceph::conf::mds { $name:
     mds_data => $mds_data
   }

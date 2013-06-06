@@ -6,7 +6,6 @@
 #
 
 $mon_secret = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
-$fsid = '2bb17eb4-11cf-44f3-86b9-838116b97488'
 Exec {
   path => '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 }
@@ -53,11 +52,11 @@ $nodes_harr = [
   {
     'name' => 'fuel-controller-01',
     'role' => 'primary-controller',
-    'internal_address' => '10.0.0.101',
-    'public_address'   => '10.0.0.101',
+    'internal_address' => '10.0.0.103',
+    'public_address'   => '10.0.204.103',
     'swift_zone'       => 1,
     'mountpoints'=> "1 1\n2 1",
-    'storage_local_net_ip' => '10.0.0.101',
+    'storage_local_net_ip' => '10.0.0.103',
   },
   {
     'name' => 'fuel-controller-02',
@@ -91,7 +90,7 @@ $nodes_harr = [
   },
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 0},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller"},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller"},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute"}]
+$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller"},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller"},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller"},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute"}]
 $default_gateway = "172.18.125.1"
 
 # Specify nameservers here.
@@ -114,7 +113,6 @@ $controllers = merge_arrays(filter_nodes($nodes,'role','primary-controller'), fi
 $controller_internal_addresses = nodes_to_hash($controllers,'name','internal_address')
 $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
 $controller_hostnames = keys($controller_internal_addresses)
-$controller_ceph_zone = nodes_to_hash($controllers,'name','ceph_zone')
 
 #Set this to anything other than pacemaker if you do not want Quantum HA
 #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
@@ -567,7 +565,7 @@ class compact_controller (
     cinder_rate_limits      => $cinder_rate_limits,
     horizon_use_ssl         => $horizon_use_ssl,
     use_unicast_corosync    => $use_unicast_corosync,
-    ha_provider             => $ha_provider,
+    ha_provider             => $ha_provider
     rbd_user		    => 'admin',
     rbd_pool		    => 'images',
     cinder_use_rbd          => 'yes',
@@ -585,7 +583,8 @@ class compact_controller (
 }
 
 # Definition of the first OpenStack controller.
-node /fuel-controller-[\d+]/ {
+node controller {
+#node /fuel-controller-[\d+]/ {
   include stdlib
   class { 'operatingsystem::checksupported':
       stage => 'setup'
@@ -611,85 +610,80 @@ node /fuel-controller-[\d+]/ {
 #  }
 
   class { compact_controller: }
-#  $swift_zone = $node[0]['swift_zone']
+  $swift_zone = $node[0]['swift_zone']
 
-#  class { 'openstack::swift::storage_node':
-#    storage_type       => $swift_loopback,
-#    swift_zone         => $swift_zone,
-#    swift_local_net_ip => $swift_local_net_ip,
-#    master_swift_proxy_ip  => $master_swift_proxy_ip,
-#    sync_rings             => ! $primary_proxy,
-#    cinder                 => $is_cinder_node,
-#    cinder_iscsi_bind_addr => $cinder_iscsi_bind_addr,
-#    manage_volumes         => $is_cinder_node ? { true => $manage_volumes, false => false},
-#    nv_physical_volume     => $nv_physical_volume,
-#    db_host                => $internal_virtual_ip,
-#    service_endpoint       => $internal_virtual_ip,
-#    cinder_rate_limits     => $cinder_rate_limits,
-#    rabbit_nodes           => $controller_hostnames,
-#    rabbit_password        => $rabbit_password,
-#    rabbit_user            => $rabbit_user,
-#    rabbit_ha_virtual_ip   => $internal_virtual_ip
-# }
+  class { 'openstack::swift::storage_node':
+    storage_type       => $swift_loopback,
+    swift_zone         => $swift_zone,
+    swift_local_net_ip => $swift_local_net_ip,
+    master_swift_proxy_ip  => $master_swift_proxy_ip,
+    sync_rings             => ! $primary_proxy,
+    cinder                 => $is_cinder_node,
+    cinder_iscsi_bind_addr => $cinder_iscsi_bind_addr,
+    manage_volumes         => $is_cinder_node ? { true => $manage_volumes, false => false},
+    nv_physical_volume     => $nv_physical_volume,
+    db_host                => $internal_virtual_ip,
+    service_endpoint       => $internal_virtual_ip,
+    cinder_rate_limits     => $cinder_rate_limits,
+    rabbit_nodes           => $controller_hostnames,
+    rabbit_password        => $rabbit_password,
+    rabbit_user            => $rabbit_user,
+    rabbit_ha_virtual_ip   => $internal_virtual_ip
+  }
 
-#  if $primary_proxy {
-#    ring_devices {'all':
-#      storages => $controllers
-#    }
-#  }
+  if $primary_proxy {
+    ring_devices {'all':
+      storages => $controllers
+    }
+  }
 
-#  class { 'openstack::swift::proxy':
-#    swift_user_password     => $swift_user_password,
-#    swift_proxies           => $swift_proxies,
-#    primary_proxy           => $primary_proxy,
-#    controller_node_address => $internal_virtual_ip,
-#    swift_local_net_ip      => $swift_local_net_ip,
-#    master_swift_proxy_ip  => $master_swift_proxy_ip,
-# }
+  class { 'openstack::swift::proxy':
+    swift_user_password     => $swift_user_password,
+    swift_proxies           => $swift_proxies,
+    primary_proxy           => $primary_proxy,
+    controller_node_address => $internal_virtual_ip,
+    swift_local_net_ip      => $swift_local_net_ip,
+    master_swift_proxy_ip  => $master_swift_proxy_ip,
+  }
 
-#  Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
+  Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
+}
 
+node 'fuel-controller-01' inherits controller {
     if !empty($::ceph_admin_key) {
       @@ceph::key { 'admin':
         secret       => $::ceph_admin_key,
         keyring_path => '/etc/ceph/keyring',
       }
     }
-
-    $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
-    $i1 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\1')
-    $i2 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\2')
-    $i3 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\3')
-    $ceph_internal_net = sprintf("%d.%d.%d.0", $i1, $i2, $i3)
-    $p1 = regsubst($controller_public_addresses[$::hostname], $ipre, '\1')
-    $p2 = regsubst($controller_public_addresses[$::hostname], $ipre, '\2')
-    $p3 = regsubst($controller_public_addresses[$::hostname], $ipre, '\3')
-    $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
-                    
-
-    ceph::rolemon {$controller_ceph_zone[$::hostname]:
-        mon_secret => $mon_secret,
-        cluster_network => "${ceph_internal_net}/24",
-        public_network  => "${ceph_public_net}/24",
-#        osd_fs => 'btrfs',
+    ceph::relo_mon {'0':
+        mon_secret => $mon_secret
     }
-    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
-    ceph::osd::deploy { '/dev/sdb':
-	osd_id  => $controller_ceph_zone[$::hostname],
-#	osd_fs  => 'btrfs',
-	cluster_addr => $controller_internal_addresses[$::hostname],
-	public_addr  => $controller_public_addresses[$::hostname],
-   }
-#    ceph::client { 'images':
-#     create_pool => 'yes',
-#    }
-#    ceph::client { 'volumes':
-#      create_pool => 'yes',
-#      pool2 => 'images',
-#    }
+    ceph::relo_mds { '0': }
+    class { 'ceph_client_add':
+        name => 'images',
+        create_pool => 'yes',
+    }
+    ceph::client { 'volumes':
+      create_pool => 'yes',
+      pool2 => 'images',
+    }
 
 }
 
+node 'fuel-controller-02' inherits controller {
+    ceph::relo_mon {'1':
+        mon_secret => $mon_secret
+    }
+    ceph::relo_mds { '1': }
+}
+
+node 'fuel-controller-03' inherits controller {
+    ceph::relo_mon {'2':
+        mon_secret => $mon_secret
+    }
+    ceph::relo_mds { '2': }
+}
 
 # Definition of OpenStack compute nodes.
 node /fuel-compute-[\d+]/ {
@@ -758,7 +752,7 @@ node /fuel-compute-[\d+]/ {
     use_rbd		   => 'yes',
                 
   }
-    ceph::osd::deploy { '/dev/sdb':
+    ceph::osd::deploy { '/dev/sdb':.
 	osd_id  => '0',
     }
         

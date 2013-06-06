@@ -1,4 +1,3 @@
-$fsid = '07d28faa-48ae-4356-a8e3-19d5b81e159e'
 $mon_secret = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
 $keystone_admin_token    = 'nova'
 
@@ -7,62 +6,6 @@ Exec {
   path => '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 }
 
-class role_ceph (
-  $fsid,
-  $auth_type = 'cephx'
-) {
-
-  class { 'ceph::conf':
-    fsid            => $fsid,
-    auth_type       => $auth_type,
-    cluster_network => "${::network_eth0}/24",
-    public_network  => "${::network_eth0}/24"
-    ssh_private_key        => 'puppet:///ssh_keys/openstack',
-    ssh_public_key         => 'puppet:///ssh_keys/openstack.pub',
-            
-  }
-
-  include ceph::apt::ceph
-
-}
-
-class role_ceph_mon (
-  $id
-) {
-
-  class { 'role_ceph':
-    fsid           => $::fsid,
-    auth_type      => 'cephx',
-  }
-
-  ceph::mon { $id:
-    monitor_secret => $mon_secret,
-    mon_port       => 6789,
-    mon_addr       => $ipaddress_eth0,
-  }
-
-}
-
-class role_mds (
-    $id
-) {
-     ceph::mds { $id:
-        fsid => $fsid,
-        auth_type => 'cephx',
-        mds_data => '/var/lib/ceph/mds',
-    }
-}
-
-class ceph_client_add (
-  $name,
-  $create_pool ='no',
-) {
-
-  ceph::client { $name:
-    create_pool => $create_pool,
-  }
-
-}
 
 
 node 'ceph1' {
@@ -72,8 +15,10 @@ node 'ceph1' {
         keyring_path => '/etc/ceph/keyring',
       }
     }
-    class { 'role_ceph_mon': id => 0}
-    class { 'role_mds': id => 0}
+    ceph::relo_mon {'0':
+	mon_secret => $mon_secret
+    }
+    ceph::relo_mds { '0': }
     ceph::osd::deploy { '/dev/sdc': 
 	osd_id	=> '0',
     }
@@ -81,9 +26,9 @@ node 'ceph1' {
 	osd_id	=> '1',
     }
                                  
-#    class { 'ceph_client_add': 
-#	name => 'images',
+#    ceph::client { 'images':
 #	create_pool => 'yes',
+#	pool2 => 'images',
 #    }
 #    ceph::client { 'volumes':
 #      create_pool => 'yes',

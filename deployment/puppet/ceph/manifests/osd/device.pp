@@ -18,6 +18,7 @@
 
 define ceph::osd::device (
     $osd_id,
+    $osd_fs = 'xfs'
 ) {
 
   include ceph::osd
@@ -36,12 +37,20 @@ define ceph::osd::device (
     require => [Package['parted'], Exec["mktable_gpt_${devname}"]]
   }
 
-  exec { "mkfs_${devname}":
-    command => "mkfs.xfs -f -d agcount=${::processorcount} -l \
-size=1024m -n size=64k ${name}1",
-    unless  => "xfs_admin -l ${name}1",
-    require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
-  }
+    if $osd_fs != 'btrfs' {
+
+     exec { "mkfs_${devname}":
+	command => "mkfs.${osd_fs} -f -d agcount=${::processorcount} -l size=1024m -n size=64k ${name}1",
+        unless  => "xfs_admin -l ${name}1",
+        require => [Package['xfsprogs'], Exec["mkpart_${devname}"]],
+      }
+     } else {
+        exec { "mkfs_${devname}":
+    	    command => "mkfs.${osd_fs} ${name}1",
+    	    unless  => "btrfs-show | grep ${name}1",
+    	    require => [Package['btrfs-tools'], Exec["mkpart_${devname}"]],
+    	}
+     }
 
   $blkid_uuid_fact = "blkid_uuid_${devname}1"
   notify { "BLKID FACT ${devname}: ${blkid_uuid_fact}": }
@@ -74,12 +83,12 @@ size=1024m -n size=64k ${name}1",
       file { $osd_data:
         ensure => directory,
       }
-
+    if $osd_fs != 'btrfs' {
       mount { $osd_data:
         ensure  => mounted,
         device  => "${name}1",
         atboot  => true,
-        fstype  => 'xfs',
+        fstype  => $osd_fs,
         options => 'rw,noatime,inode64',
         pass    => 2,
         require => [
@@ -87,6 +96,18 @@ size=1024m -n size=64k ${name}1",
           File[$osd_data]
         ],
       }
+     } else {
+      mount { $osd_data:
+          ensure  => mounted,
+          device  => "${name}1",
+          atboot  => true,
+          fstype  => $osd_fs,
+          options => 'rw,noatime',
+          pass    => 2,
+	  require => [Exec["mkfs_${devname}"],File[$osd_data]],
+      }
+                                                                                                
+     }
 
       exec { "ceph-osd-mkfs-${osd_id}":
         command => "ceph-osd -c /etc/ceph/ceph.conf \
@@ -117,9 +138,11 @@ ceph osd crush set ${osd_id} 1 root=default host=${::hostname}",
 
       service { "ceph-osd.${osd_id}":
         ensure    => running,
-        start     => "service ceph start osd.${osd_id}",
-        stop      => "service ceph stop osd.${osd_id}",
-        status    => "service ceph status osd.${osd_id}",
+        start     => "/etc/init.d/ceph start osd.${osd_id}",
+        stop      => "/etc/init.d/ceph stop osd.${osd_id}",
+        status    => "/etc/init.d/ceph status osd.${osd_id}",
+        binary    => "/etc/init.d/ceph",
+	provider => base,
         require   => Exec["ceph-osd-crush-${osd_id}"],
         subscribe => Concat['/etc/ceph/ceph.conf'],
       }
