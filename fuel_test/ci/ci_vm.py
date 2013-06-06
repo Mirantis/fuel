@@ -29,7 +29,7 @@ class CiVM(CiBase):
         )
 
     def env_name(self):
-        return os.environ.get('ENV_NAME', 'cobbler')
+        return os.environ.get('ENV_NAME', 'cobbler_grizzly')
 
     def describe_environment(self):
         """

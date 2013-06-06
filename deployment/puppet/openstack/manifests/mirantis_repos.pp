@@ -48,11 +48,21 @@ class openstack::mirantis_repos (
       if $type == 'default' {
         apt::source { 'cloud-archive':
           location    => 'http://ubuntu-cloud.archive.canonical.com/ubuntu',
-          release     => 'precise-updates/grizzly',
+          release     => 'precise-updates/folsom',
           repos       => 'main',
           key         => '5EDB1B62EC4926EA',
           key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
           # key_server => 'keys.gnupg.net',
+          include_src => false,
+        }
+
+        apt::source { 'precise-fuel-folsom':
+          location    => 'http://download.mirantis.com/precise-fuel-folsom',
+          release     => 'precise-2.1.0.1',
+          repos       => 'main',
+          key         => 'F8AF89DD',
+          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/Mirantis.key',
+          # key_server => "pgp.mit.edu",
           include_src => false,
         }
 
