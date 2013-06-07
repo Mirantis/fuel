@@ -36,6 +36,8 @@ class openstack::firewall (
   $libvirt_port = 16509,
   $nrpe_server_port = 5666,
   $ceph_mon_port = 6789,
+  $ceph_rados_port =6800,
+  $ceph_rados_port_c =6801,
 ) {
 
 #  file {"iptables":
@@ -199,8 +201,21 @@ class openstack::firewall (
     proto  => 'tcp',
     action => 'accept',
   }
+  
   firewall {'118 ceph mon':
     port   => $ceph_mon_port,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+  
+  firewall {'119 ceph rados':
+    port   => $ceph_rados_port,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+  
+  firewall {'120 ceph rados c':
+    port   => $ceph_rados_port_c,
     proto  => 'tcp',
     action => 'accept',
   }
