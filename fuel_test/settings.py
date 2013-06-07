@@ -118,7 +118,7 @@ CREATE_SNAPSHOTS = os.environ.get('CREATE_SNAPSHOTS', 'true') == 'true'
 CLEAN = os.environ.get('CLEAN', 'true') == 'true'
 ISO_IMAGE = os.environ.get('ISO_IMAGE', '/home/alan/fuel-centos-6.4-x86_64-3.0.iso')
 USE_ISO = os.environ.get('USE_ISO', 'true') == 'true'
-PARENT_PROXY = os.environ.get('PARENT_PROXY', '172.18.3.14')
+PARENT_PROXY = os.environ.get('PARENT_PROXY', '')
 PROFILES_COBBLER_COMMON = {
     'centos': 'centos64_x86_64',
     'ubuntu': 'ubuntu_1204_x86_64'

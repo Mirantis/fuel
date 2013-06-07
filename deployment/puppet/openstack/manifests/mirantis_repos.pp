@@ -10,7 +10,7 @@ class openstack::mirantis_repos (
   $deb_security = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu',
   $deb_fuel_folsom_repo      = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
   $deb_fuel_grizzly_repo  = 'http://osci-gbp.srt.mirantis.net/ubuntu/fuel/',
-  $deb_cloud_archive_repo    = 'http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu',
+  $deb_cloud_archive_repo    = 'http://download.mirantis.com/precise-fuel-grizzly',
   $deb_rabbit_repo           = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
   $enable_epel = false,
   $fuel_mirrorlist           = 'http://download.mirantis.com/epel-fuel-folsom-2.1/mirror.internal-stage.list',
@@ -47,31 +47,12 @@ class openstack::mirantis_repos (
 
       if $type == 'default' {
         apt::source { 'cloud-archive':
-          location    => 'http://ubuntu-cloud.archive.canonical.com/ubuntu',
-          release     => 'precise-updates/folsom',
-          repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
-          # key_server => 'keys.gnupg.net',
-          include_src => false,
-        }
-
-        apt::source { 'precise-fuel-folsom':
-          location    => 'http://download.mirantis.com/precise-fuel-folsom',
-          release     => 'precise-2.1.0.1',
-          repos       => 'main',
+          location    => 'http://download.mirantis.com/precise-fuel-grizzly',
+          release     => 'precise',
+          repos       => 'free',
           key         => 'F8AF89DD',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/Mirantis.key',
-          # key_server => "pgp.mit.edu",
-          include_src => false,
-        }
-
-        apt::source { 'rabbit-3.0':
-          location    => 'http://download.mirantis.com/precise-fuel-folsom',
-          release     => 'precise-rabbitmq-3.0',
-          repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/Mirantis.key',
+          key_source  => 'http://download.mirantis.com/precise-fuel-grizzly/Mirantis.key',
+          # key_server => 'keys.gnupg.net',
           include_src => false,
         }
       }
