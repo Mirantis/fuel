@@ -34,19 +34,19 @@ def main():
     parser.add_argument("-t", "--tenant", help="default tenant name", default="admin")
     parser.add_argument("-b", "--public_ip", help="public or virtual ip of controller", default=None)
     parser.add_argument("-i", "--internal_ip", help="internal or virtual ip of controller", default=None)
-    parser.add_argument("-c", "--ci", default=False)
+    parser.add_argument("-c", "--ci", default=True)
     parser.add_argument("-s", "--simple", default=False)
     args = vars(parser.parse_args())
 
-    prepare = Prepare(username=args.username,
-                      password=args.password,
-                      tenant=args.tenant,
-                      public_ip=args.public_ip,
-                      internal_ip=args.internal_ip,
-                      mode=args.simple,
-                      ci=args.ci)
+    prepare = Prepare(username=args['username'],
+                      password=args['password'],
+                      tenant=args['tenant'],
+                      public_ip=args['public_ip'],
+                      internal_ip=args['internal_ip'],
+                      mode=args['simple'],
+                      ci=args['ci'])
 
-    if args.release == "grizzly":
+    if args['release'] == "grizzly":
         prepare.prepare_tempest_grizzly()
     else:
         prepare.prepare_tempest_folsom()

@@ -6,6 +6,7 @@ import glanceclient
 import subprocess
 
 CIRROS_IMAGE = 'cirros-0.3.0-x86_64-disk.img'
+CIRROS_IMAGE_URL = 'http://srv08-srt.srt.mirantis.net/' + 'cirros-0.3.0-x86_64-disk.img'
 IMAGE_NAME = 'cirros_0.3.0'
 
 here = lambda *x: os.path.join(os.path.abspath(os.path.dirname(__file__)), *x)
@@ -22,6 +23,7 @@ class PrepareTempest():
         self.internal_ip = internal_ip
 
     def get_auth_url(self):
+        print "auth_url", 'http://%s:5000/v2.0/' % self.public_ip
         return 'http://%s:5000/v2.0/' % self.public_ip
 
     def get_keystone(self):
@@ -119,7 +121,7 @@ class PrepareTempest():
 
     def _tempest_add_images(self):
         if not os.path.isfile(CIRROS_IMAGE):
-            subprocess.check_call(['wget', CIRROS_IMAGE])
+            subprocess.check_call(['wget', CIRROS_IMAGE_URL])
 
         glance = self.get_glance()
         images = self._get_images(glance, IMAGE_NAME)

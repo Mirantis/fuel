@@ -20,6 +20,7 @@ class PrepareTempestCI():
         self.username = ADMIN_USERNAME
         self.password = ADMIN_PASSWORD
         self.tenant = ADMIN_TENANT_FOLSOM
+        self.prepare = self.prepare()
 
     def ci(self):
         if not hasattr(self, '_ci'):
@@ -27,11 +28,12 @@ class PrepareTempestCI():
         return self._ci
 
     def prepare(self):
-        self.prepare = PrepareTempest(username=self.username,
+        prepare = PrepareTempest(username=self.username,
                                       password=self.password,
                                       tenant=self.tenant,
                                       public_ip=self.public_ip,
                                       internal_ip=self.internal_ip)
+        return prepare
 
     def remote(self):
         return ssh(self.public_ip, login='root', password='r00tme').sudo.ssh
