@@ -48,6 +48,7 @@ $nodes_harr = [
     'role' => 'primary-controller',
     'internal_address' => '10.0.0.103',
     'public_address'   => '10.0.204.103',
+    'region'           => 1,
     'swift_zone'       => 1,
     'mountpoints'=> "1 1\n2 1",
     'storage_local_net_ip' => '10.0.0.103',
@@ -57,6 +58,7 @@ $nodes_harr = [
     'role' => 'controller',
     'internal_address' => '10.0.0.104',
     'public_address'   => '10.0.204.104',
+    'region'           => 1,
     'swift_zone'       => 2,
     'mountpoints'=> "1 2\n 2 1",
     'storage_local_net_ip' => '10.0.0.110',
@@ -66,6 +68,7 @@ $nodes_harr = [
     'role' => 'controller',
     'internal_address' => '10.0.0.105',
     'public_address'   => '10.0.204.105',
+    'region'           => 1,
     'swift_zone'       => 3,
     'mountpoints'=> "1 2\n 2 1",
     'storage_local_net_ip' => '10.0.0.110',
@@ -374,6 +377,9 @@ if $node[0]['role'] == 'primary-controller' {
 $master_swift_proxy_nodes = filter_nodes($nodes,'role','primary-controller')
 $master_swift_proxy_ip = $master_swift_proxy_nodes[0]['internal_address']
 
+# Regional location
+$swift_proxy_region = $master_swift_proxy_nodes[0]['region']
+
 ### Glance and swift END ###
 
 ### Syslog ###
@@ -603,7 +609,7 @@ node /fuel-controller-[\d+]/ {
     whitelist       => ['127.0.0.1', $nagios_master],
     hostgroup       => 'controller',
   }
-  
+
   class { compact_controller: }
   $swift_zone = $node[0]['swift_zone']
 
@@ -640,7 +646,8 @@ node /fuel-controller-[\d+]/ {
     primary_proxy           => $primary_proxy,
     controller_node_address => $internal_virtual_ip,
     swift_local_net_ip      => $swift_local_net_ip,
-    master_swift_proxy_ip  => $master_swift_proxy_ip,
+    master_swift_proxy_ip   => $master_swift_proxy_ip,
+    proxy_region            => $swift_proxy_region
   }
 
   Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']

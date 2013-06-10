@@ -17,9 +17,12 @@ Puppet::Type.newtype(:ring_account_device) do
   end
 
   newproperty(:zone) do
-  end  
+  end
 
-  # weight removed in 103b68b but I don't know why
+  newproperty(:region) do
+  end
+
+# weight automaticaly calculated from facter - swift_mountpoints.rb
 
   newproperty(:meta) do
   end

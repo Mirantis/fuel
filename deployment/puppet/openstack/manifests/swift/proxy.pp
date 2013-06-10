@@ -5,6 +5,7 @@ class openstack::swift::proxy (
   $ring_part_power          = 18,
   $ring_replicas            = 3,
   $ring_min_part_hours      = 1,
+  $proxy_region             = 1,
   $proxy_pipeline           = [
     'catch_errors',
     'healthcheck',
@@ -56,6 +57,7 @@ class openstack::swift::proxy (
     allow_account_management => $proxy_allow_account_management,
     account_autocreate       => $proxy_account_autocreate,
     package_ensure           => $package_ensure,
+    proxy_region             => $proxy_region,
   }
 
   # configure all of the middlewares

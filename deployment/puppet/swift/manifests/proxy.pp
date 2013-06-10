@@ -41,6 +41,7 @@
 class swift::proxy(
   $proxy_local_net_ip,
   $port = '8080',
+  $proxy_region = 1,
   $pipeline = ['healthcheck', 'cache', 'tempauth', 'proxy-server'],
   $workers = $::processorcount,
   $allow_account_management = true,

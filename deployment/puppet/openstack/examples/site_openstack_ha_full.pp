@@ -86,6 +86,7 @@ $nodes_harr = [
     'role' => 'storage',
     'internal_address' => '10.0.0.110',
     'public_address'   => '10.0.204.110',
+    'region'           => 1,
     'swift_zone'       => 1,
     'mountpoints'=> "1 2\n 2 1",
     'storage_local_net_ip' => '10.0.0.110',
@@ -95,6 +96,7 @@ $nodes_harr = [
     'role' => 'storage',
     'internal_address' => '10.0.0.111',
     'public_address'   => '10.0.204.111',
+    'region'           => 1,
     'swift_zone'       => 2,
     'mountpoints'=> "1 2\n 2 1",
     'storage_local_net_ip' => '10.0.0.111',
@@ -104,6 +106,7 @@ $nodes_harr = [
     'role' => 'storage',
     'internal_address' => '10.0.0.112',
     'public_address'   => '10.0.204.112',
+    'region'           => 1,
     'swift_zone'       => 3,
     'mountpoints'=> "1 2\n 2 1",
     'storage_local_net_ip' => '10.0.0.112',
@@ -394,6 +397,9 @@ if $node[0]['role'] == 'primary-controller' {
 }
 $master_swift_proxy_nodes = filter_nodes($nodes,'role','primary-swift-proxy')
 $master_swift_proxy_ip = $master_swift_proxy_nodes[0]['internal_address']
+
+# Regional location
+$swift_proxy_region = $master_swift_proxy_nodes[0]['region']
 
 ### Glance and swift END ###
 
@@ -773,6 +779,7 @@ node /fuel-swiftproxy-[\d+]/ {
     controller_node_address => $internal_virtual_ip,
     swift_local_net_ip      => $swift_local_net_ip,
     master_swift_proxy_ip   => $master_swift_proxy_ip,
+    proxy_region            => $swift_proxy_region,
   }
 }
 
