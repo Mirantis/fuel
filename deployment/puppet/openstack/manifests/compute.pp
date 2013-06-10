@@ -176,7 +176,7 @@ class openstack::compute (
     qpid_userid        => $qpid_user,
     qpid_password      => $qpid_password,
     qpid_host          => $qpid_host,
-    image_service       => 'nova.image.glance.GlanceImageService',
+    image_service      => 'nova.image.glance.GlanceImageService',
     glance_api_servers => $glance_api_servers,
     verbose            => $verbose,
     use_syslog         => $use_syslog,

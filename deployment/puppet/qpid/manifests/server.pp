@@ -2,59 +2,93 @@
 #
 # This module manages the installation and config of the qpid server.
 class qpid::server(
-  $config_file = '/etc/qpidd.conf',
-  $package_name = 'qpid-cpp-server',
   $package_ensure = present,
-  $service_name = 'qpidd',
   $service_ensure = running,
-  $port = '5672',
-  $max_connections = '500',
-  $worker_threads = '17',
-  $connection_backlog = '10',
-  $auth = 'yes',
-  $realm = 'QPID',
-  $log_to_file = '/var/log/qpidd.log',
-  $cluster_mechanism = 'DIGEST-MD5 PLAIN'
+
+  $qpid_port = '5672',
+  $auth = 'no',
+  $auth_realm = 'QPID',
+  $log_to_file = 'UNSET',
+  $cluster_mechanism = 'DIGEST-MD5 ANONYMOUS',
+  
+  $qpid_cluster = false,
+  $qpid_cluster_name = 'qpid_cluster',
+  $qpid_username = 'nova',
+  $qpid_password = 'nova'
 ) {
 
-  validate_re($port, '\d+')
-  validate_re($max_connections, '\d+')
-  validate_re($worker_threads, '\d+')
-  validate_re($connection_backlog, '\d+')
   validate_re($auth, '^(yes$|no$)')
 
-  package { $package_name:
-    ensure => $package_ensure
+  include qpid::params
+
+  package { $::qpid::params::package_name:
+    ensure => $package_ensure,
   }
  
-  file { $config_file:
-    ensure  => present,
-    owner   => 'qpidd',
-    group   => 'qpidd',
-    mode    => 600,
+  if $qpid_cluster {
+    package { $::qpid::params::cluster_package_name:
+      ensure => $package_ensure,
+      require => Package[$::qpid::params::package_name],
+    }
+  }
+
+  if $auth == 'yes' {
+    qpid_user { 'qpid_user':
+      password => $qpid_password,
+      file => '/var/lib/qpidd/qpidd.sasldb',
+      realm => $auth_realm,
+      name => $qpid_username,
+      provider => 'saslpasswd2',
+      require => Package[$::qpid::params::package_name],
+    } ->
+
+    file {'/var/lib/qpidd/qpidd.sasldb':
+      ensure => present,
+      owner => 'qpidd',
+      group => 'qpidd',
+      mode => 600,
+      before => File[$::qpid::params::config_file]
+    }
+  }
+
+  file { $::qpid::params::config_file:
+    ensure => present,
+    owner => 'root',
+    group => 'root',
+    mode => 644,
     content => template('qpid/qpidd.conf.erb'),
-    subscribe => Package[$package_name],
-    require => Package[$package_name]
+    require => Package[$::qpid::params::package_name],
+    notify => Service[$::qpid::params::service_name],
   }
 
   if $log_to_file != 'UNSET' {
     file { $log_to_file:
-      ensure  => present,
+      ensure => present,
       owner => 'qpidd',
       group => 'qpidd',
       mode => 644,
-      notify => Service[$service_name],
-      require => Package[$package_name]
+      require => Package[$::qpid::params::package_name],
     }
   }
 
-  service { $service_name:
-    enable => true,
-    ensure => $service_ensure,
-    hasstatus  => true,
-    hasrestart => true,
-    subscribe => [Package[$package_name], File[$config_file]]
+  if $qpid_cluster {
+    service { $::qpid::params::service_name:
+      enable => true,
+      ensure => $service_ensure,
+      hasstatus  => true,
+      hasrestart => true,
+      require => Exec['corosync-restart'],
+      subscribe => Exec['corosync-restart'],
+      require => [Package[$::qpid::params::package_name], File[$::qpid::params::config_file]],
+    }
   }
-
+  else {
+    service { $::qpid::params::service_name:
+      enable => true,
+      ensure => $service_ensure,
+      hasstatus  => true,
+      hasrestart => true,
+      require => [Package[$::qpid::params::package_name], File[$::qpid::params::config_file]],
+    }
+  }
 }
-
