@@ -116,7 +116,7 @@ TEST_REPO = os.environ.get('TEST_REPO', 'false') == 'true'
 EXIST_TAR = os.environ.get('EXIST_TAR', None)
 CREATE_SNAPSHOTS = os.environ.get('CREATE_SNAPSHOTS', 'true') == 'true'
 CLEAN = os.environ.get('CLEAN', 'true') == 'true'
-ISO_IMAGE = os.environ.get('ISO_IMAGE', '/home/alan/fuel-centos-6.4-x86_64-3.0.iso')
+ISO_IMAGE = os.environ.get('ISO_IMAGE', '~/fuel-centos-6.4-x86_64-3.0.iso')
 USE_ISO = os.environ.get('USE_ISO', 'true') == 'true'
 PARENT_PROXY = os.environ.get('PARENT_PROXY', '')
 PROFILES_COBBLER_COMMON = {
