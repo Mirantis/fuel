@@ -25,9 +25,9 @@ class SimpleTestCase(CobblerTestCase):
         manifest = Manifest().generate_openstack_manifest(
             template=Template.simple(),
             ci=self.ci(),
-            controllers=self.nodes().controllers,
+            controllers=self.nodes().controllers[:1],
             use_syslog=True,
-            quantum=True, quantums=self.nodes().controllers,
+            quantum=True, quantums=self.nodes().controllers[:1],
             ha=False, ha_provider='generic',
             cinder=True, cinder_nodes=['all'], swift=False
         )
@@ -38,8 +38,9 @@ class SimpleTestCase(CobblerTestCase):
         config = Config().generate(
             template=Template.simple(),
             ci=self.ci(),
-            nodes = self.ci().nodes().computes + [self.ci().nodes().controllers[0]],
+            nodes = self.ci().nodes().computes + self.ci().nodes().controllers[:1],
             quantum=True,
+            quantums=self.nodes().controllers[:1],
             cinder_nodes=['controller']
         )
         print "Generated config.yaml:", config
