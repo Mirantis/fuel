@@ -30,7 +30,7 @@ class openstack::mirantis_repos (
 
       apt::pin { 'mirantis-grizzly':
         order      => 20,
-        priority   => 999,
+        priority   => 1001,
       }
 
       if $use_upstream_mysql {
