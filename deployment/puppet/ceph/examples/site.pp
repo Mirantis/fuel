@@ -6,7 +6,7 @@
 #
 
 $mon_secret = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
-$fsid = '2bb17eb4-11cf-44f3-86b9-838116b97488'
+$fsid = 'f460ab38-e02d-4c42-ae5b-fdbbe46022b7'
 Exec {
   path => '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 }
@@ -91,7 +91,7 @@ $nodes_harr = [
   },
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 0},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute"}]
+$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 0},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 3}]
 $default_gateway = "172.18.125.1"
 
 # Specify nameservers here.
@@ -115,6 +115,11 @@ $controller_internal_addresses = nodes_to_hash($controllers,'name','internal_add
 $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
 $controller_hostnames = keys($controller_internal_addresses)
 $controller_ceph_zone = nodes_to_hash($controllers,'name','ceph_zone')
+
+$computes = merge_arrays(filter_nodes($nodes,'role','compute'))
+$computes_internal_addresses = nodes_to_hash($computes,'name','internal_address')
+$computes_public_addresses = nodes_to_hash($computes,'name','public_address')
+$computes_ceph_zone = nodes_to_hash($computes,'name','ceph_zone')
 
 #Set this to anything other than pacemaker if you do not want Quantum HA
 #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
@@ -299,7 +304,7 @@ $cinder = true
 # 'XXX.XXX.XXX.XXX'    -> specify particular host(s) by IP address
 # 'all'                -> compute, controller, and storage nodes will run cinder (excluding swift and proxy nodes)
 
-$cinder_nodes = ["compute"]
+$cinder_nodes = ["controller"]
 
 #Set it to true if your want cinder-volume been installed to the host
 #Otherwise it will install api and scheduler services
@@ -424,9 +429,9 @@ $openstack_version = {
 # Local puppet-managed repo option planned for future releases.
 # If you want to set up a local repository, you will need to manually adjust mirantis_repos.pp,
 # though it is NOT recommended.
-$mirror_type = "default"
+$mirror_type = "custom"
 $enable_test_repo = false
-$repo_proxy = "http://10.0.0.100:3128"
+#$repo_proxy = "http://10.0.0.100:3128"
 
 # This parameter specifies the verbosity level of log messages
 # in openstack components config. Currently, it disables or enables debugging.
@@ -671,16 +676,17 @@ if $primary_proxy {
     ceph::rolemon {$controller_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
         cluster_network => "${ceph_internal_net}/24",
-        public_network  => "${ceph_public_net}/24",
+        public_network  => "${ceph_internal_net}/24",
+        mon_addr => $controller_internal_addresses[$::hostname],
 #        osd_fs => 'btrfs',
     }
     ceph::rolemds { $controller_ceph_zone[$::hostname]: }
     ceph::osd::deploy { '/dev/sdb':
 	osd_id  => $controller_ceph_zone[$::hostname],
-#	osd_fs  => 'btrfs',
+	osd_fs  => 'btrfs',
 	cluster_addr => $controller_internal_addresses[$::hostname],
-	public_addr  => $controller_public_addresses[$::hostname],
-   }
+	public_addr  => $controller_internal_addresses[$::hostname],
+  }
 if $primary_proxy {
     ceph::client { 'images':
      create_pool => 'yes',
@@ -760,10 +766,30 @@ node /fuel-compute-[\d+]/ {
     use_rbd		   => 'yes',
                 
   }
-    ceph::osd::deploy { '/dev/sdb':
-	osd_id  => '0',
+      $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
+      $i1 = regsubst($computes_internal_addresses[$::hostname], $ipre, '\1')
+      $i2 = regsubst($computes_internal_addresses[$::hostname], $ipre, '\2')
+      $i3 = regsubst($computes_internal_addresses[$::hostname], $ipre, '\3')
+      $ceph_internal_net = sprintf("%d.%d.%d.0", $i1, $i2, $i3)
+      $p1 = regsubst($computes_public_addresses[$::hostname], $ipre, '\1')
+      $p2 = regsubst($computes_public_addresses[$::hostname], $ipre, '\2')
+      $p3 = regsubst($computes_public_addresses[$::hostname], $ipre, '\3')
+      $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
+                                      
+    ceph::rolemon { $computes_ceph_zone[$::hostname]:
+            mon_secret => $mon_secret,
+            cluster_network => "${ceph_internal_net}/24",
+            public_network  => "${ceph_internal_net}/24",
+            mon_addr => $computes_internal_addresses[$::hostname],
+#           osd_fs => 'btrfs',
     }
-        
+    ceph::osd::deploy { '/dev/sdb':
+	osd_id  => $computes_ceph_zone[$::hostname],
+#        osd_fs  => 'btrfs',
+        cluster_addr => $computes_internal_addresses[$::hostname],
+        public_addr  => $computes_internal_addresses[$::hostname],
+    }
+           
 }
 
 # Definition of OpenStack Quantum node.

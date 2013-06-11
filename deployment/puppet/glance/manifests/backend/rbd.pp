@@ -17,7 +17,7 @@ class glance::backend::rbd(
     'DEFAULT/default_store': value => 'rbd';
     'DEFAULT/rbd_store_user':         value => $rbd_store_user;
     'DEFAULT/rbd_store_pool':          value => $rbd_store_pool;
-    'DEFAULT/show_image_direct_url': value => $show_image_direct_url;
+#    'DEFAULT/show_image_direct_url': value => $show_image_direct_url;
   }
 
 }

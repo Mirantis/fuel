@@ -43,6 +43,15 @@ class openstack::mirantis_repos (
         }
       }
 
+        apt::source { 'ceph':
+          location   => 'http://ceph.com/debian-cuttlefish/',
+          repos      => 'main',
+          key        => '17ED316D',
+          key_source =>  'http://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
+          include_src => false,
+        }
+
+
       Apt::Source <| |> -> Apt::Pin <| |>
 
       if $type == 'default' {
@@ -53,13 +62,6 @@ class openstack::mirantis_repos (
           key         => '5EDB1B62EC4926EA',
           key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
           # key_server => 'keys.gnupg.net',
-          include_src => false,
-        }
-        apt::source { 'ceph':
-          location   => 'http://ceph.com/debian-cuttlefish/',
-          repos      => 'main',
-          key	     => '17ED316D',
-          key_source =>  'http://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc',
           include_src => false,
         }
                                                  

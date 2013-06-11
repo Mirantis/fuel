@@ -52,9 +52,14 @@ define ceph::mon (
 --cap mon 'allow *'",
     creates => "/var/lib/ceph/tmp/keyring.mon.${name}",
     before  => Exec['ceph-mon-mkfs'],
-    require => Package['ceph'],
+    require => [Package['ceph'],Exec['ceph_mon_tmp']],
   }
 
+  exec { 'ceph_mon_tmp':
+     command => "mkdir -p /var/lib/ceph/tmp",
+     creates => "/var/lib/ceph/tmp",
+     require => [Package['ceph'], Concat['/etc/ceph/ceph.conf']],
+  }
   exec { 'ceph-mon-dir':
      command => "mkdir -p /var/lib/ceph/mon/mon.${name}",
      creates => "/var/lib/ceph/mon/mon.${name}",

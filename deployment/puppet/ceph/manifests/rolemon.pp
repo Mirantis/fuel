@@ -24,7 +24,7 @@ define ceph::rolemon
   ceph::mon { $name:
     monitor_secret => $mon_secret,
     mon_port       => 6789,
-    mon_addr       => $ipaddress_eth0,
+    mon_addr       => $mon_addr,
   }
 
 }

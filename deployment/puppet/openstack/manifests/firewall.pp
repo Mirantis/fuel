@@ -39,6 +39,12 @@ class openstack::firewall (
   $ceph_mon_port = 6789,
   $ceph_rados_port =6800,
   $ceph_rados_port_c =6801,
+  $ceph_rados_port_c1 =6804,
+  $ceph_rados_port_c2 =6805,
+  $ceph_rados_port_c3 =6802,
+  $ceph_rados_port_c4 =6803,
+  $rabbit_q_port = 5673,
+          
 ) {
 
 #  file {"iptables":
@@ -203,20 +209,47 @@ class openstack::firewall (
     action => 'accept',
   }
   
-  firewall {'118 ceph mon':
+  firewall {'119 ceph mon':
     port   => $ceph_mon_port,
     proto  => 'tcp',
     action => 'accept',
   }
   
-  firewall {'119 ceph rados':
+  firewall {'120 ceph rados':
     port   => $ceph_rados_port,
     proto  => 'tcp',
     action => 'accept',
   }
   
-  firewall {'120 ceph rados c':
+  firewall {'121 ceph rados c':
     port   => $ceph_rados_port_c,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+
+  firewall {'121 ceph rabbit q port':
+    port   => $rabbit_q_port,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+
+  firewall {'122 ceph rados c1':
+    port   => $ceph_rados_port_c1,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+  firewall {'123 ceph rados c2':
+    port   => $ceph_rados_port_c2,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+  firewall {'124 ceph rados c3':
+    port   => $ceph_rados_port_c3,
+    proto  => 'tcp',
+    action => 'accept',
+  }
+  firewall {'125 ceph rados c4':
+    port   => $ceph_rados_port_c4,
     proto  => 'tcp',
     action => 'accept',
   }

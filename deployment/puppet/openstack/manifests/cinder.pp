@@ -100,7 +100,8 @@ class openstack::cinder(
             }
         }
         cinder_config {
-    	    'DEFAULT/volume_driver':		value => 'cinder.volume.driver.RBDDriver';
+    	    'DEFAULT/volume_driver':		value => 'cinder.volume.drivers.rbd.RBDDriver';
+    	    'DEFAULT/glance_api_version':	value => '2';
             'DEFAULT/rbd_pool':			value => $cinder_rbd_pool;
             'DEFAULT/rbd_user':			value => $cinder_rbd_user;
             'DEFAULT/rbd_secret_uuid':		value => $cinder_rbd_uuid;
