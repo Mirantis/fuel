@@ -1,4 +1,4 @@
-from fuel_test.settings_monroid_local import DOMAIN_NAME
+from fuel_test.settings import DOMAIN_NAME
 
 __author__ = 'vic'
 import yaml
