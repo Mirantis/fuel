@@ -77,9 +77,10 @@ class qpid::server(
       ensure => $service_ensure,
       hasstatus  => true,
       hasrestart => true,
-      require => Exec['corosync-restart'],
       subscribe => Exec['corosync-restart'],
-      require => [Package[$::qpid::params::package_name], File[$::qpid::params::config_file]],
+      require => [Package[$::qpid::params::package_name],
+                  File[$::qpid::params::config_file],
+                  Exec['corosync-restart']]
     }
   }
   else {
