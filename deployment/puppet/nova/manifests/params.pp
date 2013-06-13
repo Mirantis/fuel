@@ -24,6 +24,7 @@ $libvirt_type_kvm = 'qemu-kvm'
       $meta_api_package_name    = 'openstack-nova-api'
       $vncproxy_package_name    = ['novnc','openstack-nova-novncproxy']
       $pymemcache_package_name  = 'python-memcached'
+      $pyamqp_package_name      = 'python-amqp'
       # service names
       $api_service_name         = 'openstack-nova-api'
       $cert_service_name        = 'openstack-nova-cert'
@@ -65,6 +66,7 @@ $libvirt_type_kvm = 'qemu-kvm'
       $volume_package_name      = 'nova-volume'
       $meta_api_package_name    = 'nova-api-metadata'
       $pymemcache_package_name  = 'python-memcache'
+      $pyamqp_package_name      = 'python-amqplib'
       # service names
       $api_service_name         = 'nova-api'
       $cert_service_name        = 'nova-cert'

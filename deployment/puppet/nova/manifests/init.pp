@@ -99,7 +99,11 @@ class nova(
   # turn on rabbitmq ha/cluster mode
   if $rabbit_nodes {
 
-      package { ['python-kombu', 'python-anyjson', 'python-amqp']:
+      package { ['python-kombu', 'python-anyjson']:
+        ensure => present
+      }
+      package { 'python-amqp':
+        name   => $::nova::params::pyamqp_package_name,
         ensure => present
       }
       Nova_config['DEFAULT/rabbit_ha_queues'] -> Nova::Generic_service<| title != 'api' |>
