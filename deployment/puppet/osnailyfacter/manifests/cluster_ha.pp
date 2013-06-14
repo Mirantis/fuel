@@ -30,7 +30,7 @@ $rabbit_hash   = parsejson($rabbit)
 $glance_hash   = parsejson($glance)
 $keystone_hash = parsejson($keystone)
 $swift_hash    = parsejson($swift)
-$access_hash    = parsejson($access)
+$access_hash   = parsejson($access)
 
 $rabbit_user   = 'nova'
 
@@ -78,6 +78,10 @@ class compact_controller {
     glance_user_password    => $glance_hash[user_password],
     nova_db_password        => $nova_hash[db_password],
     nova_user_password      => $nova_hash[user_password],
+    queue_provider          => 'qpid',
+    qpid_password           => $rabbit_hash[password],
+    qpid_user               => $rabbit_user,
+    qpid_nodes              => $galera_nodes,
     rabbit_password         => $rabbit_hash[password],
     rabbit_user             => $rabbit_user,
     rabbit_nodes            => $controller_hostnames,
@@ -159,6 +163,11 @@ class compact_controller {
         network_config         => $network_config,
         multi_host             => $multi_host,
         sql_connection         => "mysql://nova:${nova_hash[db_password]}@${management_vip}/nova",
+        queue_provider         => 'qpid',
+        qpid_password          => $rabbit_hash[password],
+        qpid_user              => $rabbit_user,
+        qpid_nodes             => $controller_hostnames,
+        qpid_host              => $controller_hostnames[0],
         rabbit_nodes           => $controller_hostnames,
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,

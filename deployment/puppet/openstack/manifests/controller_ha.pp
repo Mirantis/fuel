@@ -83,7 +83,7 @@ class openstack::controller_ha (
    $floating_range, $fixed_range, $multi_host, $network_manager, $verbose, $network_config = {}, $num_networks = 1, $network_size = 255,
    $auto_assign_floating_ip, $mysql_root_password, $admin_email, $admin_user = 'admin', $admin_password, $keystone_admin_tenant='admin',
    $keystone_db_password, $keystone_admin_token, $glance_db_password, $glance_user_password,
-   $nova_db_password, $nova_user_password, queue_provider = 'rabbitmq',
+   $nova_db_password, $nova_user_password, $queue_provider = 'rabbitmq',
    $rabbit_password, $rabbit_user, $rabbit_nodes, 
    $qpid_password, $qpid_user, $qpid_nodes, 
    $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
@@ -136,6 +136,15 @@ local0.* -/var/log/haproxy.log'
                         haproxy_service { 'swift':    order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
         }
 
+  if ($queue_provider == 'qpid') {
+    # Install / configure qpid + corosync
+    class { 'corosync':
+        enable_secauth    => false,
+        bind_address      => $internal_address,
+        unicast_addresses => $qpid_nodes,
+        before            => Class['qpid::server']
+    }
+  }
 
     exec { 'up-public-interface':
       command => "ifconfig ${public_interface} up",
@@ -285,7 +294,7 @@ local0.* -/var/log/haproxy.log'
       qpid_password           => $qpid_password,
       qpid_user               => $qpid_user,
       qpid_cluster            => true,
-      qpid_nodes              => $controller_hostnames,
+      qpid_nodes              => $qpid_nodes,
       cache_server_ip         => $memcached_servers,
       export_resources        => false,
       api_bind_address        => $internal_address,

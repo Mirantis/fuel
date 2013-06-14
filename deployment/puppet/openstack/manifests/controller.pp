@@ -325,7 +325,7 @@ class openstack::controller (
     qpid_user               => $qpid_user,
     qpid_password           => $qpid_password,
     qpid_cluster            => $qpid_cluster,
-    qpid_nodes              => [$internal_address],
+    qpid_nodes              => $qpid_nodes,
     # Glance
     glance_api_servers      => $glance_api_servers,
     # General

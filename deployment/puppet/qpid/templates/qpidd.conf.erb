@@ -5,13 +5,12 @@
 #
 # (Note: no spaces on either side of '='). Using default settings:
 # "qpidd --help" or "man qpidd" for more details.
-port=<%= port %>
-max-connections=<%= max_connections %>
-worker-threads=<%= worker_threads %>
-connection-backlog=<%= connection_backlog %>
+port=<%= qpid_port %>
 auth=<%= auth %>
-realm=<%= realm %>
+auth-realm=<%= auth_realm %>
 cluster-mechanism=<%= cluster_mechanism %>
-<% if log_to_file != 'UNSET' %>
-log-to-file=<%= log_to_file %>
-<% end %>
+<% if qpid_cluster %>cluster-name=<%= qpid_cluster_name %>
+<% if auth == 'yes' %>cluster-username=<%= qpid_username %>
+cluster-password=<%= qpid_password %><% end %><% end %>
+<% if log_to_file != 'UNSET' %>log-to-file=<%= log_to_file %>
+log-enable=debug<% end %>

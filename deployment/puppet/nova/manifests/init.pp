@@ -237,13 +237,14 @@ require => [Package['nova-common']]
     #  nova_config { 'DEFAULT/qpid_hostname': value => $qpid_host }
     #}
     ## TODO: Remove this next line for grizzly
-    nova_config { 'DEFAULT/qpid_hostname': value =>  inline_template("<%= @qpid_nodes.map {|x| x}.join ',' %>") }
+    #nova_config { 'DEFAULT/qpid_hostname': value =>  inline_template("<%= @qpid_nodes.map {|x| x}.join ',' %>") }
  
     nova_config {
-    'DEFAULT/qpid_password':     value => $qpid_password;
-    'DEFAULT/qpid_port':         value => $qpid_port;
-    'DEFAULT/qpid_username':       value => $qpid_username;
-    'DEFAULT/rpc_backend': value => 'nova.openstack.common.rpc.impl_qpid';
+    'DEFAULT/qpid_hostname':   value => $qpid_host;
+    'DEFAULT/qpid_password':   value => $qpid_password;
+    'DEFAULT/qpid_port':       value => $qpid_port;
+    'DEFAULT/qpid_username':   value => $qpid_userid;
+    'DEFAULT/rpc_backend':     value => 'nova.openstack.common.rpc.impl_qpid';
   }
   }
   else

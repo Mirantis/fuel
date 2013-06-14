@@ -125,22 +125,24 @@ class openstack::nova::controller (
 
   if ($queue_provider == 'qpid') {
     # Install / configure qpid
-    class { 'qpid::server': }
-  
-    qpid_user { 'nova':
-      password  => 'nova',
-      file  => '/var/lib/qpidd/qpidd.sasldb',
-      realm  => 'QPID',
-      provider => 'saslpasswd2',
-      require   => Class['qpid::server'],
-    }
+
+      class { 'qpid::server' :
+        auth              => 'yes',
+        auth_realm        => 'QPID',
+        log_to_file       => '/var/log/qpidd.log',
+        cluster_mechanism => 'DIGEST-MD5',
+        qpid_cluster      => $qpid_cluster,
+        qpid_cluster_name => 'qpid_cluster',
+        qpid_username     => $qpid_user,
+        qpid_password     => $qpid_password,
+      }
     #TODO: Change to qpid_hosts => $qpid_hosts for grizzly
     class { 'nova':
       sql_connection     => $sql_connection,
       queue_provider     => $queue_provider,
       qpid_userid        => $qpid_user,
       qpid_password      => $qpid_password,
-      qpid_host          => $qpid_nodes,
+      qpid_nodes         => $qpid_nodes,
       image_service      => 'nova.image.glance.GlanceImageService',
       glance_api_servers => $glance_connection,
       verbose            => $verbose,
