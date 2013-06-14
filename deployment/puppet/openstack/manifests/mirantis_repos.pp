@@ -48,7 +48,7 @@ class openstack::mirantis_repos (
         apt::source { 'mirantis-releases':
           location    => 'http://download.mirantis.com/precise-fuel-grizzly',
           release     => 'precise',
-          repos       => 'free',
+          repos       => 'main',
           key         => 'F8AF89DD',
           key_source  => 'http://download.mirantis.com/precise-fuel-grizzly/Mirantis.key',
           include_src => false,
@@ -65,7 +65,7 @@ class openstack::mirantis_repos (
         apt::source { 'mirantis-releases':
           location    => 'http://172.18.67.168/ubuntu-repo/precise-fuel-grizzly',
           release     => 'precise',
-          repos       => 'free',
+          repos       => 'main',
           key         => 'F8AF89DD',
           key_source  => 'http://172.18.67.168/ubuntu-repo/precise-fuel-grizzly/Mirantis.key',
           include_src => false,
