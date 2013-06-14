@@ -5,7 +5,7 @@ define ceph::osd::deploy (
     $public_addr = '0.0.0.0',
 ) {
     ceph::conf::osd { $osd_id:
-        device  => $name,
+        device  => "${name}1",
         cluster_addr    => $cluster_addr,
         public_addr     => $public_addr,
     }
