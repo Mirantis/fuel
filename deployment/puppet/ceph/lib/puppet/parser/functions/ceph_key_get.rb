@@ -12,7 +12,7 @@ module Puppet::Parser::Functions
 	    msg += "\n#{detail}"
 	    user_id = false
 	end
-	return user_id
+	user_id
      end
 end
 

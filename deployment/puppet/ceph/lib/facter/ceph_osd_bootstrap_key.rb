@@ -53,6 +53,7 @@ Facter::Util::Resolution.exec("blkid").each do |line|
     Facter.add("ceph_osd_id_#{device}") do
       setcode do
         ceph_osds[uuid]
+#	Facter::Util::Resolution.exec("ceph osd create #{uuid}")
       end
     end
   end
