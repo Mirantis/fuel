@@ -86,6 +86,8 @@ class openstack::controller (
   # not sure if this works correctly
   $internal_address,
   $admin_address,
+  # AMQP
+  $queue_provider          = 'rabbitmq',
   # Rabbit
   $rabbit_password         = 'rabbit_pw',
   $rabbit_user             = 'nova',
@@ -94,6 +96,13 @@ class openstack::controller (
   $rabbit_node_ip_address  = undef,
   $rabbit_ha_virtual_ip    = false, #Internal virtual IP for HA configuration
   $rabbit_port             = '5672',
+  # Qpid
+  $qpid_password           = 'qpid_pw',
+  $qpid_user               = 'nova',
+  $qpid_cluster            = false,
+  $qpid_nodes              = [$internal_address],
+  $qpid_port               = '5672',
+  $qpid_node_ip_address    = undef,
   # network configuration
   # this assumes that it is a flat network manager
   $network_manager         = 'nova.network.manager.FlatDHCPManager',
@@ -180,8 +189,8 @@ class openstack::controller (
 
   $rabbit_addresses = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
     $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
- 
-  
+
+
   nova_config {'DEFAULT/memcached_servers':    value => $memcached_addresses;
   }
 
@@ -284,7 +293,7 @@ class openstack::controller (
   }
   else {
     $enabled_apis = 'ec2,osapi_compute,osapi_volume'
-  } 
+  }
 
   class { 'openstack::nova::controller':
     # Database
@@ -320,6 +329,8 @@ class openstack::controller (
     nova_db_password        => $nova_db_password,
     nova_db_user            => $nova_db_user,
     nova_db_dbname          => $nova_db_dbname,
+    # AMQP
+    queue_provider          => $queue_provider,
     # Rabbit
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
@@ -328,6 +339,13 @@ class openstack::controller (
     rabbit_node_ip_address  => $rabbit_node_ip_address,
     rabbit_port             => $rabbit_port,
     rabbit_ha_virtual_ip    => $rabbit_ha_virtual_ip,
+    # Qpid
+    qpid_password           => $qpid_password,
+    qpid_user               => $qpid_user,
+    qpid_cluster            => $qpid_cluster,
+    qpid_nodes              => $qpid_nodes,
+    qpid_port               => $qpid_port,
+    qpid_node_ip_address    => $qpid_node_ip_address,
     # Glance
     glance_api_servers      => $glance_api_servers,
     # General
@@ -347,9 +365,13 @@ class openstack::controller (
     if !defined(Class['openstack::cinder']) {
       class {'openstack::cinder':
       sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+      queue_provider       => $queue_provider,
       rabbit_password      => $rabbit_password,
       rabbit_host          => false,
       rabbit_nodes         => $rabbit_nodes,
+      qpid_password        => $qpid_password,
+      qpid_user            => $qpid_user,
+      qpid_nodes           => $qpid_nodes,
       volume_group         => $cinder_volume_group,
       physical_volume      => $nv_physical_volume,
       manage_volumes       => $manage_volumes,
@@ -364,25 +386,25 @@ class openstack::controller (
     }
     }
   }
-  else { 
+  else {
   if $manage_volumes {
-    
+
     class { 'nova::volume':
       ensure_package => $::openstack_version['nova'],
       enabled        => true,
-      }   
+      }
     class { 'nova::volume::iscsi':
       iscsi_ip_address => $api_bind_address,
       physical_volume  => $nv_physical_volume,
-      }   
+      }
   }
   # Set up nova-volume
-  } 
+  }
 
   if !defined(Class['memcached']){
     class { 'memcached':
       #listen_ip => $api_bind_address,
-    } 
+    }
   }
 
   ######## Horizon ########

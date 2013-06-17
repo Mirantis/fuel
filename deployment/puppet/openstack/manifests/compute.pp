@@ -56,12 +56,19 @@ class openstack::compute (
   $sql_connection                = false,
   # Nova
   $purge_nova_config             = false,
+  # AMQP
+  $queue_provider                = 'rabbitmq',
   # Rabbit
   $rabbit_nodes                  = false,
   $rabbit_password               = 'rabbit_pw',
   $rabbit_host                   = false,
   $rabbit_user                   = 'nova',
   $rabbit_ha_virtual_ip          = false,
+  # Qpid
+  $qpid_nodes                    = false,
+  $qpid_password                 = 'qpid_pw',
+  $qpid_host                     = false,
+  $qpid_user                     = 'nova',
   # Glance
   $glance_api_servers            = false,
   # Virtualization
@@ -156,43 +163,86 @@ class openstack::compute (
   nova_config {'DEFAULT/memcached_servers':
     value => $memcached_addresses
   }
-
-  class { 'nova':
-      ensure_package       => $::openstack_version['nova'],
-      sql_connection       => $sql_connection,
-      rabbit_nodes         => $rabbit_nodes,
-      rabbit_userid        => $rabbit_user,
-      rabbit_password      => $rabbit_password,
-      image_service        => 'nova.image.glance.GlanceImageService',
-      glance_api_servers   => $glance_api_servers,
-      verbose              => $verbose,
-      rabbit_host          => $rabbit_host,
-      use_syslog           => $use_syslog,
-      api_bind_address     => $internal_address,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+  case $queue_provider {
+    'rabbitmq': {
+      class { 'nova':
+          ensure_package       => $::openstack_version['nova'],
+          sql_connection       => $sql_connection,
+          rabbit_nodes         => $rabbit_nodes,
+          rabbit_userid        => $rabbit_user,
+          rabbit_password      => $rabbit_password,
+          image_service        => 'nova.image.glance.GlanceImageService',
+          glance_api_servers   => $glance_api_servers,
+          verbose              => $verbose,
+          rabbit_host          => $rabbit_host,
+          use_syslog           => $use_syslog,
+          api_bind_address     => $internal_address,
+          rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      }
+    }
+    'qpid': {
+      class { 'nova':
+        sql_connection     => $sql_connection,
+        queue_provider     => $queue_provider,
+        qpid_userid        => $qpid_user,
+        qpid_password      => $qpid_password,
+        qpid_nodes         => $qpid_nodes,
+        qpid_host          => $qpid_host,
+        image_service      => 'nova.image.glance.GlanceImageService',
+        glance_api_servers => $glance_connection,
+        verbose            => $verbose,
+        ensure_package     => $ensure_package,
+        api_bind_address   => $api_bind_address,
+        use_syslog         => $use_syslog,
+      }
+    }
   }
 
   #Cinder setup
     $enabled_apis = 'metadata'
     package {'python-cinderclient': ensure => present}
     if $cinder and $manage_volumes {
-    class {'openstack::cinder':
-        sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
-        rabbit_password      => $rabbit_password,
-        rabbit_host          => false,
-        rabbit_nodes         => $rabbit_nodes,
-        volume_group         => $cinder_volume_group,
-        physical_volume      => $nv_physical_volume,
-        manage_volumes       => $manage_volumes,
-        enabled              => true,
-        auth_host            => $service_endpoint,
-        bind_host            => false,
-        iscsi_bind_host      => $cinder_iscsi_bind_addr,
-        cinder_user_password => $cinder_user_password,
-        use_syslog           => $use_syslog,
-        cinder_rate_limits   => $cinder_rate_limits,
-        rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-    }
+      case $queue_provider {
+        'rabbitmq': {
+          class {'openstack::cinder':
+              sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+              rabbit_password      => $rabbit_password,
+              rabbit_host          => false,
+              rabbit_nodes         => $rabbit_nodes,
+              volume_group         => $cinder_volume_group,
+              physical_volume      => $nv_physical_volume,
+              manage_volumes       => $manage_volumes,
+              enabled              => true,
+              auth_host            => $service_endpoint,
+              bind_host            => false,
+              iscsi_bind_host      => $cinder_iscsi_bind_addr,
+              cinder_user_password => $cinder_user_password,
+              use_syslog           => $use_syslog,
+              cinder_rate_limits   => $cinder_rate_limits,
+              rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+          }
+        }
+        'qpid': {
+          class {'openstack::cinder':
+              sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+              queue_provider       => $queue_provider,
+              qpid_password        => $qpid_password,
+              qpid_host            => false,
+              qpid_nodes           => $qpid_nodes,
+              volume_group         => $cinder_volume_group,
+              physical_volume      => $nv_physical_volume,
+              manage_volumes       => $manage_volumes,
+              enabled              => true,
+              auth_host            => $service_endpoint,
+              bind_host            => false,
+              iscsi_bind_host      => $cinder_iscsi_bind_addr,
+              cinder_user_password => $cinder_user_password,
+              use_syslog           => $use_syslog,
+              cinder_rate_limits   => $cinder_rate_limits,
+          }
+        }
+      }
+
     }
 
 
@@ -219,9 +269,9 @@ class openstack::compute (
       }
     }
     if !defined(Package[$scp_package]) {
-      package {$scp_package: ensure => present } 
+      package {$scp_package: ensure => present }
     }
- 
+
   if ( $ssh_private_key != undef ) {
    file { '/var/lib/nova/.ssh':
       ensure => directory,
@@ -259,7 +309,7 @@ class openstack::compute (
     }
   }
 
-  # configure nova api 
+  # configure nova api
   class { 'nova::api':
     ensure_package    => $::openstack_version['nova'],
     enabled           => true,
@@ -331,14 +381,29 @@ class openstack::compute (
 
     $enable_tunneling = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
 
-    class { '::quantum':
-      verbose         => $verbose,
-      debug           => $verbose,
-      rabbit_host     => $rabbit_nodes ? { false => $rabbit_host, default => $rabbit_nodes },
-      rabbit_user     => $rabbit_user,
-      rabbit_password => $rabbit_password,
-      use_syslog           => $use_syslog,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+    case $queue_provider {
+      'rabbitmq': {
+        class { '::quantum':
+          verbose         => $verbose,
+          debug           => $verbose,
+          rabbit_host     => $rabbit_nodes ? { false => $rabbit_host, default => $rabbit_nodes },
+          rabbit_user     => $rabbit_user,
+          rabbit_password => $rabbit_password,
+          use_syslog           => $use_syslog,
+          rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+        }
+      }
+      'qpid': {
+        class { '::quantum':
+          verbose         => $verbose,
+          debug           => $verbose,
+          queue_provider  => $queue_provider,
+          qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
+          qpid_user       => $qpid_user,
+          qpid_password   => $qpid_password,
+          use_syslog      => $use_syslog,
+        }
+      }
     }
 
     class { 'quantum::plugins::ovs':
