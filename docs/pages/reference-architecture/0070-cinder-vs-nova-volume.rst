@@ -7,7 +7,7 @@ provides persistent storage for VMs.
 
 
 
-If you decide use Cinder for persistent storage, you will need to both
+If you decide to use Cinder for persistent storage, you will need to both
 enable Cinder and create the block devices on which it will store data.
 You will then provide information about those blocks devices during the Fuel
 install. (You'll see an example how to do this in section 3.)

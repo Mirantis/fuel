@@ -33,6 +33,8 @@ Next you'll need to set OpenStack's networking information::
      fixed_range: 172.16.0.0/16
      floating_range: 192.168.0.0/24
 
+NOTE: The network range configured for fixed_range allows for communications between VM nodes and is not meant to allow public or private network access. 
+
 Change the virtual IPs to match the target networks, and set the fixed and floating ranges. ::
 
      swift_loopback: loopback
@@ -208,6 +210,8 @@ Next you'll define the actual servers. ::
 	      peerdns: "no"
 
 For a VirtualBox installation, you can retrieve the MAC ids for your network adapters by expanding "Advanced" for the adapater in VirtualBox, or by executing ifconfig on the server itself.  
+
+TIP: When using VirtualBox for testing, modify nova-compute.conf to use QEMU. You should use libvirt_type=qemu. Make sure to use a small image (i.e., Tiny) and keep allocated RAM below 2GB to avoid errors. 
 
 For a physical installation, the MAC address of the server is often printed on the sticker attached to the server for the LOM interfaces, or is available from the BIOS screen.  You may also be able to find the MAC address in the hardware inventory BMC/DRAC/ILO, though this may be server-dependent.
 

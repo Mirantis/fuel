@@ -1,4 +1,4 @@
-.. _Reference-Archiecture:
+.. _Reference-Architecture:
 
 Reference Architecture
 ======================
