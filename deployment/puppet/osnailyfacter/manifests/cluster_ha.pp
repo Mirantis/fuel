@@ -59,6 +59,12 @@ else {
   $rservers = [$base_syslog_rserver]
 }
 
+# can be 'qpid' or 'rabbitmq' only
+$queue_provider = 'rabbitmq'
+
+# do not edit the below line
+validate_re($queue_provider,  'rabbitmq|qpid')
+
 $rabbit_user   = 'nova'
 
 $quantum_user_password   = 'quantum_pass' # Quantum is turned off
@@ -104,7 +110,7 @@ class compact_controller {
     glance_user_password          => $glance_hash[user_password],
     nova_db_password              => $nova_hash[db_password],
     nova_user_password            => $nova_hash[user_password],
-    queue_provider                => 'qpid',
+    queue_provider                => $queue_provider,
     rabbit_password               => $rabbit_hash[password],
     rabbit_user                   => $rabbit_user,
     rabbit_nodes                  => $controller_hostnames,
@@ -209,7 +215,7 @@ class compact_controller {
         network_config         => $network_config,
         multi_host             => $multi_host,
         sql_connection         => "mysql://nova:${nova_hash[db_password]}@${management_vip}/nova",
-        queue_provider         => 'qpid',
+        queue_provider         => $queue_provider,
         rabbit_ha_virtual_ip   => $management_vip,
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,
@@ -258,9 +264,8 @@ class compact_controller {
       }
       class { 'openstack::cinder':
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${management_vip}/cinder?charset=utf8",
-        queue_provider       => 'qpid',
+        queue_provider       => $queue_provider,
         rabbit_password      => $rabbit_hash[password],
-        rabbit_user          => $rabbit_user,
         rabbit_nodes         => $controller_hostnames,
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_user,
