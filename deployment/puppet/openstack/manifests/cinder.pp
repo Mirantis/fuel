@@ -85,6 +85,10 @@ class openstack::cinder(
 	}
     } 
   } else {
+	class { 'cinder::volume':
+	     package_ensure => $::openstack_version['cinder'],
+	      enabled        => true,
+	}
 	if $cinder_rbd_user != 'admin' {
             Ceph::Key <<| title == $cinder_rbd_user |>>
 	    file { "/etc/ceph/client.${cinder_rbd_user}.keyring":

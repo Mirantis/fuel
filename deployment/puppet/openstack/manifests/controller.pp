@@ -118,8 +118,6 @@ class openstack::controller (
   # Glance
   $glance_db_user          = 'glance',
   $glance_db_dbname        = 'glance',
-  $glance_api_servers      = undef,
-  $glance_api_servers       = $glance_api_servers,
   # Nova
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',

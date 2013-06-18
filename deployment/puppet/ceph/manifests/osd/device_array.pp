@@ -63,13 +63,13 @@
 	}
     }
     define mk_sing_osd ($osd_hash, $osd_fs, $public_addr, $cluster_addr) {
-	file { "osd_dep.sh":
+	file { "osd_dep${name}.sh":
 	    content => template("ceph/osd_dep.sh.erb"),
-	    path => "/tmp/osd_dep.sh",
+	    path => "/tmp/osd_dep${name}.sh",
 	    mode => 0700,
 	    owner => 'root',
 	}
-	exec {"/tmp/osd_dep.sh ${osd_hash[$name]} /var/lib/ceph/osd/ $cluster_addr $public_addr $osd_fs": }
+	exec {"/tmp/osd_dep${name}.sh ${osd_hash[$name]} /var/lib/ceph/osd/ $cluster_addr $public_addr $osd_fs": }
     }
 
 define ceph::osd::device_array (
@@ -82,21 +82,19 @@ define ceph::osd::device_array (
 
   include ceph::osd
   include ceph::conf
-    
+    $osds_id = range("0",size($osd_dev)-1)
     if $osd_fs != 'btrfs' {
 	if $raid == undef {
 	    $osd_devs = suffix($osd_dev,"1")
-	    $osds_id = size($osd_dev)-1
 	    parted_disk { $osd_dev: } -> mk_xfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	} else { 
 	    parted_disk { $osd_dev: } -> mk_md{ "mk raid ${raid}": raid_level => $raid, osd_dev => suffix($osd_dev,"1")} -> mk_xfs{ "/dev/md0":} -> mk_sing_osd{ "0": osd_hash => ["/dev/md0"], osd_fs => $osd_fs }
 	}
      } else {
         if $raid == undef {
-    	    $osds_id = size($osd_dev)-1
+    	    $osds_id = range("0",size($osd_dev)-1)
     	    parted_disk { $osd_dev: } -> mk_btrfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osds_id, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         } else {
-    	   $osd_sosd = suffix($osd_dev,"1")
     	   parted_disk { $osd_dev: } -> mk_btr_raid { "mk btrfs raid": raid_level => $raid, osd_dev => $osd_sosd} -> mk_sing_osd{ "0": osd_hash => [$osd_sosd[0]], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         }
      }

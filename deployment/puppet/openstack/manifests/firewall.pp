@@ -37,12 +37,7 @@ class openstack::firewall (
   $libvirt_port = 16509,
   $nrpe_server_port = 5666,
   $ceph_mon_port = 6789,
-  $ceph_rados_port =6800,
-  $ceph_rados_port_c =6801,
-  $ceph_rados_port_c1 =6804,
-  $ceph_rados_port_c2 =6805,
-  $ceph_rados_port_c3 =6802,
-  $ceph_rados_port_c4 =6803,
+  $ceph_rados_port =6800:6899,
   $rabbit_q_port = 5673,
           
 ) {
@@ -221,35 +216,8 @@ class openstack::firewall (
     action => 'accept',
   }
   
-  firewall {'121 ceph rados c':
-    port   => $ceph_rados_port_c,
-    proto  => 'tcp',
-    action => 'accept',
-  }
-
   firewall {'121 ceph rabbit q port':
     port   => $rabbit_q_port,
-    proto  => 'tcp',
-    action => 'accept',
-  }
-
-  firewall {'122 ceph rados c1':
-    port   => $ceph_rados_port_c1,
-    proto  => 'tcp',
-    action => 'accept',
-  }
-  firewall {'123 ceph rados c2':
-    port   => $ceph_rados_port_c2,
-    proto  => 'tcp',
-    action => 'accept',
-  }
-  firewall {'124 ceph rados c3':
-    port   => $ceph_rados_port_c3,
-    proto  => 'tcp',
-    action => 'accept',
-  }
-  firewall {'125 ceph rados c4':
-    port   => $ceph_rados_port_c4,
     proto  => 'tcp',
     action => 'accept',
   }

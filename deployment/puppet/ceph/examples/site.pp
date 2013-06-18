@@ -91,7 +91,7 @@ $nodes_harr = [
   },
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 0},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 3}]
+$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 4,"ceph_osd" => ["/dev/sdb"]}]
 $default_gateway = "172.18.125.1"
 
 # Specify nameservers here.
@@ -115,11 +115,14 @@ $controller_internal_addresses = nodes_to_hash($controllers,'name','internal_add
 $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
 $controller_hostnames = keys($controller_internal_addresses)
 $controller_ceph_zone = nodes_to_hash($controllers,'name','ceph_zone')
+$controller_ceph_osd = nodes_to_hash($controllers,'name','ceph_osd')
+
 
 $computes = merge_arrays(filter_nodes($nodes,'role','compute'))
 $computes_internal_addresses = nodes_to_hash($computes,'name','internal_address')
 $computes_public_addresses = nodes_to_hash($computes,'name','public_address')
 $computes_ceph_zone = nodes_to_hash($computes,'name','ceph_zone')
+$computes_ceph_osd = nodes_to_hash($computes,'name','ceph_osd')
 
 #Set this to anything other than pacemaker if you do not want Quantum HA
 #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
@@ -404,8 +407,9 @@ if $use_syslog {
 ### Syslog END ###
 case $::osfamily {
     "Debian":  {
-       $rabbitmq_version_string = '2.8.7-1'
+#       $rabbitmq_version_string = '2.8.7-1'
 #       $rabbitmq_version_string = '3.1.1-1'
+	$rabbitmq_version_string = '3.0.2-1'
     }
     "RedHat": {
        $rabbitmq_version_string = '2.8.7-2.el6'
@@ -593,15 +597,15 @@ class compact_controller (
 node /fuel-controller-[\d+]/ {
   include stdlib
   class { 'operatingsystem::checksupported':
-      stage => 'setup'
+       stage => 'setup'
   }
 
-  class {'::node_netconfig':
-      mgmt_ipaddr    => $::internal_address,
-      mgmt_netmask   => $::internal_netmask,
-      public_ipaddr  => $::public_address,
-      public_netmask => $::public_netmask,
-      stage          => 'netconfig',
+   class {'::node_netconfig':
+       mgmt_ipaddr    => $::internal_address,
+       mgmt_netmask   => $::internal_netmask,
+       public_ipaddr  => $::public_address,
+       public_netmask => $::public_netmask,
+       stage          => 'netconfig',
   }
 #  class {'nagios':
 #    proj_name       => $proj_name,
@@ -615,7 +619,7 @@ node /fuel-controller-[\d+]/ {
 #    hostgroup       => 'controller',
 #  }
 
-  class { compact_controller: }
+   class { compact_controller: }
 #  $swift_zone = $node[0]['swift_zone']
 
 #  class { 'openstack::swift::storage_node':
@@ -680,21 +684,23 @@ if $primary_proxy {
         mon_addr => $controller_internal_addresses[$::hostname],
 #        osd_fs => 'btrfs',
     }
-    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
-    ceph::osd::deploy { '/dev/sdb':
+    ->
+    ceph::osd::deploy_array { "osd array on ${::hostname}":
 	osd_id  => $controller_ceph_zone[$::hostname],
-	osd_fs  => 'btrfs',
 	cluster_addr => $controller_internal_addresses[$::hostname],
 	public_addr  => $controller_internal_addresses[$::hostname],
-  }
+	osd_dev => $controller_ceph_osd[$::hostname],
+    }
+
+    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
 if $primary_proxy {
-    ceph::client { 'images':
-     create_pool => 'yes',
-    }
-    ceph::client { 'volumes':
-      create_pool => 'yes',
-      pool2 => 'images',
-    }
+#    ceph::client { 'images':
+#     create_pool => 'yes',
+#    }
+#    ceph::client { 'volumes':
+#      create_pool => 'yes',
+#      pool2 => 'images',
+#    }
 }
 }
 
