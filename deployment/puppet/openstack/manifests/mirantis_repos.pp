@@ -54,28 +54,26 @@ class openstack::mirantis_repos (
 
       Apt::Source <| |> -> Apt::Pin <| |>
 
-      if $type == 'default' {
-        apt::source { 'cloud-archive':
-          location    => 'http://ubuntu-cloud.archive.canonical.com/ubuntu',
-          release     => 'precise-updates/folsom',
-          repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
-          # key_server => 'keys.gnupg.net',
-          include_src => false,
-        }
-                                                 
+  	if $type == 'default' {
 
-        apt::source { 'precise-fuel-folsom':
-          location    => 'http://download.mirantis.com/precise-fuel-folsom',
-          release     => 'precise-2.1.0.1',
-          repos       => 'main',
-          key         => 'F8AF89DD',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/Mirantis.key',
-          # key_server => "pgp.mit.edu",
-          include_src => false,
-        }
+	    apt::source { 'cloud-archive':
+        	location    => 'http://ubuntu-cloud.archive.canonical.com/ubuntu',
+        	release     => 'precise-updates/grizzly',
+        	repos       => 'main',
+        	key => '5EDB1B62EC4926EA',
+        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud
+        	key_server => 'keys.gnupg.net',
+        	include_src => false,
+    	    }
 
+    	    apt::source { 'precise-fuel-grizzly':
+        	location    => 'http://download.mirantis.com/precise-fuel-grizzly',
+        	release     => 'precise',
+        	repos       => 'main',
+        	key         => 'F8AF89DD',
+        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud
+        	include_src => false,
+    	    }
         apt::source { 'rabbit-3.0':
           location    => 'http://download.mirantis.com/precise-fuel-folsom',
           release     => 'precise-rabbitmq-3.0',
