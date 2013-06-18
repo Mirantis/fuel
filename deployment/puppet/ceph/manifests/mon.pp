@@ -71,9 +71,14 @@ define ceph::mon (
     command => "ceph-mon --mkfs -i ${name} \
 --keyring /var/lib/ceph/tmp/keyring.mon.${name}",
     creates => "${mon_data_real}/keyring",
-    require => [Package['ceph'], Concat['/etc/ceph/ceph.conf']],
+    require => [Package['ceph'], Concat['/etc/ceph/ceph.conf'],Exec['ceph-mon-dir'],Exec['ceph-mon-keyring'],],
   }
 
+  ceph::conf::mon { $name:
+    mon_addr => $mon_addr,
+    mon_port => $mon_port,
+  }
+  ->
   service { "ceph-mon.${name}":
     ensure  => running,
     start   => "/etc/init.d/ceph start mon.${name}",
@@ -95,12 +100,7 @@ $(ceph --name mon. --keyring ${mon_data_real}/keyring \
     osd 'allow *' \
     mds allow)",
     creates => '/etc/ceph/keyring',
-    require => Package['ceph'],
-    onlyif  => "ceph --admin-daemon /var/run/ceph/ceph-mon.${name}.asok \
-mon_status|egrep -v '\"state\": \"(leader|peon)\"'",
-  }
-  ceph::conf::mon { $name:
-      mon_addr => $mon_addr,
-      mon_port => $mon_port,
+    require => [Package['ceph'],Service["ceph-mon.${name}"]],
+    onlyif  => "ceph --admin-daemon /var/run/ceph/ceph-mon.${name}.asok mon_status|egrep -v '\"state\": \"(leader|peon)\"'",
   }
 }

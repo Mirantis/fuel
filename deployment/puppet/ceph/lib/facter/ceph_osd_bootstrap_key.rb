@@ -29,32 +29,3 @@ end
 
 
 # Load the osds/uuids from ceph
-ceph_osds = Hash.new
-ceph_osd_dump = Facter::Util::Resolution.exec("ceph osd dump")
-if ceph_osd_dump
-  ceph_osd_dump.each do |line|
-    if line =~ /^osd\.(\d+).* ([a-f0-9\-]+)$/
-      ceph_osds[$2] = $1
-    end
-  end
-end
-
-Facter::Util::Resolution.exec("blkid").each do |line|
-  if line =~ /^\/dev\/(.+):.*UUID="([a-fA-F0-9\-]+)"/
-    device = $1
-    uuid = $2
-
-    Facter.add("blkid_uuid_#{device}") do
-      setcode do
-        uuid
-      end
-    end
-
-    Facter.add("ceph_osd_id_#{device}") do
-      setcode do
-        ceph_osds[uuid]
-#	Facter::Util::Resolution.exec("ceph osd create #{uuid}")
-      end
-    end
-  end
-end

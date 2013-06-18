@@ -119,6 +119,7 @@ class openstack::controller (
   $glance_db_user          = 'glance',
   $glance_db_dbname        = 'glance',
   $glance_api_servers      = undef,
+  $glance_api_servers       = $glance_api_servers,
   # Nova
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',
@@ -363,7 +364,6 @@ class openstack::controller (
       physical_volume      => $nv_physical_volume,
       manage_volumes       => $manage_volumes,
       enabled              => true,
-      glance_api_servers   => $glance_api_servers,
       auth_host            => $service_endpoint,
       bind_host            => $api_bind_address,
       iscsi_bind_host      => $cinder_iscsi_bind_addr,

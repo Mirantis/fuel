@@ -190,9 +190,9 @@ class openstack::controller_ha (
     if $glance_backend == 'swift' {
       haproxy_service { 'swift': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
     } 
-    if $glance_backend == 'rbd' {
-      haproxy_service { 'radosgw': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $ragosgw_nodes }
-    }
+#    if $glance_backend == 'rbd' {
+#      haproxy_service { 'radosgw': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $radosgw_nodes }
+#    }
 
 
     exec { 'up-public-interface':

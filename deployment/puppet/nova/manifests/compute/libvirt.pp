@@ -72,7 +72,7 @@ class nova::compute::libvirt (
     provider => $::nova::params::special_service_provider,
     require  => Package['libvirt'],
   }
-  unless $user_rbd  == 'no' {
+  if $use_rbd  != 'no' {
        file {"secret.xml":
     	    content => template("openstack/secret.xml.erb"),
     	    path => "/tmp/secret.xml",

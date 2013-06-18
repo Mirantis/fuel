@@ -63,80 +63,13 @@
 	}
     }
     define mk_sing_osd ($osd_hash, $osd_fs, $public_addr, $cluster_addr) {
-#	$blkid_uuid_fact = "blkid_uuid_${osd_hash[$name]}"
-#        notify { "BLKID FACT ${osd_hash[$name]}: ${blkid_uuid_fact}": }
-#        $blkid = inline_template('<%= scope.lookupvar(blkid_uuid_fact) %>')
-	$blkid = ceph_get_osd_uuid("${osd_hash[$name]}")
-        notify { "BLKID ${$osd_hash[$name]}: ${blkid}": }
-
-#	exec { "ceph_osd_create_${osd_hash[$name]}":
-#	    command => "ceph osd create ${blkid}",
-#	    unless  => "ceph osd dump | grep -sq ${blkid}",
-#	    require => Ceph::Key['admin'],
-#	}
-#        $osd_id_fact = "ceph_osd_id_${devname}1"
-#        notify { "OSD ID FACT ${osd_hash[$name]}: ${osd_id_fact}": }
-#	$osd_id = inline_template('<%= scope.lookupvar(osd_id_fact) %>')
-	$osd_id = ceph_get_osd_id("${blkid}")
-        notify { "OSD ID ${osd_hash[$name]}: ${osd_id}":}
-	$osd_data = regsubst($::ceph::conf::osd_data, '\$id', "${osd_id}")
-	file { $osd_data:
-	    ensure => directory,
+	file { "osd_dep.sh":
+	    content => template("ceph/osd_dep.sh.erb"),
+	    path => "/tmp/osd_dep.sh",
+	    mode => 0700,
+	    owner => 'root',
 	}
-	if $osd_fs != 'btrfs' {
-    	    mount { $osd_data:
-    		ensure  => mounted,
-    		device  => $osd_hash[$name],
-    		atboot  => true,
-    		fstype  => $osd_fs,
-    		options => 'rw,noatime,inode64',
-    		pass    => 2,
-    		require => File[$osd_data],
-    	    }
-        } else {
-    	    mount { $osd_data:
-        	ensure  => mounted,
-        	device  => $osd_hash[$name],
-        	atboot  => true,
-        	fstype  => $osd_fs,
-        	options => 'rw,noatime',
-        	pass    => 2,
-        	require => File[$osd_data],
-    	    }
-        }
-        exec { "ceph-osd-mkfs-${osd_id}":
-    	    command => "ceph-osd -c /etc/ceph/ceph.conf -i ${osd_id} --mkfs --mkkey --osd-uuid ${blkid}",
-    	    creates => "${osd_data}/keyring",
-    	    require => [
-            Mount[$osd_data],
-            Concat['/etc/ceph/ceph.conf'],
-            ],
-        }
-	ceph::conf::osd { $osd_id:
-	    device  => $osd_hash[$name],
-	    cluster_addr    => $cluster_addr,
-	    public_addr     => $public_addr,
-	}
-
-        exec { "ceph-osd-register-${osd_id}":
-    	    command => "ceph auth add osd.${osd_id} osd 'allow *' mon 'allow rwx' -i ${osd_data}/keyring",
-	    require => Exec["ceph-osd-mkfs-${osd_id}"],
-	}
-        exec { "ceph-osd-crush-${osd_id}":
-    	    command => "ceph osd crush set ${osd_id} 1 root=default host=${::hostname}",
-    	    require => Exec["ceph-osd-register-${osd_id}"],
-        }
-
-	service { "ceph-osd.${osd_id}":
-    	    ensure    => running,
-	    start     => "/etc/init.d/ceph start osd.${osd_id}",
-	    stop      => "/etc/init.d/ceph stop osd.${osd_id}",
-            status    => "/etc/init.d/ceph status osd.${osd_id}",
-            binary    => "/etc/init.d/ceph",
-            provider => base,
-            require   => Exec["ceph-osd-crush-${osd_id}"],
-            subscribe => Concat['/etc/ceph/ceph.conf'],
-      }
+	exec {"/tmp/osd_dep.sh ${osd_hash[$name]} /var/lib/ceph/osd/ $cluster_addr $public_addr $osd_fs": }
     }
 
 define ceph::osd::device_array (
