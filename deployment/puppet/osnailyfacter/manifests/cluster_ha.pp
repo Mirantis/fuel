@@ -260,7 +260,7 @@ class compact_controller {
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${management_vip}/cinder?charset=utf8",
         queue_provider       => 'qpid',
         rabbit_password      => $rabbit_hash[password],
-        rabbit_user          => $rabbit_user,
+        rabbit_host          => false,
         rabbit_nodes         => $controller_hostnames,
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_user,
