@@ -211,8 +211,6 @@ Next you'll define the actual servers. ::
 
 For a VirtualBox installation, you can retrieve the MAC ids for your network adapters by expanding "Advanced" for the adapater in VirtualBox, or by executing ifconfig on the server itself.  
 
-TIP: When using VirtualBox for testing, modify nova-compute.conf to use QEMU. You should use libvirt_type=qemu. Make sure to use a small image (i.e., Tiny) and keep allocated RAM below 2GB to avoid errors. 
-
 For a physical installation, the MAC address of the server is often printed on the sticker attached to the server for the LOM interfaces, or is available from the BIOS screen.  You may also be able to find the MAC address in the hardware inventory BMC/DRAC/ILO, though this may be server-dependent.
 
 Also, make sure the ``ip-address`` is correct, and that the ``dns-name`` has your own domain name in it.
