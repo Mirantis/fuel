@@ -37,7 +37,7 @@ class openstack::firewall (
   $libvirt_port = 16509,
   $nrpe_server_port = 5666,
   $ceph_mon_port = 6789,
-  $ceph_rados_port = range("6800","6899"),
+  $ceph_rados_port = range("6800","6810"),
   $rabbit_q_port = 5673,
           
 ) {
