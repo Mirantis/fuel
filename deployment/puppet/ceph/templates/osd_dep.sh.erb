@@ -12,7 +12,7 @@ mount_arg="rw,noatime"
 host_name=`hostname`
 
 uuid=`/sbin/blkid $dev -o value -s UUID`
-if [ -z `ceph osd dump | grep $uuid`]
+if [ -z `ceph osd dump | grep $uuid` ]
 then
         new="1"
 fi
