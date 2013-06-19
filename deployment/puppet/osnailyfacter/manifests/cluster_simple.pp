@@ -41,7 +41,11 @@ else {
   $rservers = [$base_syslog_rserver]
 }
 
-$queue_provider = 'qpid'
+# can be 'qpid' or 'rabbitmq' only
+$queue_provider = 'rabbitmq'
+
+# do not edit the below line
+validate_re($queue_provider,  'rabbitmq|qpid')
 
 $rabbit_user   = 'nova'
 
