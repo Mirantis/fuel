@@ -78,23 +78,24 @@ define ceph::osd::device_array (
     $osd_dev,
     $public_addr,
     $cluster_addr,
+    $parted_disk,
 ) {
 
   include ceph::osd
   include ceph::conf
     $osds_id = range("0",size($osd_dev)-1)
     $osd_devs = suffix($osd_dev,"1")
-    if $osd_fs != 'btrfs' {
-	if $raid == undef {
+    if $raid == undef {
+	if $parted_disk {
 	    parted_disk { $osd_dev: } -> mk_xfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
-	} else { 
-	    parted_disk { $osd_dev: } -> mk_md{ "mk raid ${raid}": raid_level => $raid, osd_dev => $osd_devs} -> mk_xfs{ "/dev/md0":} -> mk_sing_osd{ "0": osd_hash => ["/dev/md0"], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	} else {
+	    mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	}
-     } else {
-        if $raid == undef {
-    	    parted_disk { $osd_dev: } -> mk_btrfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+    } else {
+	if $osd_fs != 'btrfs' {
+	    parted_disk { $osd_dev: } -> mk_md{ "mk raid ${raid}": raid_level => $raid, osd_dev => $osd_devs} -> mk_xfs{ "/dev/md0":} -> mk_sing_osd{ "0": osd_hash => ["/dev/md0"], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         } else {
     	   parted_disk { $osd_dev: } -> mk_btr_raid { "mk btrfs raid": raid_level => $raid, osd_dev => $osd_devs} -> mk_sing_osd{ "0": osd_hash => [$osd_sosd[0]], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         }
-     }
+    }
 }
