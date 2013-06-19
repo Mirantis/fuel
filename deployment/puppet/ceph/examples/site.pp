@@ -433,7 +433,7 @@ $openstack_version = {
 # Local puppet-managed repo option planned for future releases.
 # If you want to set up a local repository, you will need to manually adjust mirantis_repos.pp,
 # though it is NOT recommended.
-$mirror_type = "custom"
+$mirror_type = "default"
 $enable_test_repo = false
 #$repo_proxy = "http://10.0.0.100:3128"
 
@@ -683,10 +683,13 @@ if $primary_proxy {
         public_network  => "${ceph_internal_net}/24",
         mon_addr => $controller_internal_addresses[$::hostname],
 #        osd_fs => 'btrfs',
+#	osd_journal => "/usr/loca/share",
     }
     ->
     ceph::osd::deploy_array { "osd array on ${::hostname}":
 	osd_id  => $controller_ceph_zone[$::hostname],
+#	osd_fs => "btrfs",
+#	raid => 0,
 	cluster_addr => $controller_internal_addresses[$::hostname],
 	public_addr  => $controller_internal_addresses[$::hostname],
 	osd_dev => $controller_ceph_osd[$::hostname],

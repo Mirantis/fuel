@@ -61,7 +61,7 @@ class openstack::mirantis_repos (
         	release     => 'precise-updates/grizzly',
         	repos       => 'main',
         	key => '5EDB1B62EC4926EA',
-        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud
+        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
         	key_server => 'keys.gnupg.net',
         	include_src => false,
     	    }
@@ -71,7 +71,7 @@ class openstack::mirantis_repos (
         	release     => 'precise',
         	repos       => 'main',
         	key         => 'F8AF89DD',
-        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud
+        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
         	include_src => false,
     	    }
         apt::source { 'rabbit-3.0':
