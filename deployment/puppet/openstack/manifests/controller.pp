@@ -424,7 +424,10 @@ class openstack::controller (
     use_ssl           => $horizon_use_ssl,
     verbose           => $verbose,
     use_syslog        => $use_syslog,
+<<<<<<< HEAD
 
+=======
+>>>>>>> 77e7283... FUEL-682 Added syslog logging to Horizon and MySQL/Galera
   }
 
 }

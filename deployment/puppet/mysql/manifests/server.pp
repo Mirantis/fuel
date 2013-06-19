@@ -30,6 +30,7 @@ class mysql::server (
   $server_id         = $mysql::params::server_id,
   $rep_user = 'replicator',
   $rep_pass = 'replicant666',
+  $use_syslog              = false,
 ) inherits mysql::params {
 
   Exec {path => '/usr/bin:/bin:/usr/sbin:/sbin'}    
@@ -96,11 +97,12 @@ class mysql::server (
   elsif ($custom_setup_class == 'galera')  {
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
-      cluster_name => $galera_cluster_name,
+      cluster_name       => $galera_cluster_name,
       primary_controller => $primary_controller,
-      node_address => $galera_node_address,
-      node_addresses => $galera_nodes,
-        skip_name_resolve => $mysql_skip_name_resolve,
+      node_address       => $galera_node_address,
+      node_addresses     => $galera_nodes,
+      skip_name_resolve  => $mysql_skip_name_resolve,
+      use_syslog         => $use_syslog,
     }
 #    require($galera_class)
   }
