@@ -30,7 +30,7 @@ echo "  public addr = $public_addr" >> /etc/ceph/ceph.conf
 fi
 mkdir -p $osd_data
 mount -t $fs_type $dev $osd_data -o $mount_arg
-if [ -z $new ]
+if [ -n $new ]
 then
         rm -rf $osd_data/*
 fi
