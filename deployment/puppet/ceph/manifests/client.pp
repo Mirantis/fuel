@@ -4,38 +4,32 @@ define ceph::client (
   $create_pool = 'no',
   $pg_num = '128',
   $replicas = "3",
+  $primary_node,
 ) {
+if $primary_node {
     if $pool2 == 'none' {
-	if !ceph_key_get($name) {
 	    exec { "ceph-permissions-set-${name}":
 		command => "ceph auth get-or-create client.${name} mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=${name}'",
     		require => Package['ceph'],
+    		creates => "/etc/ceph/client.${name}.keyring",
 	    }
-	} else  {
-	    $cli_key = ceph_key_get($name)
-	    notify { "USER_ID: $cli_key": }
-	    @@ceph::key{ $name:
-		secret => $cli_key,
-		keyring_path => $keyring_path,
-	    }
-	    Ceph::Key <<| title == $name |>>
-	    
-	}
+	  @@exec { "ceph-key-${name}":
+	    command => "ceph-authtool ${keyring_path} --create-keyring --name='client.${name}' --add-key=`/usr/bin/ceph auth get-key client.${name}`",
+	    creates => $keyring_path,
+	    require => Exec["ceph-permissions-set-${name}"]
+	  }
     } else {
-        if !ceph_key_get($name) {
             exec { "ceph-permissions-set-${name}":
                 command => "ceph auth get-or-create client.${name} mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=${name}, allow rx pool=${pool2}'",
                 require => Package['ceph'],
+                creates => "/etc/ceph/client.${name}.keyring",
             }
-        } else {
-            $cli_key = ceph_key_get($name)
-            notify { "USER_ID: $cli_key": }
-            @@ceph::key{ $name:
-                secret => $cli_key,
-                keyring_path => $keyring_path,
-            }
-            Ceph::Key <<| title == $name |>>
-	}
+            @@exec { "ceph-key-${name}":
+        	command => "ceph-authtool ${keyring_path} --create-keyring --name='client.${name}' --add-key=`/usr/bin/ceph auth get-key client.${name}`",
+        	creates => $keyring_path,
+        	require => Exec["ceph-permissions-set-${name}"]
+    	    }
+    	    
     }
     if $create_pool == 'yes' {
 	exec { "ceph-pool-create-${name}":
@@ -47,5 +41,6 @@ define ceph::client (
 	    require => [Package['ceph'],Exec["ceph-pool-create-${name}"]],
 	}
     }
-    ceph::conf::client { $name: }
+}
+	Exec  <<| tag == "ceph-key-${name}" |>>
 }

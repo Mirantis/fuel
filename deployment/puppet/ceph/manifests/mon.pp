@@ -58,12 +58,12 @@ define ceph::mon (
   exec { 'ceph_mon_tmp':
      command => "mkdir -p /var/lib/ceph/tmp",
      creates => "/var/lib/ceph/tmp",
-     require => [Package['ceph'], Concat['/etc/ceph/ceph.conf']],
+     require => Package['ceph'],
   }
   exec { 'ceph-mon-dir':
      command => "mkdir -p /var/lib/ceph/mon/mon.${name}",
      creates => "/var/lib/ceph/mon/mon.${name}",
-     require => [Package['ceph'], Concat['/etc/ceph/ceph.conf']],
+     require => Package['ceph'],
  }
                
 

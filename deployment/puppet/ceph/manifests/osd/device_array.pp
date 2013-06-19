@@ -55,7 +55,7 @@
     }
     define mk_btr_raid ($raid_level,$osd_dev) {
 	$dev_count = size($osd_dev)
-	$dev_arr = join($osd_dev," ")
+	$dev_arr = join($osd_dev,"\ ")
 	exec { "mk_btr raid ${raid_level}":
 	    command => "mkfs.btrfs -m raid${raid_level} ${dev_arr}",
 	    unless  => "btrfs-show | grep \"Total devices ${$dev_count}\"",
@@ -83,19 +83,18 @@ define ceph::osd::device_array (
   include ceph::osd
   include ceph::conf
     $osds_id = range("0",size($osd_dev)-1)
+    $osd_devs = suffix($osd_dev,"1")
     if $osd_fs != 'btrfs' {
 	if $raid == undef {
-	    $osd_devs = suffix($osd_dev,"1")
 	    parted_disk { $osd_dev: } -> mk_xfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	} else { 
-	    parted_disk { $osd_dev: } -> mk_md{ "mk raid ${raid}": raid_level => $raid, osd_dev => suffix($osd_dev,"1")} -> mk_xfs{ "/dev/md0":} -> mk_sing_osd{ "0": osd_hash => ["/dev/md0"], osd_fs => $osd_fs }
+	    parted_disk { $osd_dev: } -> mk_md{ "mk raid ${raid}": raid_level => $raid, osd_dev => $osd_devs} -> mk_xfs{ "/dev/md0":} -> mk_sing_osd{ "0": osd_hash => ["/dev/md0"], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	}
      } else {
         if $raid == undef {
-    	    $osds_id = range("0",size($osd_dev)-1)
-    	    parted_disk { $osd_dev: } -> mk_btrfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osds_id, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+    	    parted_disk { $osd_dev: } -> mk_btrfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         } else {
-    	   parted_disk { $osd_dev: } -> mk_btr_raid { "mk btrfs raid": raid_level => $raid, osd_dev => $osd_sosd} -> mk_sing_osd{ "0": osd_hash => [$osd_sosd[0]], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+    	   parted_disk { $osd_dev: } -> mk_btr_raid { "mk btrfs raid": raid_level => $raid, osd_dev => $osd_devs} -> mk_sing_osd{ "0": osd_hash => [$osd_sosd[0]], osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
         }
      }
 }

@@ -91,7 +91,7 @@ $nodes_harr = [
   },
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 4,"ceph_osd" => ["/dev/sdb"]}]
+$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 4,"ceph_osd" => ["/dev/sdb"]}]
 $default_gateway = "172.18.125.1"
 
 # Specify nameservers here.
@@ -344,11 +344,11 @@ if ($cinder) {
 }
 
 
-
+$cinder_pool = "volumes"
 ### CINDER/VOLUME END ###
 
 ### GLANCE and SWIFT ###
-
+$glance_pool = "images"
 # Which backend to use for glance
 # Supported backends are "swift" and "file"
 $glance_backend          = 'rbd'
@@ -578,10 +578,10 @@ class compact_controller (
     use_unicast_corosync    => $use_unicast_corosync,
     ha_provider             => $ha_provider,
     rbd_user		    => 'admin',
-    rbd_pool		    => 'images',
+    rbd_pool		    => $glance_pool,
     cinder_use_rbd          => 'yes',
     cinder_rbd_user         => 'admin',
-    cinder_rbd_pool         => 'volumes',
+    cinder_rbd_pool         => $cinder_pool,
     cinder_rbd_uuid         => '143b14f0-54ba-4c21-ba11-8b08c33c5375',
                             
   }
@@ -676,6 +676,10 @@ if $primary_proxy {
     $p3 = regsubst($controller_public_addresses[$::hostname], $ipre, '\3')
     $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
                     
+    if $primary_controller {
+	ceph::conf::client { $glance_pool: }
+	ceph::conf::client { $cinder_pool: }
+    }
 
     ceph::rolemon {$controller_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
@@ -683,28 +687,31 @@ if $primary_proxy {
         public_network  => "${ceph_internal_net}/24",
         mon_addr => $controller_internal_addresses[$::hostname],
 #        osd_fs => 'btrfs',
-#	osd_journal => "/usr/loca/share",
+#       osd_journal => "/usr/loca/share",
     }
     ->
-    ceph::osd::deploy_array { "osd array on ${::hostname}":
-	osd_id  => $controller_ceph_zone[$::hostname],
-#	osd_fs => "btrfs",
-#	raid => 0,
-	cluster_addr => $controller_internal_addresses[$::hostname],
-	public_addr  => $controller_internal_addresses[$::hostname],
-	osd_dev => $controller_ceph_osd[$::hostname],
+   ceph::osd::deploy_array { "osd array on ${::hostname}":
+        osd_id  => $controller_ceph_zone[$::hostname],
+#        osd_fs => "btrfs",
+#       raid => 0,
+        cluster_addr => $controller_internal_addresses[$::hostname],
+        public_addr  => $controller_internal_addresses[$::hostname],
+        osd_dev => $controller_ceph_osd[$::hostname],
     }
-
+    ->
+    ceph::client { $glance_pool:
+        create_pool => 'yes',
+        primary_node => $primary_controller,
+    }
+    ->
+    ceph::client { $cinder_pool:
+        create_pool => 'yes',
+        pool2 => $glance_pool,
+        primary_node => $primary_controller,
+    }
     ceph::rolemds { $controller_ceph_zone[$::hostname]: }
-if $primary_proxy {
-#    ceph::client { 'images':
-#     create_pool => 'yes',
-#    }
-#    ceph::client { 'volumes':
-#      create_pool => 'yes',
-#      pool2 => 'images',
-#    }
-}
+
+
 }
 
 
