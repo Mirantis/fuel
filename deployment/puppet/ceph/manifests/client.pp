@@ -13,10 +13,12 @@ if $primary_node {
     		require => Package['ceph'],
     		creates => "/etc/ceph/client.${name}.keyring",
 	    }
+	    ->
+	    Exec  <<| tag == "ceph-key-${name}" |>>
 	  @@exec { "ceph-key-${name}":
 	    command => "ceph-authtool ${keyring_path} --create-keyring --name='client.${name}' --add-key=`/usr/bin/ceph auth get-key client.${name}`",
 	    creates => $keyring_path,
-	    require => Exec["ceph-permissions-set-${name}"]
+#	    require => Exec["ceph-permissions-set-${name}"]
 	  }
     } else {
             exec { "ceph-permissions-set-${name}":
@@ -24,10 +26,12 @@ if $primary_node {
                 require => Package['ceph'],
                 creates => "/etc/ceph/client.${name}.keyring",
             }
+            ->
+            Exec  <<| tag == "ceph-key-${name}" |>>
             @@exec { "ceph-key-${name}":
         	command => "ceph-authtool ${keyring_path} --create-keyring --name='client.${name}' --add-key=`/usr/bin/ceph auth get-key client.${name}`",
         	creates => $keyring_path,
-        	require => Exec["ceph-permissions-set-${name}"]
+#        	require => Exec["ceph-permissions-set-${name}"]
     	    }
     	    
     }
@@ -41,6 +45,7 @@ if $primary_node {
 	    require => [Package['ceph'],Exec["ceph-pool-create-${name}"]],
 	}
     }
-}
+} else {
 	Exec  <<| tag == "ceph-key-${name}" |>>
+}
 }

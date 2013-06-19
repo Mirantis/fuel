@@ -792,18 +792,22 @@ node /fuel-compute-[\d+]/ {
       $p3 = regsubst($computes_public_addresses[$::hostname], $ipre, '\3')
       $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
                                       
-    ceph::rolemon { $computes_ceph_zone[$::hostname]:
-            mon_secret => $mon_secret,
-            cluster_network => "${ceph_internal_net}/24",
-            public_network  => "${ceph_internal_net}/24",
-            mon_addr => $computes_internal_addresses[$::hostname],
-#           osd_fs => 'btrfs',
+    ceph::rolemon {$computes_ceph_zone[$::hostname]:
+        mon_secret => $mon_secret,
+        cluster_network => "${ceph_internal_net}/24",
+        public_network  => "${ceph_internal_net}/24",
+        mon_addr => $computes_internal_addresses[$::hostname],
+#        osd_fs => 'btrfs',
+#       osd_journal => "/usr/loca/share",
     }
-    ceph::osd::deploy { '/dev/sdb':
-	osd_id  => $computes_ceph_zone[$::hostname],
-#        osd_fs  => 'btrfs',
+    ->
+   ceph::osd::deploy_array { "osd array on ${::hostname}":
+        osd_id  => $computes_ceph_zone[$::hostname],
+#        osd_fs => "btrfs",
+#       raid => 0,
         cluster_addr => $computes_internal_addresses[$::hostname],
         public_addr  => $computes_internal_addresses[$::hostname],
+        osd_dev => $computes_ceph_osd[$::hostname],
     }
            
 }
