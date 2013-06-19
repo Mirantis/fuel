@@ -25,7 +25,7 @@
       }
 
       exec { "mkpart_${name}":
-        command => "parted -a optimal -s ${name} mkpart ceph 0% 100%",
+        command => "dd if=/dev/zero of=${name} count=1k bs=1k ; parted -a optimal -s ${name} mkpart ceph 0% 100%",
         unless  => "parted ${name} print | egrep '^ 1.*ceph$'",
         require => [Package['parted'], Exec["mktable_gpt_${name}"]]
       }
