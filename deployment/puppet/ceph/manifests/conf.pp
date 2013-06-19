@@ -44,7 +44,7 @@ class ceph::conf (
   }
 
   if $osd_journal {
-    $osd_journal_real = $osd_journal
+    $osd_journal_real = "${osd_journal}/journal.$id"
   } else {
     $osd_journal_real = "${osd_data}/journal"
   }

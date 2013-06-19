@@ -95,13 +95,13 @@ class openstack::cinder(
     	        group => "cinder",
         	owner => "cinder",
             }
-        } else {
+        } 
             file { "/etc/ceph/keyring":
     	        group => "cinder",
         	owner => "glance",
         	mode => "660",
             }
-        }
+        
         cinder_config {
     	    'DEFAULT/volume_driver':		value => 'cinder.volume.drivers.rbd.RBDDriver';
     	    'DEFAULT/glance_api_version':	value => '2';

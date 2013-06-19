@@ -8,6 +8,7 @@ define ceph::rolemon
   $public_network  = "${::network_eth0}/24",
   $ssh_private_key = 'puppet:///ssh_keys/openstack',
   $ssh_public_key = 'puppet:///ssh_keys/openstack.pub',
+  $osd_journal = undef,
 ) {
 
 
@@ -18,7 +19,8 @@ define ceph::rolemon
       public_network  => $public_network,
       ssh_private_key        => $ssh_private_key,
       ssh_public_key         => $ssh_public_key,
-      osd_fs => $osd_fs
+      osd_fs => $osd_fs,
+      osd_journal => $osd_journal,
     }
 
   ceph::mon { $name:
