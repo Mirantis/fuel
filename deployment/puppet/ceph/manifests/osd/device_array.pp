@@ -87,7 +87,7 @@ define ceph::osd::device_array (
     $osd_devs = suffix($osd_dev,"1")
     if $raid == undef {
 	if $parted_disk {
-	    parted_disk { $osd_dev: } -> mk_xfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    parted_disk { $osd_dev: } -> mk_xfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_dev, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	} else {
 	    mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
 	}
