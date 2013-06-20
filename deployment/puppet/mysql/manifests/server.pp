@@ -61,12 +61,95 @@ class mysql::server (
       provider => $service_provider,
     }
   }
+  elsif ($custom_setup_class == 'pacemaker_mysql')  {
+    include mysql
+    #Class['mysql::server'] -> Class['mysql::config']
+    Package[mysql-server] -> Class['mysql::config']
+    Package[mysql-client] -> Package[mysql-server]
+    #Cs_commit['mysql']    -> Service['mysqld']
+    #Cs_resource['p_mysql'] -> Cs_shadow['mysql']
+    Cs_property <||> -> Cs_shadow <||>
+    Cs_shadow['mysql']    -> Service['mysqld']
+
+    $config_hash['custom_setup_class'] = $custom_setup_class
+    $allowed_hosts = 'localhost'
+    $rep_user = 'replicator'
+    $rep_pass = 'replicant666'
+
+    create_resources( 'class', { 'mysql::config' => $config_hash } )
+
+    if !defined(Package[mysql-client]) {
+      package { 'mysql-client':
+        name   => $package_name,
+      }
+    }
+
+    package { 'mysql-server':
+      name   => $package_name,
+    }
+
+    mysql::replicator { $allowed_hosts:
+      user      => $rep_user,
+      password  => $rep_pass,
+      require   => Exec['mysqld-restart'],
+      before    => Service['mysqld_stopped']
+    }
+
+
+    service { 'mysqld_stopped':
+      name     => $service_name,
+      ensure   => 'stopped',
+      enable   => false,
+      require  => Class['mysql::config'],
+      #require  => Package['mysql-server'],
+      #provider => $service_provider,
+    }->
+
+    class {'openstack::corosync' :
+      bind_address => $galera_node_address,
+    }->
+
+    cs_resource { "p_mysql":
+      ensure          => present,
+      primitive_class => 'ocf',
+      provided_by     => 'heartbeat',
+      primitive_type  => 'mysql',
+      cib             => 'mysql',
+      multistate_hash => {'type'=>'master'},
+      ms_metadata     => {'notify'=>"true"},
+      parameters      => {
+        'binary' => "/usr/bin/mysqld_safe",
+        'replication_user'   => $rep_user,
+        'replication_passwd' => $rep_pass
+      },
+      operations   => {
+        'monitor'  => { 'interval' => '20', 'timeout'  => '30' },
+        'start'    => { 'timeout' => '360' },
+        'stop'     => { 'timeout' => '360' },
+        'promote'  => { 'timeout' => '360' },
+        'demote'   => { 'timeout' => '360' },
+        'notify'   => { 'timeout' => '360' },
+      }
+    }->
+
+    service { 'mysqld':
+      name     => "p_${service_name}",
+      ensure   => 'running',
+      enable   => true,
+      require  => Package['mysql-server'],
+      provider => 'pacemaker',
+    }
+
+    cs_shadow { 'mysql': cib => 'mysql' }
+ #   cs_commit { 'mysql': cib => 'mysql' }
+
+  }
   elsif ($custom_setup_class == 'galera')  {
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
-	    cluster_name => $galera_cluster_name,
-	    primary_controller => $primary_controller,
-	    node_address => $galera_node_address,
+      cluster_name => $galera_cluster_name,
+      primary_controller => $primary_controller,
+      node_address => $galera_node_address,
       node_addresses => $galera_nodes,
         skip_name_resolve => $mysql_skip_name_resolve,
     }
