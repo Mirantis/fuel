@@ -89,13 +89,13 @@ class openstack::cinder(
 	     package_ensure => $::openstack_version['cinder'],
 	      enabled        => true,
 	}
-	if $cinder_rbd_user != 'admin' {
-            Ceph::Key <<| title == $cinder_rbd_user |>>
-	    file { "/etc/ceph/client.${cinder_rbd_user}.keyring":
-    	        group => "cinder",
-        	owner => "cinder",
-            }
-        } 
+	    if $cinder_rbd_user != 'admin' {
+		Exec  <<| tag == "ceph-key-${cinder_rbd_user}" |>>
+		file { "/etc/ceph/client.${cinder_rbd_user}.keyring":
+    	    	    group => "cinder",
+        	    owner => "cinder",
+        	}
+    	    }
             file { "/etc/ceph/keyring":
     	        group => "cinder",
         	owner => "glance",

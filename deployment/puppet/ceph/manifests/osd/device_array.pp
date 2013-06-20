@@ -18,26 +18,39 @@
 
   define parted_disk {
       exec { "mktable_gpt_${name}":
-	command => "parted -a optimal --script ${name} mktable gpt",
-        unless  => "parted --script ${name} print|grep -sq 'gpt'",
+	command => "dd if=/dev/zero of=${name} count=1k bs=1k ; parted -s ${name} mklabel gpt",
+	unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+#       unless  => "parted --script ${name} print|grep -sq 'gpt'",
 #	unless  => "parted --script ${name} print|grep -sq 'Partition Table: gpt'",
         require => Package['parted']
       }
 
       exec { "mkpart_${name}":
-        command => "dd if=/dev/zero of=${name} count=1k bs=1k ; parted -a optimal -s ${name} mkpart ceph 0% 100%",
+        command => "parted -a optimal -s ${name} mkpart ceph 0% 100%",
         unless  => "parted ${name} print | egrep '^ 1.*ceph$'",
         require => [Package['parted'], Exec["mktable_gpt_${name}"]]
       }
    }
-   define mk_btrfs {
-	exec { "mk_btrfs_${name}1":
-	    command => "mkfs.btrfs ${name}1",
-	    unless  => "btrfs-show | grep ${name}1",
+   define mk_btrfs ($parted = true) {
+	if !$parted {
+	    exec { "clean_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k",
+		unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+	    }
+	}
+	exec { "mk_btrfs_${name}":
+	    command => "mkfs.btrfs ${name}",
+	    unless  => "btrfs-show | grep ${name}",
 	    require => Package['btrfs-tools'],
 	}
    }
-    define mk_xfs {
+    define mk_xfs ($parted = true) {
+	if !$parted {
+	    exec { "clean_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k",
+		unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+	    }
+	}
 	exec { "mk_xfs_${name}":
 	    command => "mkfs.xfs -f -d agcount=${::processorcount} -l size=1024m -n size=64k ${name}",
 	    unless  => "xfs_admin -l ${name}",
@@ -87,9 +100,17 @@ define ceph::osd::device_array (
     $osd_devs = suffix($osd_dev,"1")
     if $raid == undef {
 	if $parted_disk {
-	    parted_disk { $osd_dev: } -> mk_xfs { $osd_dev: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_dev, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    if $osd_fs != 'btrfs' {
+		parted_disk { $osd_dev: } -> mk_xfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    } else {
+		parted_disk { $osd_dev: } -> mk_btrfs { $osd_devs: } -> mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    }
 	} else {
-	    mk_sing_osd{ $osds_id: osd_hash => $osd_devs, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    if $osd_fs != 'btrfs' {
+		mk_xfs { $osd_dev: parted => $parted_disk  } -> mk_sing_osd{ $osds_id: osd_hash => $osd_dev, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    } else {
+		mk_btrfs { $osd_dev: parted => $parted_disk } -> mk_sing_osd{ $osds_id: osd_hash => $osd_dev, osd_fs => $osd_fs, public_addr => $public_addr, cluster_addr => $cluster_addr }
+	    }
 	}
     } else {
 	if $osd_fs != 'btrfs' {

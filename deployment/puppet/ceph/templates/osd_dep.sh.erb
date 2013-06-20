@@ -7,7 +7,7 @@ public_addr=$4
 fs_type=$5
 
 
-new=""
+new="0"
 mount_arg="rw,noatime"
 host_name=`hostname`
 
@@ -19,7 +19,7 @@ fi
 osd_id=`ceph osd create $uuid`
 
 osd_data="$osd_dir/osd.$osd_id"
-if [ -z `cat /etc/ceph/ceph.conf | grep "\[osd.$osd_id\]"`]
+if [ -z `cat /etc/ceph/ceph.conf | grep "\[osd.$osd_id\]"` ]
 then
 echo "" >> /etc/ceph/ceph.conf
 echo "[osd.$osd_id]" >> /etc/ceph/ceph.conf
@@ -30,7 +30,7 @@ echo "  public addr = $public_addr" >> /etc/ceph/ceph.conf
 fi
 mkdir -p $osd_data
 mount -t $fs_type $dev $osd_data -o $mount_arg
-if [ -n $new ]
+if [ $new == "1" ]
 then
         rm -rf $osd_data/*
 fi

@@ -113,13 +113,12 @@ class openstack::glance (
       package { "python-ceph":
           ensure => "installed"
       }
-      Package['ceph'] -> Ceph::Key <<| title == 'admin' |>>
       if $rbd_user != 'admin' {
-        Package['ceph'] -> Ceph::Key <<| title == $rbd_user |>>
-      }
-      file { "/etc/ceph/client.${rbd_user}.keyring":
-	owner => "glance",
-        group => "glance",
+        Exec  <<| tag == "ceph-key-${rbd_user}" |>>
+        file { "/etc/ceph/client.${rbd_user}.keyring":
+	    owner => "glance",
+    	    group => "glance",
+        }
       }
       class { "glance::backend::$glance_backend":
 	rbd_store_user => $rbd_user,
