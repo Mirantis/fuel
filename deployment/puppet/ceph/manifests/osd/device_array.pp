@@ -19,7 +19,7 @@
   define parted_disk {
       exec { "mktable_gpt_${name}":
 	command => "dd if=/dev/zero of=${name} count=1k bs=1k ; parted -s ${name} mklabel gpt",
-	unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+	unless  => "ceph osd dump | grep `/sbin/blkid ${name}1 -o value -s UUID`",
 #       unless  => "parted --script ${name} print|grep -sq 'gpt'",
 #	unless  => "parted --script ${name} print|grep -sq 'Partition Table: gpt'",
         require => Package['parted']
@@ -33,9 +33,15 @@
    }
    define mk_btrfs ($parted = true) {
 	if !$parted {
-	    exec { "clean_${name}":
-		command => "dd if=/dev/zero of=${name} count=1k bs=1k",
+	    exec { "clean_step1_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k ; mkfs.btrfs ${name}",
+		unless  => "/sbin/blkid ${name} -o value -s UUID",
+		require => Package['btrfs-tools'],
+	    }
+	    exec { "clean_step2_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k ; mkfs.btrfs ${name}",
 		unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+		require => Exec["clean_step1_${name}"],
 	    }
 	}
 	exec { "mk_btrfs_${name}":
@@ -46,9 +52,15 @@
    }
     define mk_xfs ($parted = true) {
 	if !$parted {
-	    exec { "clean_${name}":
-		command => "dd if=/dev/zero of=${name} count=1k bs=1k",
+	    exec { "clean_step1_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k ; mkfs.xfs -f -d agcount=${::processorcount} -l size=1024m -n size=64k ${name}",
+		unless  => "/sbin/blkid ${name} -o value -s UUID",
+		require => Package['xfsprogs'],
+	    }
+	    exec { "clean_step2_${name}":
+		command => "dd if=/dev/zero of=${name} count=1k bs=1k ; mkfs.xfs -f -d agcount=${::processorcount} -l size=1024m -n size=64k ${name}",
 		unless  => "ceph osd dump | grep `/sbin/blkid ${name} -o value -s UUID`",
+		require => Exec["clean_step1_${name}"],
 	    }
 	}
 	exec { "mk_xfs_${name}":
