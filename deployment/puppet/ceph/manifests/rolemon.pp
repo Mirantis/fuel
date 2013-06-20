@@ -6,8 +6,8 @@ define ceph::rolemon
   $osd_fs = 'xfs',
   $cluster_network = "${::network_eth0}/24",
   $public_network  = "${::network_eth0}/24",
-  $ssh_private_key = 'puppet:///ssh_keys/openstack',
-  $ssh_public_key = 'puppet:///ssh_keys/openstack.pub',
+  $ssh_private_key = undef,
+  $ssh_public_key = undef,
   $osd_journal = undef,
 ) {
 
