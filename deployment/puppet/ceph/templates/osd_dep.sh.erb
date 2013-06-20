@@ -1,0 +1,43 @@
+#!/bin/bash
+
+dev=$1
+osd_dir=$2
+cluster_addr=$3
+public_addr=$4
+fs_type=$5
+
+
+new="0"
+mount_arg="rw,noatime"
+host_name=`hostname`
+
+uuid=`/sbin/blkid $dev -o value -s UUID`
+if [ -z `ceph osd dump | grep $uuid` ]
+then
+        new="1"
+fi
+osd_id=`ceph osd create $uuid`
+
+osd_data="$osd_dir/osd.$osd_id"
+if [ -z `cat /etc/ceph/ceph.conf | grep "\[osd.$osd_id\]"` ]
+then
+echo "" >> /etc/ceph/ceph.conf
+echo "[osd.$osd_id]" >> /etc/ceph/ceph.conf
+echo "  host = $host_name" >> /etc/ceph/ceph.conf
+echo "  devs = $dev" >> /etc/ceph/ceph.conf
+echo "  cluster addr = $cluster_addr" >> /etc/ceph/ceph.conf
+echo "  public addr = $public_addr" >> /etc/ceph/ceph.conf
+fi
+mkdir -p $osd_data
+mount -t $fs_type $dev $osd_data -o $mount_arg
+if [ $new == "1" ]
+then
+        rm -rf $osd_data/*
+fi
+ceph-osd -c /etc/ceph/ceph.conf -i $osd_id --mkfs --mkkey --osd-uuid $uuid
+ceph auth add osd.$osd_id osd 'allow *' mon 'allow rwx' -i $osd_data/keyring
+ceph osd crush set $osd_data 1 root=default host=$host_name
+
+
+service ceph start osd.$osd_id
+

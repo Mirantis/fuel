@@ -118,7 +118,6 @@ class openstack::controller (
   # Glance
   $glance_db_user          = 'glance',
   $glance_db_dbname        = 'glance',
-  $glance_api_servers      = undef,
   # Nova
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',
@@ -167,6 +166,13 @@ class openstack::controller (
   $nova_rate_limits        = undef,
   $cinder_rate_limits      = undef,
   $ha_mode                 = false,
+  $rbd_user		   = 'images',
+  $rbd_pool		   = 'images',
+  $cinder_use_rbd         = 'no',
+  $cinder_rbd_user         = 'volumes',
+  $cinder_rbd_pool         = 'volumes',
+  $cinder_rbd_uuid	   = '143b14f0-54ba-4c21-ba11-8b08c33c5375',
+            
 ) {
 
 
@@ -267,6 +273,8 @@ class openstack::controller (
     glance_backend            => $glance_backend,
     registry_host             => $service_endpoint,
     use_syslog                => $use_syslog,
+    rbd_user		      => $rbd_user,
+    rbd_pool		      => $rbd_pool,
   }
 
   ######## BEGIN NOVA ###########
@@ -354,7 +362,6 @@ class openstack::controller (
       physical_volume      => $nv_physical_volume,
       manage_volumes       => $manage_volumes,
       enabled              => true,
-      glance_api_servers   => "${service_endpoint}:9292",
       auth_host            => $service_endpoint,
       bind_host            => $api_bind_address,
       iscsi_bind_host      => $cinder_iscsi_bind_addr,
@@ -362,6 +369,11 @@ class openstack::controller (
       use_syslog           => $use_syslog,
       cinder_rate_limits   => $cinder_rate_limits,
       rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      cinder_use_rbd      => $cinder_use_rbd,
+      cinder_rbd_user      => $cinder_rbd_user,
+      cinder_rbd_pool      => $cinder_rbd_pool,
+      cinder_rbd_uuid      => $cinder_rbd_uuid,
+                              
     }
     }
   }

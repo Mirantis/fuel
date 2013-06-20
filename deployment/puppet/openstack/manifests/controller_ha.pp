@@ -132,6 +132,7 @@ class openstack::controller_ha (
    $horizon_use_ssl         = false,
    $quantum_network_node    = false,
    $quantum_netnode_on_cnt  = false,
+   $radosgw_nodes	    = undef,
    $quantum_gre_bind_addr   = $internal_address,
    $quantum_external_ipinfo = {},
    $mysql_skip_name_resolve = false,
@@ -139,6 +140,13 @@ class openstack::controller_ha (
    $create_networks         = true,
    $use_unicast_corosync    = false,
    $ha_mode                 = true,
+   $rbd_user		    = 'images',
+   $rbd_pool		    = 'images',
+   $cinder_use_rbd         = 'no',
+   $cinder_rbd_user         = 'volumes',
+   $cinder_rbd_pool         = 'volumes',
+   $cinder_rbd_uuid         = '143b14f0-54ba-4c21-ba11-8b08c33c5375',
+                     
  ) {
 
     # haproxy
@@ -181,7 +189,10 @@ class openstack::controller_ha (
     haproxy_service { 'mysqld': order => 95, port => 3306, virtual_ips => [$internal_virtual_ip], define_backend => true }
     if $glance_backend == 'swift' {
       haproxy_service { 'swift': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
-    }
+    } 
+#    if $glance_backend == 'rbd' {
+#      haproxy_service { 'radosgw': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $radosgw_nodes }
+#    }
 
 
     exec { 'up-public-interface':
@@ -312,7 +323,6 @@ class openstack::controller_ha (
       keystone_admin_tenant   => $keystone_admin_tenant,
       glance_db_password      => $glance_db_password,
       glance_user_password    => $glance_user_password,
-      glance_api_servers      => $glance_api_servers,
       nova_db_password        => $nova_db_password,
       nova_user_password      => $nova_user_password,
       rabbit_password         => $rabbit_password,
@@ -346,6 +356,10 @@ class openstack::controller_ha (
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,
       cinder_volume_group     => $cinder_volume_group,
+      cinder_use_rbd          => $cinder_use_rbd,
+      cinder_rbd_user         => $cinder_rbd_user,
+      cinder_rbd_pool         => $cinder_rbd_pool,
+      cinder_rbd_uuid         => $cinder_rbd_uuid,
       # turn on SWIFT_ENABLED option for Horizon dashboard
       swift                   => $glance_backend ? { 'swift' => true, default => false },
       use_syslog              => $use_syslog,
@@ -353,6 +367,8 @@ class openstack::controller_ha (
       nova_rate_limits        => $nova_rate_limits,
       horizon_use_ssl         => $horizon_use_ssl,
       ha_mode                 => $ha_mode,
+      rbd_user		      => $rbd_user,
+      rbd_pool		      => $rbd_pool,
     }
     if $quantum and $quantum_network_node {
       class { '::openstack::quantum_router':

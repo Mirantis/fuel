@@ -1,0 +1,31 @@
+[global]
+<% if @auth_type -%>
+  auth cluster required = <%= @auth_type %>
+  auth service required = <%= @auth_type %>
+  auth client required = <%= @auth_type %>
+<% end -%>
+  keyring = /etc/ceph/keyring
+  rgw socket path = /tmp/radosgw.sock
+  fsid = <%= @fsid %>
+
+[mon]
+  mon data = <%= @mon_data %>
+
+[osd]
+  osd journal size = <%= @journal_size_mb %>
+<% if @cluster_network && @public_network -%>
+  cluster network = <%= @cluster_network %>
+  public network = <%= @public_network %>
+<% end -%>
+  filestore flusher = false
+  osd data = <%= @osd_data %>
+  osd journal = <%= @osd_journal_real %>
+  osd mkfs type = <%= osd_fs %>
+  keyring = <%= @osd_data %>/keyring
+
+[mds]
+  mds data = <%= @mds_data %>
+  keyring = <%= @mds_data %>/keyring
+
+[client.admin]
+   keyring = /etc/ceph/keyring

@@ -45,6 +45,9 @@ class openstack::glance (
   $verbose              = 'False',
   $enabled              = true,
   $use_syslog           = false,
+  $rbd_pool		= 'images',
+  $rbd_user		= 'images',
+     
 ) {
 
   # Configure the db string
@@ -106,6 +109,21 @@ class openstack::glance (
       swift_store_create_container_on_put => "True",
       swift_store_auth_address => "http://${keystone_host}:5000/v2.0/"
     }
+  } elsif $glance_backend == "rbd" {
+      package { "python-ceph":
+          ensure => "installed"
+      }
+      if $rbd_user != 'admin' {
+        Exec  <<| tag == "ceph-key-${rbd_user}" |>>
+        file { "/etc/ceph/client.${rbd_user}.keyring":
+	    owner => "glance",
+    	    group => "glance",
+        }
+      }
+      class { "glance::backend::$glance_backend":
+	rbd_store_user => $rbd_user,
+        rbd_store_pool => $rbd_pool,
+      }
   } else {
     class { "glance::backend::$glance_backend": }
   }
