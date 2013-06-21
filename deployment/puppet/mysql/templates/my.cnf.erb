@@ -28,10 +28,9 @@ thread_cache_size  = 8
 myisam-recover     = BACKUP
 query_cache_limit  = 1M
 query_cache_size   = 16M
-<% if use_syslog -%>
+<% if log_error == 'syslog' or use_syslog -%>
 #log_error          = syslog:local1
 <% else -%>
-<% if log_error != 'syslog' -%>
 log_error          = <%= log_error %>
 <% end -%>
 expire_logs_days   = 10
