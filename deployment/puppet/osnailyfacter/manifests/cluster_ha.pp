@@ -5,6 +5,7 @@ $controller_public_addresses = parsejson($ctrl_public_addresses)
 $controller_storage_addresses = parsejson($ctrl_storage_addresses)
 $controller_hostnames = keys($controller_internal_addresses)
 $galera_nodes = values($controller_internal_addresses)
+$custom_mysql_setup_class = 'pacemaker_mysql'
 
 $create_networks = true
 
@@ -136,6 +137,7 @@ class compact_controller {
     cinder_db_password            => $cinder_hash[db_password],
     manage_volumes                => false,
     galera_nodes                  => $galera_nodes,
+    custom_mysql_setup_class      => $custom_mysql_setup_class,
     mysql_skip_name_resolve       => true,
     use_syslog                    => true,
   }

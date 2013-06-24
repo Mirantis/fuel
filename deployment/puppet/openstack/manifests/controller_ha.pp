@@ -123,7 +123,7 @@ class openstack::controller_ha (
    $qpid_password, $qpid_user, $qpid_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
    $quantum = false, $quantum_user_password='', $quantum_db_password='', $quantum_db_user = 'quantum',
    $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_addr = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
-   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $use_syslog = false,
+   $nv_physical_volume = undef, $manage_volumes = false, $custom_mysql_setup_class = 'galera', $galera_nodes, $use_syslog = false,
    $cinder_rate_limits = undef, $nova_rate_limits = undef,
    $cinder_volume_group     = 'cinder-volumes',
    $cinder_user_password    = 'cinder_user_pass',
@@ -186,7 +186,9 @@ class openstack::controller_ha (
       haproxy_service { 'rabbitmq-openstack':    order => 92, port => 5672, virtual_ips => [$internal_virtual_ip], define_backend => true }
     }
 
-    haproxy_service { 'mysqld': order => 95, port => 3306, virtual_ips => [$internal_virtual_ip], define_backend => true }
+    if $custom_mysql_provider_name == 'galera' {
+      haproxy_service { 'mysqld': order => 95, port => 3306, virtual_ips => [$internal_virtual_ip], define_backend => true }
+    }
     if $glance_backend == 'swift' {
       haproxy_service { 'swift': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
     }
@@ -233,25 +235,6 @@ class openstack::controller_ha (
     }
     sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
-    package { 'socat': ensure => present }
-    exec { 'wait-for-haproxy-mysql-backend':
-      command   => "echo show stat | socat unix-connect:///var/lib/haproxy/stats stdio | grep -q '^mysqld,BACKEND,.*,UP,'",
-      path      => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
-      require   => [Service['haproxy'], Package['socat']],
-      try_sleep => 5,
-      tries     => 60,
-    }
-
-    Exec<| title == 'wait-for-synced-state' |> -> Exec['wait-for-haproxy-mysql-backend']
-    Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'initial-db-sync' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'keystone-manage db_sync' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'glance-manage db_sync' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'cinder-manage db_sync' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'nova-db-sync' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-scheduler' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-volume' |>
-    Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-api' |>
-
     class { 'haproxy':
       enable => true,
       global_options   => merge($::haproxy::params::global_options, {'log' => "/dev/log local0"}),
@@ -287,8 +270,27 @@ class openstack::controller_ha (
       state    => $primary_controller ? { true => 'MASTER', default => 'BACKUP' },
       priority => $primary_controller ? { true => 101,      default => 100      },
     }
-
-   Class['haproxy'] -> Class['galera']
+   if ( $custom_mysql_setup_class == 'galera' ) {
+     Class['haproxy'] -> Class['galera']
+     package { 'socat': ensure => present }
+     exec { 'wait-for-haproxy-mysql-backend':
+       command   => "echo show stat | socat unix-connect:///var/lib/haproxy/stats stdio | grep -q '^mysqld,BACKEND,.*,UP,'",
+       path      => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
+       require   => [Service['haproxy'], Package['socat']],
+       try_sleep => 5,
+       tries     => 60,
+     }
+ 
+     Exec<| title == 'wait-for-synced-state' |> -> Exec['wait-for-haproxy-mysql-backend']
+     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'initial-db-sync' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'keystone-manage db_sync' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'glance-manage db_sync' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'cinder-manage db_sync' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Exec<| title == 'nova-db-sync' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-scheduler' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-volume' |>
+     Exec['wait-for-haproxy-mysql-backend'] -> Service <| title == 'cinder-api' |>
+   }
 
     class { '::openstack::controller':
       public_address          => $public_virtual_ip,
@@ -306,7 +308,7 @@ class openstack::controller_ha (
       verbose                 => $verbose,
       auto_assign_floating_ip => $auto_assign_floating_ip,
       mysql_root_password     => $mysql_root_password,
-      custom_mysql_setup_class=> 'galera',
+      custom_mysql_setup_class=> $custom_mysql_setup_class,
       galera_cluster_name     => 'openstack',
       primary_controller      => $primary_controller,
       galera_node_address     => $internal_address,
