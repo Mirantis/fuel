@@ -13,7 +13,18 @@ class quantum::server (
   include 'quantum::params'
 
   require 'keystone::python'
-
+  case $::osfamily
+  {
+    'Debian':
+      {
+       file { "/etc/init/quantum-server.override":
+         replace => "no",
+         ensure  => "present",
+         content => "manual",
+         mode    => 644,
+       }
+      }
+  }
   if $::quantum::params::server_package {
     $server_package = 'quantum-server'
 

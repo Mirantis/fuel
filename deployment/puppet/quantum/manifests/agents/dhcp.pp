@@ -16,6 +16,19 @@ class quantum::agents::dhcp (
   $auth_password    = 'password') {
   include 'quantum::params'
 
+  case $::osfamily
+  {
+    'Debian':
+      {
+       file { "/etc/init/quantum-dhcp-agent.override":
+         replace => "no",
+         ensure  => "present",
+         content => "manual",
+         mode    => 644,
+       }
+      }
+  }
+
   if $::quantum::params::dhcp_agent_package {
     Package['quantum'] -> Package['quantum-dhcp-agent']
 
