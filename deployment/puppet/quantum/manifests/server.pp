@@ -23,6 +23,13 @@ class quantum::server (
          content => "manual",
          mode    => 644,
        }
+
+       file { "/etc/init/quantum-metadata-agent.override":
+         replace => "no",
+         ensure  => "present",
+         content => "manual",
+         mode    => 644,
+       }
       }
   }
   if $::quantum::params::server_package {
