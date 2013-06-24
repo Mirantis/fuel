@@ -33,6 +33,8 @@ Next you'll need to set OpenStack's networking information::
      fixed_range: 172.16.0.0/16
      floating_range: 192.168.0.0/24
 
+NOTE: The network range configured for fixed_range allows for communications between VM nodes and is not meant to allow public or private network access. 
+
 Change the virtual IPs to match the target networks, and set the fixed and floating ranges. ::
 
      swift_loopback: loopback

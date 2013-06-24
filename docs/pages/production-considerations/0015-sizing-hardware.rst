@@ -15,7 +15,7 @@ Your needs in each of these areas are going to determine your overall hardware r
 CPU
 ^^^
 
-The basic consideration when it comes to CPU is how many GHZ you're going to need.  To determine that, think about how many VMs you plan to support, and the average speed you plan to provide, as well as the maximum you plan to provide for a single VM.  For example, consider a situation in which you expect:
+The basic consideration when it comes to CPU is how many GHz you're going to need.  To determine that, think about how many VMs you plan to support, and the average speed you plan to provide, as well as the maximum you plan to provide for a single VM.  For example, consider a situation in which you expect:
 
 * 100 VMs
 * 2 EC2 compute units (2 GHz) average
