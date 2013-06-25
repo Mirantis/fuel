@@ -4,9 +4,9 @@ let numd=\$#/2
 d1=\$1
 d2=\$3
 /usr/sbin/parted -s /dev/\$d1 mklabel gpt
-/usr/sbin/parted -s /dev/\$d1 mkpart primary 0 1M
+/usr/sbin/parted -s /dev/\$d1 mkpart primary 0 24M
 /usr/sbin/parted -s /dev/\$d1 set 1 bios_grub on
-/usr/sbin/parted -s /dev/\$d1 mkpart primary 1M 128M
+/usr/sbin/parted -s /dev/\$d1 mkpart primary 24M 128M
 cat << EOF > /tmp/partinfo
 part / --fstype ext3 --size=1024 --grow --ondisk=\$d1 --asprimary
 part swap --recommended --ondisk=\$d1 --asprimary
