@@ -17,13 +17,6 @@ class quantum::server (
   {
     'Debian':
       {
-       file { "/etc/init/quantum-server.override":
-         replace => "no",
-         ensure  => "present",
-         content => "manual",
-         mode    => 644,
-       }
-
        file { "/etc/init/quantum-metadata-agent.override":
          replace => "no",
          ensure  => "present",
