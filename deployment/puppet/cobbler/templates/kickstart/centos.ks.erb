@@ -85,22 +85,7 @@ $SNIPPET('kickstart_start')
 # INTO KICKSTART BY 'network_config' SNIPPET
 $SNIPPET('pre_install_network_config')
 
-#$SNIPPET('pre_partition_select')
-# We`re commenting out this snippet because it included in the package
-# Determine how many drives we have
-set \$(list-harddrives)
-let numd=\$#/2
-d1=\$1
-d2=\$3
-/usr/sbin/parted -s /dev/\$d1 mklabel gpt
-/usr/sbin/parted -s /dev/\$d1 mkpart primary 0 1M
-/usr/sbin/parted -s /dev/\$d1 set 1 bios_grub on
-/usr/sbin/parted -s /dev/\$d1 mkpart primary 1M 128M
-cat << EOF > /tmp/partinfo
-part / --fstype ext3 --size=1024 --grow --ondisk=\$d1 --asprimary
-part swap --recommended --ondisk=\$d1 --asprimary
-EOF
-
+$SNIPPET('rhel_gpt')
 
 # PACKAGES SECTION
 # HERE ARE LIST OF PACKAGES THAT WILL BE INSTALLED
