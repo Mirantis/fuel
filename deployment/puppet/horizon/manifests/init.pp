@@ -56,12 +56,6 @@ class horizon(
     require => Package[$::horizon::params::http_service],
   }
 
-  File {
-    require => Package['dashboard'],
-    owner   => $wsgi_user,
-    group   => $wsgi_group,
-  }
-
   file { $::horizon::params::local_settings_path:
     content => template('horizon/local_settings.py.erb'),
     mode    => '0644',
@@ -122,6 +116,8 @@ class horizon(
   file { $::horizon::params::logdir:
     ensure  => directory,
     mode    => '0751',
+    owner   => $wsgi_user,
+    group   => $wsgi_group,
     before  => Service['httpd'],
   }
 

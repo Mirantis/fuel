@@ -29,6 +29,19 @@ class quantum::agents::l3 (
 ) {
   include 'quantum::params'
 
+  case $::osfamily
+  {
+    'Debian':
+      {
+       file { "/etc/init/quantum-l3-agent.override":
+         replace => "no",
+         ensure  => "present",
+         content => "manual",
+         mode    => 644,
+       }
+      }
+  }
+
   if $::quantum::params::l3_agent_package {
     Package['quantum'] -> Package['quantum-l3']
     $l3_agent_package = 'quantum-l3'

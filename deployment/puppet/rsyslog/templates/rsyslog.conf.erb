@@ -42,6 +42,12 @@ $ActionQueueWorkerThreads 2
 $ActionQueueDequeueBatchSize 128
 
 #
+# Increase limit of processed messages` size
+#
+
+$MaxMessageSize 32k
+
+#
 # Include all config files in <%= scope.lookupvar('rsyslog::params::rsyslog_d') %>
 #
 $IncludeConfig <%= scope.lookupvar('rsyslog::params::rsyslog_d') -%>*.conf
