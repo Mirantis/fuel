@@ -28,11 +28,10 @@ class openstack::mirantis_repos (
         stage => $::openstack::mirantis_repos::stage
       }
 
-#      apt::pin { 'mirantis-releases':
-#        order      => 20,
-#        priority   => 1001,
-#        originator => $originator
-#      }
+      apt::pin { 'mirantis-releases':
+        order      => 20,
+        priority   => 1001,
+      }
 
       if $use_upstream_mysql {
         apt::pin { 'upstream-mysql':
@@ -54,74 +53,30 @@ class openstack::mirantis_repos (
 
       Apt::Source <| |> -> Apt::Pin <| |>
 
-  	if $type == 'default' {
-
-	    apt::source { 'cloud-archive':
-        	location    => 'http://ubuntu-cloud.archive.canonical.com/ubuntu',
-        	release     => 'precise-updates/grizzly',
-        	repos       => 'main',
-        	key => '5EDB1B62EC4926EA',
-        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
-        	key_server => 'keys.gnupg.net',
-        	include_src => false,
-    	    }
-
-    	    apt::source { 'precise-fuel-grizzly':
-        	location    => 'http://download.mirantis.com/precise-fuel-grizzly',
-        	release     => 'precise',
-        	repos       => 'main',
-        	key         => 'F8AF89DD',
-        	key_source  => 'http://download.mirantis.com/precise-fuel-folsom/cloud-archive.key',
-        	include_src => false,
-    	    }
-        apt::source { 'rabbit-3.0':
-          location    => 'http://download.mirantis.com/precise-fuel-folsom',
-          release     => 'precise-rabbitmq-3.0',
+      if $type == 'default' {
+        apt::source { 'mirantis-releases':
+          location    => 'http://download.mirantis.com/precise-fuel-grizzly',
+          release     => 'precise',
           repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://download.mirantis.com/precise-fuel-folsom/Mirantis.key',
+          key         => 'F8AF89DD',
+          key_source  => 'http://download.mirantis.com/precise-fuel-grizzly/Mirantis.key',
           include_src => false,
         }
       }
 
       # Below we set our internal repos for testing purposes. Some of them may match with external ones.
       if $type == 'custom' {
-        
-        apt::pin { 'precise-fuel-grizzly':
+        apt::pin { 'mirantis-releases':
           order      => 19,
           priority   => 1001,
-          }
-
-        apt::pin { 'cloud-archive':
-            order      => 20,
-            priority   => 1002,
         }
 
-        apt::source { 'cloud-archive':
-          location    => $deb_cloud_archive_repo,
-          release     => 'precise-updates/grizzly',
-          repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom/cloud-archive.key',
-          # key_server   => "pgp.mit.edu",
-          include_src => false,
-        }
-
-        apt::source { 'precise-fuel-grizzly':
-          location    => $deb_fuel_grizzly_repo,
-          release     => 'precise-3.0',
+        apt::source { 'mirantis-releases':
+          location    => 'http://172.18.67.168/ubuntu-repo/precise-fuel-grizzly',
+          release     => 'precise',
           repos       => 'main',
           key         => 'F8AF89DD',
-          key_source  => 'http://osci-gbp.srt.mirantis.net/ubuntu/key.gpg',
-          include_src => false,
-        }
-
-        apt::source { 'rabbit-3.0':
-          location    => $deb_rabbit_repo,
-          release     => 'precise-rabbitmq-3.0',
-          repos       => 'main',
-          key         => '5EDB1B62EC4926EA',
-          key_source  => 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom/Mirantis.key',
+          key_source  => 'http://172.18.67.168/ubuntu-repo/precise-fuel-grizzly/Mirantis.key',
           include_src => false,
         }
 
@@ -170,7 +125,7 @@ class openstack::mirantis_repos (
 
       # added internal (custom)/external (default) network mirror
       if $type == 'default' {
-        
+
         yumrepo { 'centos-base':
             descr      => 'Mirantis-CentOS-Base',
             name       => 'base',
@@ -257,7 +212,6 @@ class openstack::mirantis_repos (
           gpgcheck       => 1,
           enabled        => 1,
         }
-
         yumrepo { 'epel-testing':
           descr      => 'Extra Packages for Enterprise Linux 6 - Testing - $basearch',
           mirrorlist => 'http://mirrors.fedoraproject.org/metalink?repo=testing-epel6&arch=$basearch',
@@ -290,3 +244,5 @@ class openstack::mirantis_repos (
     }
   }
 }
+
+

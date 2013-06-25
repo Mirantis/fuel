@@ -37,6 +37,7 @@ class quantum::agents::ovs (
     skip_existing => true,
   # require      => Service['quantum-plugin-ovs-service'],
   }
+  
 
   if $enable_tunneling {
     l23network::l2::bridge { $tunnel_bridge:
@@ -151,7 +152,6 @@ class quantum::agents::ovs (
       hasrestart => false,
       provider   => $service_provider,
     }
-
   } else {
     service { 'quantum-plugin-ovs-service':
       name       => $::quantum::params::ovs_agent_service,
@@ -164,14 +164,14 @@ class quantum::agents::ovs (
   }
   Class[quantum::waistline] -> Service[quantum-plugin-ovs-service]
   Package[$ovs_agent_package] -> Service[quantum-plugin-ovs-service]
-
-  service { 'quantum-ovs-agent-cleanup':
-    name       => 'quantum-ovs-cleanup',
-    enable     => $enabled,
-    ensure     => false,
-    hasstatus  => false,
-    hasrestart => false,
+  if $::osfamily == "RedHat" {
+    service { 'quantum-ovs-agent-cleanup':
+      name       => 'quantum-ovs-cleanup',
+      enable     => $enabled,
+      ensure     => false,
+      hasstatus  => false,
+      hasrestart => false,
+    }
+    Service['quantum-plugin-ovs-service'] -> Service['quantum-ovs-agent-cleanup']
   }
-  Service['quantum-plugin-ovs-service'] -> Service['quantum-ovs-agent-cleanup']
-
 }
