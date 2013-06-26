@@ -154,7 +154,8 @@ class openstack::controller_ha (
     }
 
     if $queue_provider == 'rabbitmq' {
-      Class['keepalived'] -> Class ['nova::rabbitmq']
+      #Class['keepalived'] -> Class ['nova::rabbitmq']
+      Cs_resource['internal-vip'] -> Class ['nova::rabbitmq']
     }
 
     haproxy_service { 'horizon':    order => 15, port => 80, virtual_ips => [$public_virtual_ip], define_cookies => true  }
@@ -207,32 +208,61 @@ class openstack::controller_ha (
       path    => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
     }
 
-    if $primary_controller {
-      exec { 'create-public-virtual-ip':
-        command => "ip addr add ${public_virtual_ip} dev ${public_interface} label ${public_interface}:ka",
-        unless  => "ip addr show dev ${public_interface} | grep -w ${public_virtual_ip}",
-        path    => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
-        before  => Service['keepalived'],
-        require => Exec['up-public-interface'],
-      }
-    }
+#    if $primary_controller {
+#      exec { 'create-public-virtual-ip':
+#        command => "ip addr add ${public_virtual_ip} dev ${public_interface} label ${public_interface}:ka",
+#        unless  => "ip addr show dev ${public_interface} | grep -w ${public_virtual_ip}",
+#        path    => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
+#        before  => Service['keepalived'],
+#        require => Exec['up-public-interface'],
+#      }
+#       
+#    }
+#
+#    keepalived_dhcp_hook {$public_interface:interface=>$public_interface}
+#    if $internal_interface != $public_interface {
+#      keepalived_dhcp_hook {$internal_interface:interface=>$internal_interface}
+#    }
+#
+#    Keepalived_dhcp_hook<| |> {before =>Service['keepalived']}
+#
+#    if $primary_controller {
+#      exec { 'create-internal-virtual-ip':
+#        command => "ip addr add ${internal_virtual_ip} dev ${internal_interface} label ${internal_interface}:ka",
+#        unless  => "ip addr show dev ${internal_interface} | grep -w ${internal_virtual_ip}",
+#        path    => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
+#        before  => Service['keepalived'],
+#        require => Exec['up-internal-interface'],
+#      }
+#    }
+    cs_shadow { 'internal-vip': cib => 'internal-vip' }
 
-    keepalived_dhcp_hook {$public_interface:interface=>$public_interface}
-    if $internal_interface != $public_interface {
-      keepalived_dhcp_hook {$internal_interface:interface=>$internal_interface}
+    cs_resource { 'internal-vip':
+      primitive_class => 'ocf',
+      primitive_type  => 'IPaddr2',
+      provided_by     => 'heartbeat',
+      parameters      => { 'ip' => $internal_virtual_ip, 'cidr_netmask' => '24',
+                           'nic' => $internal_interface },
+      operations      => { 'monitor' => { 'interval' => '15s' } },
     }
+    
+    cs_commit { 'internal-vip': cib => "internal-vip" }
 
-    Keepalived_dhcp_hook<| |> {before =>Service['keepalived']}
+    cs_shadow { 'public-vip': cib => 'public-vip' }
 
-    if $primary_controller {
-      exec { 'create-internal-virtual-ip':
-        command => "ip addr add ${internal_virtual_ip} dev ${internal_interface} label ${internal_interface}:ka",
-        unless  => "ip addr show dev ${internal_interface} | grep -w ${internal_virtual_ip}",
-        path    => ['/usr/bin', '/usr/sbin', '/sbin', '/bin'],
-        before  => Service['keepalived'],
-        require => Exec['up-internal-interface'],
-      }
+    cs_resource { 'public-vip':
+      primitive_class => 'ocf',
+      primitive_type  => 'IPaddr2',
+      provided_by     => 'heartbeat',
+      parameters      => { 'ip' => $public_virtual_ip, 'cidr_netmask' => '24',
+                           'nic' => $public_interface },
+      operations      => { 'monitor' => { 'interval' => '15s' } },
     }
+    
+    cs_commit { 'public-vip': cib => "public-vip" }
+
+    #Order dependencies
+    Cs_resource['internal-vip'] -> Cs_resource['public-vip'] -> Class['openstack::controller']
     sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
     class { 'haproxy':
@@ -249,27 +279,27 @@ class openstack::controller_ha (
 #        before => Service['keepalived'],
 #        require => Class['::openstack::firewall']
 #    }
-
-    # keepalived
-    $public_vrid   = $::deployment_id
-    $internal_vrid = $::deployment_id + 1
-
-    class { 'keepalived':
-      require => Class['haproxy'] ,
-    }
-
-    keepalived::instance { $public_vrid:
-      interface => $public_interface,
-      virtual_ips => [$public_virtual_ip],
-      state    => $primary_controller ? { true => 'MASTER', default => 'BACKUP' },
-      priority => $primary_controller ? { true => 101,      default => 100      },
-    }
-    keepalived::instance { $internal_vrid:
-      interface => $internal_interface,
-      virtual_ips => [$internal_virtual_ip],
-      state    => $primary_controller ? { true => 'MASTER', default => 'BACKUP' },
-      priority => $primary_controller ? { true => 101,      default => 100      },
-    }
+#
+#    # keepalived
+#    $public_vrid   = $::deployment_id
+#    $internal_vrid = $::deployment_id + 1
+#
+#    class { 'keepalived':
+#      require => Class['haproxy'] ,
+#    }
+#
+#    keepalived::instance { $public_vrid:
+#      interface => $public_interface,
+#      virtual_ips => [$public_virtual_ip],
+#      state    => $primary_controller ? { true => 'MASTER', default => 'BACKUP' },
+#      priority => $primary_controller ? { true => 101,      default => 100      },
+#    }
+#    keepalived::instance { $internal_vrid:
+#      interface => $internal_interface,
+#      virtual_ips => [$internal_virtual_ip],
+#      state    => $primary_controller ? { true => 'MASTER', default => 'BACKUP' },
+#      priority => $primary_controller ? { true => 101,      default => 100      },
+#    }
    if ( $custom_mysql_setup_class == 'galera' ) {
      Class['haproxy'] -> Class['galera']
      package { 'socat': ensure => present }
@@ -344,7 +374,7 @@ class openstack::controller_ha (
       db_host                 => $internal_virtual_ip,
       service_endpoint        => $internal_virtual_ip,
       glance_backend          => $glance_backend,
-      require                 => Service['keepalived'],
+      #require                 => Service['keepalived'],
       quantum                 => $quantum,
       quantum_user_password   => $quantum_user_password,
       quantum_db_password     => $quantum_db_password,
