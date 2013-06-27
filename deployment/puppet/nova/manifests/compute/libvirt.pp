@@ -90,9 +90,8 @@ class nova::compute::libvirt (
                command => "virsh secret-define --file /tmp/secret.xml",
        }
        exec { 'define-secret':
-    		require => [ File['secret.xml'],Service['libvirt'],Exec['add-secret']],
+    		require => [ File['secret.xml'],Service['libvirt'],Exec['add-secret'],Exec['ceph-admin-key'],Service[nova-compute]],
     		command => "virsh secret-set-value --secret ${secret_uuid} --base64 `ceph auth get-key client.${rbd_user}`",
-    		require => Exec['ceph-admin-key'],
        }
    }
                                            
