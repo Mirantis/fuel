@@ -10,6 +10,7 @@ SITE_PPS = {
     :ha_minimal.to_s => '/etc/puppet/modules/openstack/examples/site_openstack_ha_minimal.pp',
     :multinode_compute.to_s => '/etc/puppet/modules/openstack/examples/site_openstack_simple.pp',
     :singlenode_compute.to_s => '/etc/puppet/modules/openstack/examples/site_openstack_single.pp',
+    :multinode_ceph.to_s => '/etc/puppet/modules/openstack/examples/site_openstack_ceph.pp',
 }
 
 class Template
@@ -266,6 +267,47 @@ class ConfigYaml
   def quantum_netnode_on_cnt()
     self.obligatory('quantum_netnode_on_cnt')
   end
+
+  def ceph_enabled()
+    self.obligatory('ceph_enable')
+  end
+
+  def ceph_mon_secret()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['mon_secret']
+    end
+  end
+
+  def ceph_fsid()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['fsid']
+    end
+  end
+
+  def ceph_rbd_user()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['rbd_user']
+    end
+  end
+
+  def ceph_use_rbd()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['use_rbd']
+    end
+  end
+
+  def ceph_cinder_rbd_user()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['cinder_rbd_user']
+    end
+  end
+
+  def ceph_cinder_rbd_uuid()
+    if self.ceph_enabled()
+      self.mandatory('ceph_common')['cinder_rbd_uuid']
+    end
+  end
+
 end
 
 class Manifest
@@ -298,7 +340,13 @@ class Manifest
                      :internal_netmask => config.internal_netmask(),
                      :network_manager => config.network_manager(),
                      :auto_assign_floating_ip => config.auto_assign_floating_ip(),
-                     :quantum_netnode_on_cnt=> config.quantum_netnode_on_cnt()
+                     :quantum_netnode_on_cnt=> config.quantum_netnode_on_cnt(),
+                     :mon_secret      => config.ceph_mon_secret(),
+                     :fsid            => config.ceph_fsid(),
+                     :rbd_user        => config.ceph_rbd_user(),
+                     :use_rbd         => config.ceph_use_rbd(),
+                     :cinder_rbd_user => config.ceph_cinder_rbd_user(),
+                     :cinder_rbd_uuid => config.ceph_cinder_rbd_uuid()
     )
     if config.swift()
       template.replace(:swift_loopback => config.swift_loopback()) unless config.swift_loopback().nil?
