@@ -92,6 +92,7 @@ class nova::compute::libvirt (
        exec { 'define-secret':
     		require => [ File['secret.xml'],Service['libvirt'],Exec['add-secret']],
     		command => "virsh secret-set-value --secret ${secret_uuid} --base64 `ceph auth get-key client.${rbd_user}`",
+    		require => Exec['ceph-admin-key'],
        }
    }
                                            

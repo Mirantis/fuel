@@ -10,7 +10,7 @@ if $primary_node {
     if $pool2 == 'none' {
 	    exec { "ceph-permissions-set-${name}":
 		command => "ceph auth get-or-create client.${name} mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=${name}'",
-    		require => Package['ceph'],
+    		require => Exec['ceph-admin-key'],
     		creates => "/etc/ceph/client.${name}.keyring",
 	    }
 	    ->
@@ -23,7 +23,7 @@ if $primary_node {
     } else {
             exec { "ceph-permissions-set-${name}":
                 command => "ceph auth get-or-create client.${name} mon 'allow r' osd 'allow class-read object_prefix rbd_children, allow rwx pool=${name}, allow rx pool=${pool2}'",
-                require => Package['ceph'],
+                require => Exec['ceph-admin-key'],
                 creates => "/etc/ceph/client.${name}.keyring",
             }
             ->
@@ -35,14 +35,15 @@ if $primary_node {
     	    }
     	    
     }
+    ceph::conf::client { $name: }
     if $create_pool == 'yes' {
 	exec { "ceph-pool-create-${name}":
 	    command => "ceph osd pool create ${name} ${pg_num}",
-	    require => Package['ceph'],
+	    require => Exec['ceph-admin-key'],
 	}
 	exec { "ceph-pool-set-replicas-${name}":
 	    command => "ceph osd pool set ${name} size ${replicas}",
-	    require => [Package['ceph'],Exec["ceph-pool-create-${name}"]],
+	    require => Exec["ceph-pool-create-${name}"],
 	}
     }
 } else {

@@ -16,22 +16,22 @@ Exec {
 # This section sets main parameters such as hostnames and IP addresses of different nodes
 
 # This is the name of the public interface. The public network provides address space for Floating IPs, as well as public IP accessibility to the API endpoints.
-$public_interface = "eth1"
+$public_interface = "eth0"
 $public_br           = 'br-ex'
 
 # This is the name of the internal interface. It will be attached to the management network, where data exchange between components of the OpenStack cluster will happen.
-$internal_interface = "eth0"
+$internal_interface = "eth1"
 $internal_br         = 'br-mgmt'
 
 # This is the name of the private interface. All traffic within OpenStack tenants' networks will go through this interface.
 $private_interface = "eth2"
 
 # Public and Internal VIPs. These virtual addresses are required by HA topology and will be managed by keepalived.
-$internal_virtual_ip = "10.0.0.127"
+$internal_virtual_ip = "10.10.10.127"
 # Change this IP to IP routable from your 'public' network,
 # e. g. Internet or your office LAN, in which your public 
 # interface resides
-$public_virtual_ip = "172.18.125.127"
+$public_virtual_ip = "192.168.122.127"
 
 $nodes_harr = [
   {
@@ -91,15 +91,15 @@ $nodes_harr = [
   },
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 4,"ceph_osd" => ["/dev/sdb"]}]
-$default_gateway = "172.18.125.1"
+$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.10.10.201","name" => "fuel-controller-01","storage_local_net_ip" => "10.10.10.201","public_address" => "192.168.122.201","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb"]},{"internal_address" => "10.10.10.202","name" => "fuel-controller-02","storage_local_net_ip" => "10.10.10.202","public_address" => "192.168.122.202","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb"]},{"internal_address" => "10.10.10.203","name" => "fuel-controller-03","storage_local_net_ip" => "10.10.10.203","public_address" => "192.168.122.203","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb"]},{"internal_address" => "10.10.10.204","name" => "fuel-compute-01","public_address" => "192.168.122.204","role" => "compute", "ceph_zone" => 4}]
+$default_gateway = "192.168.122.1"
 
 # Specify nameservers here.
 # Need points to cobbler node IP, or to special prepared nameservers if you known what you do.
-$dns_nameservers = ["10.0.0.100","8.8.8.8"]
+$dns_nameservers = ["192.168.122.99","8.8.8.8"]
 
 # Specify netmasks for internal and external networks.
-$internal_netmask = "255.255.0.0"
+$internal_netmask = "255.255.255.0"
 $public_netmask = "255.255.255.0"
 
 
@@ -181,10 +181,10 @@ $quantum_netnode_on_cnt = true
 $create_networks = true
 
 # Fixed IP addresses are typically used for communication between VM instances.
-$fixed_range = "192.168.0.0/16"
+$fixed_range = "10.11.11.0/24"
 
 # Floating IP addresses are used for communication of VM instances with the outside world (e.g. Internet).
-$floating_range = "172.18.125.0/24"
+$floating_range = "192.168.122.0/24"
 
 # These parameters are passed to the previously specified network manager , e.g. nova-manage network create.
 # Not used in Quantum.
@@ -207,7 +207,7 @@ $quantum_gre_bind_addr = $internal_address
 # the first address will be defined as an external default router,
 # the second address will be attached to an uplink bridge interface,
 # the remaining addresses will be utilized for the floating IP address pool.
-$external_ipinfo = {"public_net_router" => "172.18.125.1","pool_end" => "172.18.125.239","ext_bridge" => "172.18.125.126","pool_start" => "172.18.125.235"}
+$external_ipinfo = {"public_net_router" => "192.168.122.1","pool_end" => "192.168.122.239","ext_bridge" => "192.168.122.126","pool_start" => "192.168.122.235"}
 ## $external_ipinfo = {
 ##   'public_net_router' => '10.0.74.129',
 ##   'ext_bridge'        => '10.0.74.130',
@@ -407,9 +407,9 @@ if $use_syslog {
 ### Syslog END ###
 case $::osfamily {
     "Debian":  {
-#       $rabbitmq_version_string = '2.8.7-1'
+       $rabbitmq_version_string = '2.8.7-1'
 #       $rabbitmq_version_string = '3.1.1-1'
-	$rabbitmq_version_string = '3.0.2-1'
+#	$rabbitmq_version_string = '3.0.2-1'
     }
     "RedHat": {
        $rabbitmq_version_string = '2.8.7-2.el6'
@@ -658,14 +658,6 @@ node /fuel-controller-[\d+]/ {
 
 #  Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
 
-if $primary_proxy {
-    if !empty($::ceph_admin_key) {
-      @@ceph::key { 'admin':
-        secret       => $::ceph_admin_key,
-        keyring_path => '/etc/ceph/keyring',
-      }
-    }
-}
     $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
     $i1 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\1')
     $i2 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\2')
@@ -676,10 +668,6 @@ if $primary_proxy {
     $p3 = regsubst($controller_public_addresses[$::hostname], $ipre, '\3')
     $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
                     
-    if $primary_controller {
-	ceph::conf::client { $glance_pool: }
-	ceph::conf::client { $cinder_pool: }
-    }
 
     ceph::rolemon {$controller_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
@@ -689,7 +677,7 @@ if $primary_proxy {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
+
    ceph::osd::deploy_array { "osd array on ${::hostname}":
         osd_id  => $controller_ceph_zone[$::hostname],
 #        osd_fs => "btrfs",
@@ -698,18 +686,24 @@ if $primary_proxy {
         public_addr  => $controller_internal_addresses[$::hostname],
         osd_dev => $controller_ceph_osd[$::hostname],
     }
-    ->
+
     ceph::client { $glance_pool:
         create_pool => 'yes',
         primary_node => $primary_controller,
     }
-    ->
+
     ceph::client { $cinder_pool:
         create_pool => 'yes',
         pool2 => $glance_pool,
         primary_node => $primary_controller,
     }
-    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
+    
+    ceph::radosgw { 'RadosGW config':
+	use_keystone => "true",
+	keystone_url => "${internal_virtual_ip}:5000",
+	keystone_admin_key => $keystone_admin_token,
+    }
+#    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
 
 
 }
@@ -800,16 +794,6 @@ node /fuel-compute-[\d+]/ {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
-   ceph::osd::deploy_array { "osd array on ${::hostname}":
-        osd_id  => $computes_ceph_zone[$::hostname],
-#        osd_fs => "btrfs",
-#       raid => 0,
-        cluster_addr => $computes_internal_addresses[$::hostname],
-        public_addr  => $computes_internal_addresses[$::hostname],
-        osd_dev => $computes_ceph_osd[$::hostname],
-    }
-           
 }
 
 # Definition of OpenStack Quantum node.

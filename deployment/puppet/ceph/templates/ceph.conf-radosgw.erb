@@ -1,15 +1,15 @@
 [client.radosgw.gateway]
   host = <%= hostname %>
-  user = apache
-  keyring = /etc/ceph/keyring.radosgw.gateway
+  user = <%= @apache_user %>
+  keyring = <%= @keyring_path %>
   log file = /var/log/ceph/radosgw.log
   rgw data = <%= @datadir %>
   gw dns name = <%= hostname %>
-<% if has_variable?("use_keystone") %>< % then %>
+<% if has_variable?("use_keystone") %><% then %>
   rgw keystone url = <%= @keystone_url %>
   rgw keystone admin token = <%= @keystone_admin_key %>
-  rgw keystone accepted roles = <% @roles %>
+  rgw keystone accepted roles = <%= @roles %>
   rgw keystone token cache size = 10
   rgw keystone revocation interval = 60
-  nss db path = <% @nss_db_path %>
+  nss db path = <%= @nss_db_path %>
 <% end %>

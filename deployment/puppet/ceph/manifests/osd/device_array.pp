@@ -22,7 +22,7 @@
 	unless  => "ceph osd dump | grep `/sbin/blkid ${name}1 -o value -s UUID`",
 #       unless  => "parted --script ${name} print|grep -sq 'gpt'",
 #	unless  => "parted --script ${name} print|grep -sq 'Partition Table: gpt'",
-        require => Package['parted']
+        require => [Package['parted'],Exec['ceph-admin-key']],
       }
 
       exec { "mkpart_${name}":
