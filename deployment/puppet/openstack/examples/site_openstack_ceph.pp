@@ -1,7 +1,7 @@
 #
 # Parameter values in this file should be changed, taking into consideration your
 # networking setup and desired OpenStack settings.
-#
+# 
 # Please consult with the latest Fuel User Guide before making edits.
 #
 
@@ -33,7 +33,7 @@ $public_virtual_ip = "172.18.125.127"
 $mon_secret      = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
 $fsid            = 'f460ab38-e02d-4c42-ae5b-fdbbe46022b7'
 $rbd_user        = "admin"
-$use_rbd         = 'yes',
+$use_rbd         = 'yes'
 $cinder_rbd_user = "admin"
 $cinder_rbd_uuid = "143b14f0-54ba-4c21-ba11-8b08c33c5375"
 
@@ -403,9 +403,7 @@ if $use_syslog {
 ### Syslog END ###
 case $::osfamily {
     "Debian":  {
-#       $rabbitmq_version_string = '2.8.7-1'
-#       $rabbitmq_version_string = '3.1.1-1'
-	$rabbitmq_version_string = '3.0.2-1'
+       $rabbitmq_version_string = '2.8.7-1'
     }
     "RedHat": {
        $rabbitmq_version_string = '2.8.7-2.el6'
@@ -654,14 +652,6 @@ node /fuel-controller-[\d+]/ {
 
 #  Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
 
-if $primary_proxy {
-    if !empty($::ceph_admin_key) {
-      @@ceph::key { 'admin':
-        secret       => $::ceph_admin_key,
-        keyring_path => '/etc/ceph/keyring',
-      }
-    }
-}
     $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
     $i1 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\1')
     $i2 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\2')
@@ -672,10 +662,6 @@ if $primary_proxy {
     $p3 = regsubst($controller_public_addresses[$::hostname], $ipre, '\3')
     $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
 
-    if $primary_controller {
-	ceph::conf::client { $glance_pool: }
-	ceph::conf::client { $cinder_pool: }
-    }
 
     ceph::rolemon {$controller_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
@@ -685,7 +671,7 @@ if $primary_proxy {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
+
    ceph::osd::deploy_array { "osd array on ${::hostname}":
         osd_id  => $controller_ceph_zone[$::hostname],
 #        osd_fs => "btrfs",
@@ -694,18 +680,24 @@ if $primary_proxy {
         public_addr  => $controller_internal_addresses[$::hostname],
         osd_dev => $controller_ceph_osd[$::hostname],
     }
-    ->
+
     ceph::client { $glance_pool:
         create_pool => 'yes',
         primary_node => $primary_controller,
     }
-    ->
+
     ceph::client { $cinder_pool:
         create_pool => 'yes',
         pool2 => $glance_pool,
         primary_node => $primary_controller,
     }
-    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
+    
+    ceph::radosgw { 'RadosGW config':
+	use_keystone => "true",
+	keystone_url => "${internal_virtual_ip}:5000",
+	keystone_admin_key => $keystone_admin_token,
+    }
+#    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
 
 
 }
@@ -796,16 +788,6 @@ node /fuel-compute-[\d+]/ {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
-   ceph::osd::deploy_array { "osd array on ${::hostname}":
-        osd_id  => $computes_ceph_zone[$::hostname],
-#        osd_fs => "btrfs",
-#       raid => 0,
-        cluster_addr => $computes_internal_addresses[$::hostname],
-        public_addr  => $computes_internal_addresses[$::hostname],
-        osd_dev => $computes_ceph_osd[$::hostname],
-    }
-
 }
 
 # Definition of OpenStack Quantum node.
