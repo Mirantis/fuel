@@ -13,6 +13,9 @@
 #   Defaults to false.
 # [fixed_range] Range of ipv4 network for vms.
 # [network_manager] Nova network manager to use.
+# [auto_assign_floating_ip] Rather configured to automatically allocate and
+#   assign a floating IP address to virtual instances when they are launched.
+#   Defaults to false.
 # [multi_host] Rather node should support multi-host networking mode for HA.
 #   Optional. Defaults to false.
 # [network_config] Hash that can be used to pass implementation specifc
@@ -63,7 +66,7 @@ class openstack::compute (
   $rabbit_user                   = 'nova',
   $rabbit_ha_virtual_ip          = false,
   # Glance
-  $glance_api_servers            = false,
+  $glance_api_servers            = undef,
   # Virtualization
   $libvirt_type                  = 'kvm',
   # VNC
@@ -72,6 +75,7 @@ class openstack::compute (
   # General
   $enabled                       = true,
   $multi_host                    = false,
+  $auto_assign_floating_ip       = false,
   $network_config                = {},
   $public_interface,
   $private_interface,
@@ -105,7 +109,8 @@ class openstack::compute (
   $use_syslog              = false,
   $nova_rate_limits = undef,
   $cinder_rate_limits = undef,
-  $create_networks = false
+  $create_networks = false,
+  $state_path              = '/var/lib/nova'
 ) {
 
   #
@@ -170,6 +175,7 @@ class openstack::compute (
       use_syslog           => $use_syslog,
       api_bind_address     => $internal_address,
       rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      state_path           => $state_path,
   }
 
   #Cinder setup
@@ -185,6 +191,7 @@ class openstack::compute (
         physical_volume      => $nv_physical_volume,
         manage_volumes       => $manage_volumes,
         enabled              => true,
+        glance_api_servers   => $glance_api_servers,
         auth_host            => $service_endpoint,
         bind_host            => false,
         iscsi_bind_host      => $cinder_iscsi_bind_addr,
@@ -219,9 +226,9 @@ class openstack::compute (
       }
     }
     if !defined(Package[$scp_package]) {
-      package {$scp_package: ensure => present } 
+      package {$scp_package: ensure => present }
     }
- 
+
   if ( $ssh_private_key != undef ) {
    file { '/var/lib/nova/.ssh':
       ensure => directory,
@@ -259,7 +266,7 @@ class openstack::compute (
     }
   }
 
-  # configure nova api 
+  # configure nova api
   class { 'nova::api':
     ensure_package    => $::openstack_version['nova'],
     enabled           => true,
@@ -294,6 +301,11 @@ class openstack::compute (
       }
 
       $enable_network_service = true
+
+      if $auto_assign_floating_ip {
+         nova_config { 'DEFAULT/auto_assign_floating_ip': value => 'True' }
+      }
+
 
     } else {
       $enable_network_service = false

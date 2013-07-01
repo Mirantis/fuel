@@ -150,7 +150,7 @@ class openstack::controller_ha (
 
     file { '/etc/rsyslog.d/haproxy.conf':
       ensure => present,
-      content => 'local0.* -/var/log/haproxy.log'
+      content => "local0.* -/var/log/haproxy.log \nlocal1.* -/var/log/horizon.log"
     }
     Class['keepalived'] -> Class ['nova::rabbitmq']
     haproxy_service { 'horizon':    order => 15, port => 80, virtual_ips => [$public_virtual_ip], define_cookies => true  }
@@ -312,6 +312,7 @@ class openstack::controller_ha (
       keystone_admin_tenant   => $keystone_admin_tenant,
       glance_db_password      => $glance_db_password,
       glance_user_password    => $glance_user_password,
+      glance_api_servers      => $glance_api_servers,
       nova_db_password        => $nova_db_password,
       nova_user_password      => $nova_user_password,
       rabbit_password         => $rabbit_password,
