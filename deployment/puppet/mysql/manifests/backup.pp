@@ -25,19 +25,31 @@ class mysql::backup (
   $backupuser,
   $backuppassword,
   $backupdir,
-  $ensure = 'present'
+  $ensure = 'present',
+  $connection_host = false,
+  $connection_port = false,
+  $connection_user = false,
+  $connection_pass = false,
 ) {
 
   database_user { "${backupuser}@localhost":
-    ensure        => $ensure,
-    password_hash => mysql_password($backuppassword),
-    provider      => 'mysql',
-    require       => Class['mysql::config'],
+    connection_host => $connection_host,
+    connection_port => $connection_port,
+    connection_user => $connection_user,
+    connection_pass => $connection_pass,
+    ensure          => $ensure,
+    password_hash   => mysql_password($backuppassword),
+    provider        => 'mysql',
+    require         => Class['mysql::config'],
   }
 
   database_grant { "${backupuser}@localhost":
-    privileges => [ 'Select_priv', 'Reload_priv', 'Lock_tables_priv' ],
-    require    => Database_user["${backupuser}@localhost"],
+    connection_host => $connection_host,
+    connection_port => $connection_port,
+    connection_user => $connection_user,
+    connection_pass => $connection_pass,
+    privileges      => [ 'Select_priv', 'Reload_priv', 'Lock_tables_priv' ],
+    require         => Database_user["${backupuser}@localhost"],
   }
 
   cron { 'mysql-backup':

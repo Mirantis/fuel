@@ -39,27 +39,44 @@ define mysql::db (
   $host        = 'localhost',
   $grant       = 'all',
   $sql         = '',
-  $enforce_sql = false
+  $enforce_sql = false,
+  $connection_host = false,
+  $connection_port = false,
+  $connection_user = false,
+  $connection_pass = false,
+
 ) {
 
   database { $name:
-    ensure   => present,
-    charset  => $charset,
-    provider => 'mysql',
-    require  => Class['mysql::server'],
+    connection_host => $connection_host,
+    connection_port => $connection_port,
+    connection_user => $connection_user,
+    connection_pass => $connection_pass,
+    ensure          => present,
+    charset         => $charset,
+    provider        => 'mysql',
+    require         => Class['mysql::server'],
   }
 
   database_user { "${user}@${host}":
-    ensure        => present,
-    password_hash => mysql_password($password),
-    provider      => 'mysql',
-    require       => Database[$name],
+    ensure          => present,
+    connection_host => $connection_host,
+    connection_port => $connection_port,
+    connection_user => $connection_user,
+    connection_pass => $connection_pass,
+    password_hash   => mysql_password($password),
+    provider        => 'mysql',
+    require         => Database[$name],
   }
 
   database_grant { "${user}@${host}/${name}":
-    privileges => $grant,
-    provider   => 'mysql',
-    require    => Database_user["${user}@${host}"],
+    connection_host => $connection_host,
+    connection_port => $connection_port,
+    connection_user => $connection_user,
+    connection_pass => $connection_pass,
+    privileges      => $grant,
+    provider        => 'mysql',
+    require         => Database_user["${user}@${host}"],
   }
 
   $refresh = ! $enforce_sql
