@@ -15,20 +15,40 @@ class qpid::server(
   $qpid_cluster_name = 'qpid_cluster',
   $qpid_username = 'nova',
   $qpid_password = 'nova'
+  $qpid_nodes = [$::ipaddress],
 ) {
 
   validate_re($auth, '^(yes$|no$)')
 
   include qpid::params
-
+  include stdlib
   package { $::qpid::params::package_name:
     ensure => $package_ensure,
   }
 
-  if $qpid_cluster {
-    package { $::qpid::params::cluster_package_name:
-      ensure => $package_ensure,
-      require => Package[$::qpid::params::package_name],
+  define qpid_safe_package(){
+    if ! defined(Package[$name]){
+      @package { $name : }
+    }
+  }
+
+
+  if size($qpid_nodes) > 1 {
+    qpid_safe_package { $qpid::params:additional_packages : }
+    
+    file { '/usr/local/bin/qpid-setup-routes.sh':
+      ensure => present,
+      owner => 'root',
+      group => 'root',
+      mode => 755,
+      content => template('qpid/qpid-setup-routes.sh.erb'),
+    }
+
+    exec { "propagate_qpid_routes":
+      path    => "/usr/bin/:/bin:/usr/sbin",
+      command => "bash /usr/local/bin/qpid-setup-routes.sh",
+      require => File['/usr/local/bin/qpid-setup-routes.sh']
+      logoutput => "on_failure",
     }
   }
 
@@ -101,8 +121,7 @@ class qpid::server(
       ensure => $service_ensure,
       hasstatus  => true,
       hasrestart => true,
-      subscribe => [Exec['corosync-restart'],
-                    File[$::qpid::params::config_file]],
+      subscribe => File[$::qpid::params::config_file],
       require => [Package[$::qpid::params::package_name],
                   File[$::qpid::params::config_file],
                   Exec['qpid-corosync-restart']],
