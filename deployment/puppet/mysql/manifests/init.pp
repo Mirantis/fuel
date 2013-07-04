@@ -17,8 +17,8 @@ class mysql (
 ) inherits mysql::params {
 
   package { 'mysql-client':
+    ensure => $package_ensure,
     name    => $package_name,
-   #ensure  => $package_ensure,
   }
 
 }

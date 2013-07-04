@@ -59,9 +59,9 @@ describe 'mysql::config' do
           end
 
           it { should contain_exec('set_mysql_rootpw').with(
-            'command'   => 'mysqladmin -u root  password foo',
+            'command'   => 'mysqladmin -u root  password \'foo\'',
             'logoutput' => true,
-            'unless'    => "mysqladmin -u root -pfoo status > /dev/null",
+            'unless'    => "mysqladmin -u root -p\'foo\' status > /dev/null",
             'path'      => '/usr/local/sbin:/usr/bin:/usr/local/bin'
           )}
 
@@ -78,9 +78,9 @@ describe 'mysql::config' do
           end
 
           it { should contain_exec('set_mysql_rootpw').with(
-            'command'   => 'mysqladmin -u root -pbar password foo',
+            'command'   => 'mysqladmin -u root -p\'bar\' password \'foo\'',
             'logoutput' => true,
-            'unless'    => "mysqladmin -u root -pfoo status > /dev/null",
+            'unless'    => "mysqladmin -u root -p\'foo\' status > /dev/null",
             'path'      => '/usr/local/sbin:/usr/bin:/usr/local/bin'
           )}
 
@@ -126,7 +126,7 @@ describe 'mysql::config' do
 
             it { should_not contain_exec('set_mysql_rootpw') }
 
-            it { should_not contain_file('/root/.my.cnf')}
+            it { should contain_file('/root/.my.cnf')}
 
             it { should contain_file('/etc/mysql').with(
               'owner'  => 'root',
@@ -153,6 +153,7 @@ describe 'mysql::config' do
               expected_lines = [
                 "port    = #{param_values[:port]}",
                 "socket    = #{param_values[:socket]}",
+                "pid-file  = #{param_values[:pidfile]}",
                 "datadir   = #{param_values[:datadir]}",
                 "bind-address    = #{param_values[:bind_address]}"
               ]
@@ -186,9 +187,9 @@ describe 'mysql::config' do
     end
 
     it { should contain_exec('set_mysql_rootpw').with(
-      'command'   => 'mysqladmin -u root -pbar password foo',
+      'command'   => 'mysqladmin -u root -p\'bar\' password \'foo\'',
       'logoutput' => true,
-      'unless'    => "mysqladmin -u root -pfoo status > /dev/null",
+      'unless'    => "mysqladmin -u root -p\'foo\' status > /dev/null",
       'path'      => '/usr/local/sbin:/usr/bin:/usr/local/bin'
     )}
 
@@ -209,9 +210,7 @@ describe 'mysql::config' do
     end
 
     it 'should fail' do
-      expect do
-        subject
-      end.should raise_error(Puppet::Error, /Duplicate (declaration|definition)/)
+      expect { subject }.to raise_error(Puppet::Error, /Duplicate (declaration|definition)/)
     end
 
   end
@@ -226,9 +225,7 @@ describe 'mysql::config' do
     end
 
     it 'should fail' do
-      expect do
-        subject
-      end.should raise_error(Puppet::Error, /required when ssl is true/)
+      expect { subject }.to raise_error(Puppet::Error, /required when ssl is true/)
     end
 
   end
