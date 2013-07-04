@@ -132,7 +132,6 @@ class openstack::controller_ha (
    $horizon_use_ssl         = false,
    $quantum_network_node    = false,
    $quantum_netnode_on_cnt  = false,
-   $radosgw_nodes	    = undef,
    $quantum_gre_bind_addr   = $internal_address,
    $quantum_external_ipinfo = {},
    $mysql_skip_name_resolve = false,
@@ -190,9 +189,9 @@ class openstack::controller_ha (
     if $glance_backend == 'swift' {
       haproxy_service { 'swift': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
     } 
-#    if $glance_backend == 'rbd' {
-#      haproxy_service { 'radosgw': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $radosgw_nodes }
-#    }
+    if $glance_backend == 'rbd' {
+      haproxy_service { 'radosgw': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
+    }
 
 
     exec { 'up-public-interface':

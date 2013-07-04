@@ -24,4 +24,9 @@ define ceph::radoscli (
 	    require => Exec["step2"],
 	    unless => "/usr/bin/ceph auth get-key client.radosgw.gateway",
         }
+        exec { "step4":
+    	    command => "ceph-authtool ${keyring_path} --create-keyring --name='client.radosgw.gateway' --add-key=`/usr/bin/ceph auth get-key client.radosgw.gateway`",
+    	    creates => $keyring_path,
+	    onlyif => "/usr/bin/ceph auth get-key client.radosgw.gateway",
+    	}
 }

@@ -42,7 +42,7 @@ class swift::keystone::auth(
     type        => 'object-store',
     description => 'Openstack Object-Store Service',
   }
-  if !($user_rados) {
+  if !($use_rados) {
       keystone_endpoint { $auth_name:
 	ensure       => present,
         region       => 'RegionOne',

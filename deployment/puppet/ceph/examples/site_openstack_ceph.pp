@@ -1,105 +1,90 @@
 #
 # Parameter values in this file should be changed, taking into consideration your
 # networking setup and desired OpenStack settings.
-# 
+#
 # Please consult with the latest Fuel User Guide before making edits.
 #
 
-$mon_secret = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
-$fsid = 'f460ab38-e02d-4c42-ae5b-fdbbe46022b7'
 Exec {
   path => '/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin'
 }
-
-
 ### GENERAL CONFIG ###
 # This section sets main parameters such as hostnames and IP addresses of different nodes
 
 # This is the name of the public interface. The public network provides address space for Floating IPs, as well as public IP accessibility to the API endpoints.
-$public_interface = "eth1"
+$public_interface = "eth0"
 $public_br           = 'br-ex'
 
 # This is the name of the internal interface. It will be attached to the management network, where data exchange between components of the OpenStack cluster will happen.
-$internal_interface = "eth0"
+$internal_interface = "eth1"
 $internal_br         = 'br-mgmt'
 
 # This is the name of the private interface. All traffic within OpenStack tenants' networks will go through this interface.
 $private_interface = "eth2"
 
 # Public and Internal VIPs. These virtual addresses are required by HA topology and will be managed by keepalived.
-$internal_virtual_ip = "10.0.0.127"
+$internal_virtual_ip = "10.10.10.127"
 # Change this IP to IP routable from your 'public' network,
-# e. g. Internet or your office LAN, in which your public 
+# e. g. Internet or your office LAN, in which your public
 # interface resides
-$public_virtual_ip = "172.18.125.127"
+$public_virtual_ip = "192.168.122.127"
+
+# Ceph configuration parameters
+$mon_secret      = 'AQD7kyJQQGoOBhAAqrPAqSopSwPrrfMMomzVdw=='
+$fsid            = 'f460ab38-e02d-4c42-ae5b-fdbbe46022b7'
+$rbd_user        = "admin"
+$use_rbd         = 'yes'
+$cinder_rbd_user = "admin"
+$cinder_rbd_uuid = "143b14f0-54ba-4c21-ba11-8b08c33c5375"
 
 $nodes_harr = [
   {
-    'name' => 'master',
-    'role' => 'master',
-    'internal_address' => '10.0.0.101',
-    'public_address'   => '10.0.204.101',
-    'mountpoints'=> "1 1\n2 1",
-    'storage_local_net_ip' => '10.0.0.101',
+    "internal_address" => "10.0.0.100",
+    "name" => "fuel-cobbler",
+    "public_address" => "172.18.125.58",
+    "role" => "cobbler"
   },
   {
-    'name' => 'fuel-cobbler',
-    'role' => 'cobbler',
-    'internal_address' => '10.0.0.102',
-    'public_address'   => '10.0.204.102',
-    'mountpoints'=> "1 1\n2 1",
-    'storage_local_net_ip' => '10.0.0.102',
+    "internal_address" => "10.10.10.201",
+    "name" => "fuel-controller-01",
+    "storage_local_net_ip" => "10.10.10.201",
+    "public_address" => "192.168.122.201",
+    "swift_zone" => 1,
+    "mountpoints" => "1 2\n 2 1",
+    "role" => "primary-controller",
+    "ceph_zone" => 1,
+    "ceph_osd" => ["/dev/sdb"]
   },
   {
-    'name' => 'fuel-controller-01',
-    'role' => 'primary-controller',
-    'internal_address' => '10.0.0.101',
-    'public_address'   => '10.0.0.101',
-    'swift_zone'       => 1,
-    'mountpoints'=> "1 1\n2 1",
-    'storage_local_net_ip' => '10.0.0.101',
+    "internal_address" => "10.10.10.203",
+    "name" => "fuel-controller-03",
+    "storage_local_net_ip" => "10.10.10.203",
+    "public_address" => "192.168.122.203",
+    "swift_zone" => 3,
+    "mountpoints" => "1 2\n 2 1",
+    "role" => "controller",
+    "ceph_zone" => 3,
+    "ceph_osd" => ["/dev/sdb"]
   },
   {
-    'name' => 'fuel-controller-02',
-    'role' => 'controller',
-    'internal_address' => '10.0.0.104',
-    'public_address'   => '10.0.204.104',
-    'swift_zone'       => 2,
-    'mountpoints'=> "1 2\n 2 1",
-    'storage_local_net_ip' => '10.0.0.110',
-  },
-  {
-    'name' => 'fuel-controller-03',
-    'role' => 'controller',
-    'internal_address' => '10.0.0.105',
-    'public_address'   => '10.0.204.105',
-    'swift_zone'       => 3,
-    'mountpoints'=> "1 2\n 2 1",
-    'storage_local_net_ip' => '10.0.0.110',
-  },
-  {
-    'name' => 'fuel-compute-01',
-    'role' => 'compute',
-    'internal_address' => '10.0.0.106',
-    'public_address'   => '10.0.204.106',
-  },
-  {
-    'name' => 'fuel-compute-02',
-    'role' => 'compute',
-    'internal_address' => '10.0.0.107',
-    'public_address'   => '10.0.204.107',
-  },
+    "internal_address" => "10.10.10.204",
+    "name" => "fuel-compute-01",
+    "public_address" => "192.168.122.204",
+    "role" => "compute",
+    "ceph_zone" => 4,
+    "ceph_osd" => ["/dev/sdb"]
+  }
 ]
 
-$nodes = [{"internal_address" => "10.0.0.100","name" => "fuel-cobbler","public_address" => "172.18.125.58","role" => "cobbler"},{"internal_address" => "10.0.0.101","name" => "fuel-controller-01","storage_local_net_ip" => "10.0.0.101","public_address" => "172.18.125.101","swift_zone" => 1,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 1,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.102","name" => "fuel-controller-02","storage_local_net_ip" => "10.0.0.102","public_address" => "172.18.125.102","swift_zone" => 2,"mountpoints" => "1 2\n 2 1","role" => "primary-controller","ceph_zone" => 2,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.103","name" => "fuel-controller-03","storage_local_net_ip" => "10.0.0.103","public_address" => "172.18.125.103","swift_zone" => 3,"mountpoints" => "1 2\n 2 1","role" => "controller","ceph_zone" => 3,"ceph_osd" => ["/dev/sdb","/dev/sdc","/dev/sdd"]},{"internal_address" => "10.0.0.104","name" => "fuel-compute-01","public_address" => "172.18.125.104","role" => "compute", "ceph_zone" => 4,"ceph_osd" => ["/dev/sdb"]}]
-$default_gateway = "172.18.125.1"
+$nodes = $nodes_harr
+$default_gateway = "192.168.122.1"
 
 # Specify nameservers here.
 # Need points to cobbler node IP, or to special prepared nameservers if you known what you do.
-$dns_nameservers = ["10.0.0.100","8.8.8.8"]
+$dns_nameservers = ["192.168.122.99","8.8.8.8"]
 
 # Specify netmasks for internal and external networks.
-$internal_netmask = "255.255.0.0"
+$internal_netmask = "255.255.255.0"
 $public_netmask = "255.255.255.0"
 
 
@@ -181,14 +166,14 @@ $quantum_netnode_on_cnt = true
 $create_networks = true
 
 # Fixed IP addresses are typically used for communication between VM instances.
-$fixed_range = "192.168.0.0/16"
+$fixed_range = "192.168.233.0/24"
 
 # Floating IP addresses are used for communication of VM instances with the outside world (e.g. Internet).
-$floating_range = "172.18.125.0/24"
+$floating_range = "192.168.122.0/24"
 
 # These parameters are passed to the previously specified network manager , e.g. nova-manage network create.
 # Not used in Quantum.
-# Consult openstack docs for corresponding network manager. 
+# Consult openstack docs for corresponding network manager.
 # https://fuel-dev.mirantis.com/docs/0.2/pages/0050-installation-instructions.html#network-setup
 $num_networks    = 1
 $network_size    = 31
@@ -197,7 +182,7 @@ $vlan_start      = 300
 # Quantum
 
 # Segmentation type for isolating traffic between tenants
-# Consult Openstack Quantum docs 
+# Consult Openstack Quantum docs
 $tenant_network_type     = 'gre'
 
 # Which IP address will be used for creating GRE tunnels.
@@ -207,7 +192,7 @@ $quantum_gre_bind_addr = $internal_address
 # the first address will be defined as an external default router,
 # the second address will be attached to an uplink bridge interface,
 # the remaining addresses will be utilized for the floating IP address pool.
-$external_ipinfo = {"public_net_router" => "172.18.125.1","pool_end" => "172.18.125.239","ext_bridge" => "172.18.125.126","pool_start" => "172.18.125.235"}
+$external_ipinfo = {"public_net_router" => "192.168.122.1","pool_end" => "192.168.122.239","ext_bridge" => "192.168.122.126","pool_start" => "192.168.122.235"}
 ## $external_ipinfo = {
 ##   'public_net_router' => '10.0.74.129',
 ##   'ext_bridge'        => '10.0.74.130',
@@ -288,7 +273,7 @@ class node_netconfig (
 
 
 # This parameter specifies the the identifier of the current cluster. This is needed in case of multiple environments.
-# installation. Each cluster requires a unique integer value. 
+# installation. Each cluster requires a unique integer value.
 # Valid identifier range is 1 to 254
 $deployment_id = "2"
 
@@ -319,7 +304,7 @@ $cinder_iscsi_bind_addr = $internal_address
 # Below you can add physical volumes to cinder. Please replace values with the actual names of devices.
 # This parameter defines which partitions to aggregate into cinder-volumes or nova-volumes LVM VG
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED, 
+# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED,
 # IT WILL AGGREGATE THE VOLUMES INTO AN LVM VOLUME GROUP
 # AND ALL THE DATA THAT RESIDES ON THESE VOLUMES WILL BE LOST!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -407,16 +392,16 @@ if $use_syslog {
 ### Syslog END ###
 case $::osfamily {
     "Debian":  {
-#       $rabbitmq_version_string = '2.8.7-1'
+       $rabbitmq_version_string = '2.8.7-1'
 #       $rabbitmq_version_string = '3.1.1-1'
-	$rabbitmq_version_string = '3.0.2-1'
+#	$rabbitmq_version_string = '3.0.2-1'
     }
     "RedHat": {
        $rabbitmq_version_string = '2.8.7-2.el6'
     }
 }
 #
-# OpenStack packages and customized component versions to be installed. 
+# OpenStack packages and customized component versions to be installed.
 # Use 'latest' to get the most recent ones or specify exact version if you need to install custom version.
 $openstack_version = {
   'keystone'         => 'latest',
@@ -449,13 +434,13 @@ $nova_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 $cinder_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 
 #Specify desired NTP servers here.
@@ -486,7 +471,7 @@ Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
 Exec { logoutput => true }
 
 ### END OF PUBLIC CONFIGURATION PART ###
-# Normally, you do not need to change anything after this string 
+# Normally, you do not need to change anything after this string
 
 # Globally apply an environment-based tag to all resources on each node.
 tag("${::deployment_id}::${::environment}")
@@ -498,11 +483,11 @@ class { 'openstack::mirantis_repos':
   enable_test_repo=>$enable_test_repo,
   repo_proxy=>$repo_proxy,
 }
- stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] } 
+ stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] }
  class { '::openstack::firewall':
       stage => 'openstack-firewall'
  }
- 
+
 if $::operatingsystem == 'Ubuntu' {
   class { 'openstack::apparmor::disable': stage => 'openstack-custom-repo' }
 }
@@ -577,19 +562,20 @@ class compact_controller (
     horizon_use_ssl         => $horizon_use_ssl,
     use_unicast_corosync    => $use_unicast_corosync,
     ha_provider             => $ha_provider,
-    rbd_user		    => 'admin',
-    rbd_pool		    => $glance_pool,
-    cinder_use_rbd          => 'yes',
-    cinder_rbd_user         => 'admin',
+    rbd_user		            => $rbd_user,
+    rbd_pool		            => $glance_pool,
+    cinder_use_rbd          => $use_rbd,
+    cinder_rbd_user         => $cinder_rbd_user,
     cinder_rbd_pool         => $cinder_pool,
-    cinder_rbd_uuid         => '143b14f0-54ba-4c21-ba11-8b08c33c5375',
-                            
+    cinder_rbd_uuid         => $cinder_rbd_uuid,
+
   }
   class { 'swift::keystone::auth':
     password         => $swift_user_password,
     public_address   => $public_virtual_ip,
     internal_address => $internal_virtual_ip,
     admin_address    => $internal_virtual_ip,
+    use_rados        => true,
   }
 }
 
@@ -658,14 +644,6 @@ node /fuel-controller-[\d+]/ {
 
 #  Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
 
-if $primary_proxy {
-    if !empty($::ceph_admin_key) {
-      @@ceph::key { 'admin':
-        secret       => $::ceph_admin_key,
-        keyring_path => '/etc/ceph/keyring',
-      }
-    }
-}
     $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
     $i1 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\1')
     $i2 = regsubst($controller_internal_addresses[$::hostname], $ipre, '\2')
@@ -675,11 +653,6 @@ if $primary_proxy {
     $p2 = regsubst($controller_public_addresses[$::hostname], $ipre, '\2')
     $p3 = regsubst($controller_public_addresses[$::hostname], $ipre, '\3')
     $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
-                    
-    if $primary_controller {
-	ceph::conf::client { $glance_pool: }
-	ceph::conf::client { $cinder_pool: }
-    }
 
     ceph::rolemon {$controller_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
@@ -689,7 +662,6 @@ if $primary_proxy {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
    ceph::osd::deploy_array { "osd array on ${::hostname}":
         osd_id  => $controller_ceph_zone[$::hostname],
 #        osd_fs => "btrfs",
@@ -698,19 +670,25 @@ if $primary_proxy {
         public_addr  => $controller_internal_addresses[$::hostname],
         osd_dev => $controller_ceph_osd[$::hostname],
     }
-    ->
+
     ceph::client { $glance_pool:
         create_pool => 'yes',
         primary_node => $primary_controller,
     }
-    ->
+
     ceph::client { $cinder_pool:
         create_pool => 'yes',
         pool2 => $glance_pool,
         primary_node => $primary_controller,
     }
-    ceph::rolemds { $controller_ceph_zone[$::hostname]: }
-
+    
+    ceph::radosgw { 'rados':
+	use_keystone => true,
+	keystone_url => "${public_virtual_ip}:5000",
+	keystone_admin_key => $keystone_admin_token,
+	nss_db_path => "/etc/ceph/nss",
+	rados_ip => $controller_internal_addresses[$::hostname],
+    }
 
 }
 
@@ -718,7 +696,7 @@ if $primary_proxy {
 # Definition of OpenStack compute nodes.
 node /fuel-compute-[\d+]/ {
   ## Uncomment lines bellow if You want
-  ## configure network of this nodes 
+  ## configure network of this nodes
   ## by puppet.
   class {'::node_netconfig':
       mgmt_ipaddr    => $::internal_address,
@@ -777,10 +755,10 @@ node /fuel-compute-[\d+]/ {
     use_syslog             => $use_syslog,
     nova_rate_limits       => $nova_rate_limits,
     cinder_rate_limits     => $cinder_rate_limits,
-    secret_uuid		   => '143b14f0-54ba-4c21-ba11-8b08c33c5375',
-    rbd_user		   => 'admin',
-    use_rbd		   => 'yes',
-                
+    secret_uuid            => $cinder_rbd_uuid,
+    rbd_user               => $rbd_user,
+    use_rbd                => $use_rbd,
+
   }
       $ipre = '^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$'
       $i1 = regsubst($computes_internal_addresses[$::hostname], $ipre, '\1')
@@ -791,7 +769,7 @@ node /fuel-compute-[\d+]/ {
       $p2 = regsubst($computes_public_addresses[$::hostname], $ipre, '\2')
       $p3 = regsubst($computes_public_addresses[$::hostname], $ipre, '\3')
       $ceph_public_net = sprintf("%d.%d.%d.0", $p1, $p2, $p3)
-                                      
+
     ceph::rolemon {$computes_ceph_zone[$::hostname]:
         mon_secret => $mon_secret,
         cluster_network => "${ceph_internal_net}/24",
@@ -800,16 +778,8 @@ node /fuel-compute-[\d+]/ {
 #        osd_fs => 'btrfs',
 #       osd_journal => "/usr/loca/share",
     }
-    ->
-   ceph::osd::deploy_array { "osd array on ${::hostname}":
-        osd_id  => $computes_ceph_zone[$::hostname],
-#        osd_fs => "btrfs",
-#       raid => 0,
-        cluster_addr => $computes_internal_addresses[$::hostname],
-        public_addr  => $computes_internal_addresses[$::hostname],
-        osd_dev => $computes_ceph_osd[$::hostname],
-    }
-           
+
+
 }
 
 # Definition of OpenStack Quantum node.

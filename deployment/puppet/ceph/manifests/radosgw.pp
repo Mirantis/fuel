@@ -4,6 +4,7 @@ define ceph::radosgw (
     $use_keystone = "false",
     $keystone_url = "127.0.0.1:5000",
     $keystone_admin_key = "",
+    $rados_ip = "127.0.0.1",
     $roles = "admin, SwiftOperator",
     $nss_db_path = "/tmp/nss.db",
 ) {
@@ -40,6 +41,21 @@ define ceph::radosgw (
         ensure => "directory",
         mode   => 755,
     }
+    file { "${nss_db_path}":  
+	ensure => "directory",
+	mode   => 755,
+    }
+    package { 'libnss3-tools': 
+	ensure => "installed",
+    }
+    exec { "mk_nss1":
+	command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | certutil -d ${nss_db_path} -A -n ca -t 'TCu,Cu,Tuw'",
+	require => [File["${nss_db_path}"],Package['libnss3-tools']],
+    }
+    exec { "mk_nss2":
+	command => "openssl x509 -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | certutil -A -d ${nss_db_path} -n signing_cert -t 'P,P,P'",
+	require => Exec['mk_nss2'],
+    }
     file { "/var/www/s3gw.fcgi":
         content => template('ceph/s3gw.fcgi.erb'),
     }
@@ -48,8 +64,9 @@ define ceph::radosgw (
     }
     case $::operatingsystem {
 	'ubuntu', 'debian': {
-	    service { "radosgw":
-		ensure => "running",
+	    exec { "radosgw_start":
+		command => "/etc/init.d/radosgw restart",
+		unless => "ps -auxwww | grep rados | grep -v auto",
 		require => [File["${datadir}"],Concat::Fragment["ceph-radosgw.conf"],File['/var/www/s3gw.fcgi'],Ceph::Radoscli['add gw user']],
 	    }
 #	    service { 'apache2':
