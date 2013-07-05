@@ -28,14 +28,22 @@ class mysql::server (
   $galera_nodes = undef,
   $mysql_skip_name_resolve = false,
   $use_syslog              = false,
+  $manage_service   = true,
+  $galera_cluster_name = undef,
+  $primary_controller = primary_controller,
+  $galera_node_address = undef,
+  $galera_nodes = undef,
+  $mysql_skip_name_resolve = false,
 ) inherits mysql::params {
-    
+
   if ($custom_setup_class == undef) {
     include mysql
-    Class['mysql::server'] -> Class['mysql::config']
+  Class['mysql::server'] -> Class['mysql::config']
     Class['mysql']         -> Class['mysql::server']
 
-    create_resources( 'class', { 'mysql::config' => $config_hash } )
+  $config_class = { 'mysql::config' => $config_hash }
+
+  create_resources( 'class', $config_class )
 #    exec { "debug-mysql-server-installation" :
 #      command     => "/usr/bin/yum -d 10 -e 10 -y install MySQL-server-5.5.28-6 2>&1 | tee mysql_install.log",
 #      before => Package["mysql-server"],
@@ -47,21 +55,28 @@ class mysql::server (
        #ensure => $mysql::params::client_version,
       }
     }
-    package { 'mysql-server':
-      name   => $package_name,
-     #ensure => $mysql::params::server_version,
-     #require=> Package['mysql-shared'],
-    }
+  package { 'mysql-server':
+    #ensure => $package_ensure,
+    name   => $package_name,
+  }
+
+  if $enabled {
+    $service_ensure = 'running'
+  } else {
+    $service_ensure = 'stopped'
+  }
     Package[mysql-client] -> Package[mysql-server]
- 
+
+  if $manage_service {
     service { 'mysqld':
+      ensure   => $service_ensure,
       name     => $service_name,
-      ensure   => $enabled ? { true => 'running', default => 'stopped' },
       enable   => $enabled,
       require  => Package['mysql-server'],
       provider => $service_provider,
     }
   }
+ }
   elsif ($custom_setup_class == 'galera')  {
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
