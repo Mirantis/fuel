@@ -1,21 +1,57 @@
 [loggers]
-keys = root
+keys = root,service
 
+# devel is reserved for future usage
 [handlers]
-keys = syslog
+keys = production,file,devel
 
 [formatters]
-keys = default
+keys = normal,debug
 
 [logger_root]
 level = DEBUG
-handlers = syslog
+handlers = production
 qualname = keystone
 
-[handler_syslog]
-class = handlers.SysLogHandler
-args = ('/dev/log', handlers.SysLogHandler.LOG_LOCAL1)
-formatter = default
+[logger_service]
+level = DEBUG
+handlers = file
+qualname = keystone
 
-[formatter_default]
-format = keystone %(name)s %(levelname)s %(message)s
+[formatter_debug]
+format = keystone-%(name)s: %(levelname)s %(module)s %(funcName)s %(message)s
+
+[formatter_normal]
+format = keystone-%(name)s: %(levelname)s %(message)s
+
+# Extended logging info to LOG_SYSLOG with debug:<%= @debug %> and verbose:<%= @verbose %>
+[handler_file]
+class = handlers.SysLogHandler
+<% if @debug then -%>
+level = DEBUG
+<% elsif @verbose then -%>
+level = INFO
+<% else -%>
+level = WARNING
+<% end -%>
+args = ('/dev/log', handlers.SysLogHandler.LOG_SYSLOG)
+formatter = debug
+
+# Brief logging info to <%= @syslog_log_facility %> with level <%= @syslog_log_level %>+ 
+# or WARNING+ if verbose:false & debug:false. 
+# Note: local copy goes to /var/log/keystone-all.log
+[handler_production]
+class = handlers.SysLogHandler
+<% if not @debug and not @verbose then -%>
+level = WARNING
+<% else -%>
+level = <%= @syslog_log_level %>
+<% end -%>
+args = ('/dev/log', handlers.SysLogHandler.LOG_<%= @syslog_log_facility %>)
+formatter = normal
+
+# TODO find out how it could be usefull and how it should be used
+[handler_devel]
+class = StreamHandler
+formatter = debug
+args = (sys.stdout,)

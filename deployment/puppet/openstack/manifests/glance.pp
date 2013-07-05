@@ -21,6 +21,10 @@
 # [verbose] Log verbosely. Optional. Defaults to 'False'
 # [enabled] Used to indicate if the service should be active (true) or passive (false).
 #   Optional. Defaults to true
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for main syslog files (/var/log/{messages, syslog, kern.log}). Optional.
 #
 # === Example
 #
@@ -45,6 +49,9 @@ class openstack::glance (
   $verbose              = 'False',
   $enabled              = true,
   $use_syslog           = false,
+  # Facility is common for all glance services
+  $syslog_log_facility  = 'LOCAL2',
+  $syslog_log_level     = 'INFO',
 ) {
 
   # Configure the db string
@@ -68,7 +75,7 @@ class openstack::glance (
     sql_connection    => $sql_connection,
     enabled           => $enabled,
     registry_host     => $registry_host,
-    use_syslog => $use_syslog
+    use_syslog        => $use_syslog,
   }
 
   # Install and configure glance-registry
@@ -84,7 +91,7 @@ class openstack::glance (
     keystone_password => $glance_user_password,
     sql_connection    => $sql_connection,
     enabled           => $enabled,
-    use_syslog => $use_syslog
+    use_syslog        => $use_syslog,
   }
 
   # Configure file storage backend

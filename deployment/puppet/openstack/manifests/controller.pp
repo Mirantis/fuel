@@ -44,6 +44,10 @@
 # [horizon_app_links]     array as in '[ ["Nagios","http://nagios_addr:port/path"],["Ganglia","http://ganglia_addr"] ]'
 # [enabled] Whether services should be enabled. This parameter can be used to
 #   implement services in active-passive modes for HA. Optional. Defaults to true.
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for main syslog files (/var/log/{messages, syslog, kern.log}). Optional.
 #
 # === Examples
 #
@@ -163,6 +167,12 @@ class openstack::controller (
   $manage_volumes          = false,
   $nv_physical_volume      = undef,
   $use_syslog              = false,
+  $syslog_log_level        = 'INFO',
+  $syslog_log_facility_glance   = 'LOCAL2',
+  $syslog_log_facility_cinder   = 'LOCAL3',
+  $syslog_log_facility_quantum  = 'LOCAL4',
+  $syslog_log_facility_nova     = 'LOCAL6',
+  $syslog_log_facility_keystone = 'LOCAL7',
   $horizon_use_ssl         = false,
   $nova_rate_limits        = undef,
   $cinder_rate_limits      = undef,
@@ -219,6 +229,7 @@ class openstack::controller (
       galera_nodes           => $galera_nodes,
       custom_setup_class     => $custom_mysql_setup_class,
       mysql_skip_name_resolve => $mysql_skip_name_resolve,
+      use_syslog             => $use_syslog,
     }
   }
   ####### KEYSTONE ###########
@@ -247,6 +258,8 @@ class openstack::controller (
     enabled               => $enabled,
     package_ensure        => $::openstack_keystone_version,
     use_syslog            => $use_syslog,
+    syslog_log_facility   => $syslog_log_facility_keystone,
+    syslog_log_level      => $syslog_log_level,
   }
 
 
@@ -266,6 +279,8 @@ class openstack::controller (
     glance_backend            => $glance_backend,
     registry_host             => $service_endpoint,
     use_syslog                => $use_syslog,
+    syslog_log_facility       => $syslog_log_facility_glance,
+    syslog_log_level          => $syslog_log_level,
   }
 
   ######## BEGIN NOVA ###########
@@ -337,6 +352,9 @@ class openstack::controller (
     api_bind_address        => $api_bind_address,
     ensure_package          => $::openstack_version['nova'],
     use_syslog              => $use_syslog,
+    syslog_log_facility     => $syslog_log_facility_nova,
+    syslog_log_facility_quantum => $syslog_log_facility_quantum,
+    syslog_log_level        => $syslog_log_level,
     nova_rate_limits        => $nova_rate_limits,
     cinder                  => $cinder
   }
@@ -345,23 +363,24 @@ class openstack::controller (
   if $cinder {
     if !defined(Class['openstack::cinder']) {
       class {'openstack::cinder':
-        sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
-        rabbit_password      => $rabbit_password,
-        rabbit_host          => false,
-        rabbit_nodes         => $rabbit_nodes,
-        volume_group         => $cinder_volume_group,
-        physical_volume      => $nv_physical_volume,
-        manage_volumes       => $manage_volumes,
-        enabled              => true,
-        glance_api_servers   => "${service_endpoint}:9292",
-        auth_host            => $service_endpoint,
-        bind_host            => $api_bind_address,
-        iscsi_bind_host      => $cinder_iscsi_bind_addr,
-        cinder_user_password => $cinder_user_password,
-        use_syslog           => $use_syslog,
-        cinder_rate_limits   => $cinder_rate_limits,
-        rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-      }
+      sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+      rabbit_password      => $rabbit_password,
+      rabbit_host          => false,
+      rabbit_nodes         => $rabbit_nodes,
+      volume_group         => $cinder_volume_group,
+      physical_volume      => $nv_physical_volume,
+      manage_volumes       => $manage_volumes,
+      enabled              => true,
+      glance_api_servers   => "${service_endpoint}:9292",
+      auth_host            => $service_endpoint,
+      bind_host            => $api_bind_address,
+      iscsi_bind_host      => $cinder_iscsi_bind_addr,
+      cinder_user_password => $cinder_user_password,
+      use_syslog           => $use_syslog,
+      syslog_log_facility  => $syslog_log_facility_cinder,
+      syslog_log_level     => $syslog_log_level,
+      cinder_rate_limits   => $cinder_rate_limits,
+      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
     }
   } else { 
     if $manage_volumes {
@@ -395,6 +414,8 @@ class openstack::controller (
     horizon_app_links => $horizon_app_links,
     keystone_host     => $service_endpoint,
     use_ssl           => $horizon_use_ssl,
+    verbose           => $verbose,
+    use_syslog        => $use_syslog,
   }
 
 }

@@ -81,6 +81,9 @@ class openstack::nova::controller (
   $enabled_apis              = 'ec2,osapi_compute',
   $api_bind_address          = '0.0.0.0',
   $use_syslog                = false,
+  $syslog_log_facility       = 'LOCAL6',
+  $syslog_log_facility_quantum = 'LOCAL4',
+  $syslog_log_level          = 'INFO',
   $nova_rate_limits          = undef,
   $cinder                    = true
 ) {
@@ -153,6 +156,8 @@ class openstack::nova::controller (
       ensure_package       => $ensure_package,
       api_bind_address     => $api_bind_address,
       use_syslog           => $use_syslog,
+      syslog_log_facility  => $syslog_log_facility,
+      syslog_log_level     => $syslog_log_level,
       rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
     }
   } else {
@@ -167,6 +172,8 @@ class openstack::nova::controller (
       ensure_package     => $ensure_package,
       api_bind_address   => $api_bind_address,
       use_syslog         => $use_syslog,
+      syslog_log_facility => $syslog_log_facility,
+      syslog_log_level    => $syslog_log_level,
     }
   }
   class {'nova::quota':
@@ -238,6 +245,8 @@ class openstack::nova::controller (
         verbose              => $verbose,
         debug                => $verbose,
         use_syslog           => $use_syslog,
+        syslog_log_facility  => $syslog_log_facility_quantum,
+        syslog_log_level     => $syslog_log_level,
       }
    }
      class { 'nova::network::quantum':

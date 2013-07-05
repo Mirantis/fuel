@@ -25,6 +25,10 @@
 # [nova] Set up nova endpoints and auth. Optional. Defaults to  true
 # [enabled] If the service is active (true) or passive (false).
 #   Optional. Defaults to  true
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for main syslog files (/var/log/{messages, syslog, kern.log}). Optional.
 #
 # === Example
 #
@@ -74,8 +78,10 @@ class openstack::keystone (
   $cinder                   = true,
   $quantum                  = true,
   $enabled                  = true,
-  $package_ensure = present,
-  $use_syslog = false,
+  $package_ensure           = present,
+  $use_syslog               = false,
+  $syslog_log_facility      = 'LOCAL7',
+  $syslog_log_level         = 'INFO',
 ) {
 
   # Install and configure Keystone
@@ -167,7 +173,9 @@ class openstack::keystone (
     sql_connection => $sql_conn,
     bind_host	=> $bind_host,
     package_ensure => $package_ensure,
-    use_syslog => $use_syslog
+    use_syslog => $use_syslog,
+    syslog_log_facility => $syslog_log_facility,
+    syslog_log_level    => $syslog_log_level,
   }
 
   if ($enabled) {

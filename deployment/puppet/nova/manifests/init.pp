@@ -32,6 +32,10 @@
 #
 # $rabbit_nodes = ['node001', 'node002', 'node003']
 # add rabbit nodes hostname
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for main syslog files (/var/log/{messages, syslog, kern.log}). Optional.
 #
 class nova(
   $ensure_package = 'present',
@@ -39,7 +43,8 @@ class nova(
   $nova_cluster_id='localcluster',
   $sql_connection = false,
   $use_syslog = false,
-  $syslog_log_facility = "LOCAL0",
+  $syslog_log_facility = "LOCAL6",
+  $syslog_log_level    = 'INFO',
   $image_service = 'nova.image.glance.GlanceImageService',
   # these glance params should be optional
   # this should probably just be configured as a glance client
@@ -130,6 +135,14 @@ class nova(
     require => Package['nova-common'],
   }
 
+  File {
+    ensure  => present,
+    owner   => 'nova',
+    group   => 'nova',
+    mode    => '0644',
+    require => Package['nova-common'],
+  }
+
 #Configure logging in nova.conf
 if $use_syslog
  {
@@ -137,6 +150,8 @@ if $use_syslog
 nova_config
  {
  'DEFAULT/log_config': value => "/etc/nova/logging.conf";
+ 'DEFAULT/log_file': ensure=> absent;
+ 'DEFAULT/logdir': ensure=> absent;
  'DEFAULT/use_syslog': value =>  "True";
  'DEFAULT/syslog_log_facility': value =>  $syslog_log_facility;
  'DEFAULT/logging_context_format_string':
@@ -148,39 +163,55 @@ nova_config
 file {"nova-logging.conf":
   content => template('nova/logging.conf.erb'),
   path => "/etc/nova/logging.conf",
-  owner => "nova",
-  group => "nova",
-  require => [Package['nova-common']]
+  require => File[$logdir],
+}
+file { "nova-all.log":
+  path => "/var/log/nova-all.log",
+}
+file { '/etc/rsyslog.d/10-nova.conf':
+  ensure => present,
+  content => template('nova/rsyslog.d.erb'),
 }
 
-##TODO: Add rsyslog module for nova logging to <splunkhost>
+# We must notify rsyslog and services to apply new logging rules
+include rsyslog::params
+File['/etc/rsyslog.d/10-nova.conf'] ~> Service <| title == "$rsyslog::params::service_name" |>
+
+File['nova-logging.conf'] ~> Nova::Generic_service <| |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::api_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::cert_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::compute_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::conductor_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::consoleauth_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::console_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::libvirt_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::network_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::objectstore_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::scheduler_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::tgt_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::vncproxy_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::volume_service_name" |>
+File['nova-logging.conf'] ~> Service <| title == "$nova::params::meta_api_service_name" |>
 
 }
 else {
   nova_config {
    'DEFAULT/log_config': ensure=>absent;
    'DEFAULT/use_syslog': value =>"False";
+   'DEFAULT/logdir':     value => $logdir;
   }
 }
   file { $logdir:
     ensure  => directory,
     mode    => '0751',
-    require => Package['nova-common'],
-    owner   => 'nova',
-    group   => 'nova',
   }
   file { "${logdir}/nova.log":
       ensure => present,
       mode  => '0640',
       require => [Package['nova-common'], File[$logdir]],
-      owner   => 'nova',
-      group   => 'nova',
   }
   file { '/etc/nova/nova.conf':
     mode  => '0640',
-    require => Package['nova-common'],
-    owner   => 'nova',
-    group   => 'nova',
   }
 
   # used by debian/ubuntu in nova::network_bridge to refresh
@@ -249,7 +280,6 @@ else {
 
   nova_config {
     'DEFAULT/verbose':           value => $verbose;
-    'DEFAULT/logdir':            value => $logdir;
     # Following may need to be broken out to different nova services
     'DEFAULT/state_path':        value => $state_path;
     'DEFAULT/lock_path':         value => $lock_path;

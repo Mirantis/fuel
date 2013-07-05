@@ -4,6 +4,11 @@
 # 
 # Please consult with the latest Fuel User Guide before making edits.
 #
+# Run stages for puppet
+stage {'rsyslogs': before => Stage['openstack-custom-repo']}
+stage {'openstack-custom-repo': before => Stage['netconfig'] }
+stage {'netconfig': before  => Stage['main'] }
+stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] }
 
 ### GENERAL CONFIG ###
 # This section sets main parameters such as hostnames and IP addresses of different nodes
@@ -183,10 +188,6 @@ if $quantum {
 }
 
 #Network configuration
-stage {'netconfig':
-      before  => Stage['main'],
-}
-
 class {'l23network': use_ovs=>$quantum, stage=> 'netconfig'}
 class node_netconfig (
   $mgmt_ipaddr,
@@ -302,18 +303,33 @@ $swift_loopback = false
 
 ### Glance and swift END ###
 
-### Syslog ###
-# Enable error messages reporting to rsyslog. Rsyslog must be installed in this case.
-$use_syslog = false
-if $use_syslog {
-  class { "::rsyslog::client":
-    log_local => true,
-    log_auth_local => true,
-    server => '127.0.0.1',
-    port => '514'
-  }
-}
+### Syslog ###                                                                
+# Enable error messages reporting to rsyslog. Rsyslog must be installed in this case,
+# and configured to start at the very beginning of puppet agent run.          
+$use_syslog = true
+# Default log level would have been used, if non verbose and non debug
+$syslog_log_level             = 'ERROR'
+# Syslog facilities for main openstack services, choose any, may overlap if needed.
+$syslog_log_facility_glance   = 'LOCAL2'
+$syslog_log_facility_cinder   = 'LOCAL3'
+$syslog_log_facility_quantum  = 'LOCAL4'
+$syslog_log_facility_nova     = 'LOCAL6'
+$syslog_log_facility_keystone = 'LOCAL7'
 
+if $use_syslog {
+  anchor { '::rsyslog::begin': }
+  class { "::rsyslog::client":
+    log_remote => true,
+    log_local  => true,
+    log_auth_local => true,
+    stage => 'rsyslogs',
+# TODO configurable master node name, default is 'master:514'
+    #server => 'master',
+    #rservers => ['server1', 'server2', 'server3'],
+    #port => '514'
+  }
+  anchor { '::rsyslog::end': }
+}
 ### Syslog END ###
 
 
@@ -405,7 +421,6 @@ Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
 tag("${::deployment_id}::${::environment}")
 
 
-stage { 'openstack-custom-repo': before => Stage['netconfig'] }
 class { 'openstack::mirantis_repos':
   stage => 'openstack-custom-repo',
   type=>$mirror_type,
@@ -413,7 +428,6 @@ class { 'openstack::mirantis_repos':
   repo_proxy=>$repo_proxy,
   use_upstream_mysql=>$use_upstream_mysql
 }
- stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] } 
  class { '::openstack::firewall':
       stage => 'openstack-firewall'
  }
@@ -494,6 +508,12 @@ class simple_controller (
     manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
     nv_physical_volume      => $nv_physical_volume,
     use_syslog              => $use_syslog,
+    syslog_log_level        => $syslog_log_level,
+    syslog_log_facility_glance   => syslog_log_facility_glance,
+    syslog_log_facility_cinder   => syslog_log_facility_cinder,
+    syslog_log_facility_quantum  => syslog_log_facility_quantum,
+    syslog_log_facility_nova     => syslog_log_facility_nova,
+    syslog_log_facility_keystone => syslog_log_facility_keystone,
     nova_rate_limits        => $nova_rate_limits,
     cinder_rate_limits      => $cinder_rate_limits,
     horizon_use_ssl         => $horizon_use_ssl,
@@ -527,6 +547,8 @@ class simple_controller (
       external_ipinfo       => $external_ipinfo,
       api_bind_address      => $internal_address,
       use_syslog            => $use_syslog,
+      syslog_log_level      => $syslog_log_level,
+      syslog_log_facility   => syslog_log_facility_quantum,
     }
   }
   class { 'openstack::auth_file':
@@ -587,6 +609,7 @@ node /fuel-compute-[\d+]/ {
     network_manager        => $network_manager,
     network_config         => { 'vlan_start' => $vlan_start },
     multi_host             => $multi_host,
+    auto_assign_floating_ip => $auto_assign_floating_ip,
     sql_connection         => $sql_connection,
     nova_user_password     => $nova_user_password,
     rabbit_nodes           => [$controller_internal_address],
@@ -611,6 +634,9 @@ node /fuel-compute-[\d+]/ {
     nv_physical_volume     => $nv_physical_volume,
     cinder_iscsi_bind_addr => $cinder_iscsi_bind_addr,
     use_syslog             => $use_syslog,
+    syslog_log_level       => $syslog_log_level,
+    syslog_log_facility_quantum => $syslog_log_facility_quantum,
+    syslog_log_facility_cinder  => $syslog_log_facility_cinder,
     nova_rate_limits       => $nova_rate_limits,
     cinder_rate_limits     => $cinder_rate_limits
   }

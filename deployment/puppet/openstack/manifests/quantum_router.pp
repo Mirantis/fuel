@@ -1,4 +1,8 @@
 #This class installs quantum WITHOUT quantum api server which is installed on controller nodes
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for main syslog files (/var/log/{messages, syslog, kern.log}). Optional.
 
 class openstack::quantum_router (
   $db_host,
@@ -33,6 +37,8 @@ class openstack::quantum_router (
   $quantum_netnode_on_cnt   = false,  
   $tenant_network_type      = 'gre',
   $use_syslog               = false,
+  $syslog_log_facility      = 'LOCAL4',
+  $syslog_log_level         = 'INFO',
   $ha_mode                  = false,
   $service_provider         = 'generic'
 ) {
@@ -50,6 +56,8 @@ class openstack::quantum_router (
       verbose              => $verbose,
       debug                => $verbose,
       use_syslog           => $use_syslog,
+      syslog_log_facility  => $syslog_log_facility,
+      syslog_log_level     => $syslog_log_level,
       server_ha_mode       => $ha_mode,
 
     }
