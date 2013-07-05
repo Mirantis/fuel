@@ -48,14 +48,14 @@ skipx
 # --driveorder=sda,hda
 # APPEND STRING TO KERNEL BOOT COMMAND
 # --append=""
-bootloader --location=mbr --driveorder=sda,hda --append=" crashkernel=auto edd=off"
+bootloader --location=mbr --driveorder=sda,hda,vda --append=" crashkernel=none edd=off"
 
 # PARTITIONING
 # CLEAN ANY INVALID PARTITION TABLE
-zerombr
+#zerombr
 
 # REMOVE ALL PARTITIONS BEFORE CREATING NEW ONES
-clearpart --all --initlabel
+#clearpart --all --initlabel
 
 $SNIPPET('main_partition_select')
 
@@ -85,8 +85,7 @@ $SNIPPET('kickstart_start')
 # INTO KICKSTART BY 'network_config' SNIPPET
 $SNIPPET('pre_install_network_config')
 
-$SNIPPET('pre_partition_select')
-
+$SNIPPET('rhel_gpt')
 
 # PACKAGES SECTION
 # HERE ARE LIST OF PACKAGES THAT WILL BE INSTALLED

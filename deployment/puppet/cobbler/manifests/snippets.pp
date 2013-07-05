@@ -31,6 +31,8 @@ class cobbler::snippets {
   cobbler_snippet {"cinder_create_lvm_group":}
   cobbler_snippet {"cinder_create_lvm_group__ubuntu":}
 
+  cobbler_snippet {"rhel_gpt":}
+
   cobbler_snippet {"ubuntu_disable_pxe":}
   cobbler_snippet {"ubuntu_packages":}
   cobbler_snippet {"ubuntu_puppet_config":}
