@@ -9,7 +9,6 @@ class openstack::cinder(
   $qpid_password   = 'qpid_pw',
   $qpid_user       = 'nova',
   $qpid_nodes      = ['127.0.0.1'],
-  $glance_api_servers,
   $volume_group    = 'cinder-volumes',
   $physical_volume = undef,
   $manage_volumes  = false,
@@ -27,7 +26,14 @@ class openstack::cinder(
   #   purge => true,
   # }
   #}
- case $queue_provider {
+  #  There are two assumptions - everyone should use keystone auth
+  #  and we had rabbit_ha_virtual_ip set in every mode except single
+  #  when service should authenticate itself against localhost anyway.
+
+  cinder_config { 'DEFAULT/auth_strategy': value => 'keystone' }
+  cinder_config { 'DEFAULT/glance_api_servers': value => $glance_api_servers }
+ 
+  case $queue_provider {
     "rabbitmq": {
       if $rabbit_nodes and !$rabbit_ha_virtual_ip {
         $rabbit_hosts = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
@@ -55,11 +61,11 @@ class openstack::cinder(
     rabbit_password => $rabbit_password,
     rabbit_hosts    => $rabbit_hosts,
     qpid_password   => $qpid_password,
-    qpid_user       => $qpid_user,
+    qpid_userid     => $qpid_user,
     qpid_hosts      => $qpid_hosts,
     sql_connection  => $sql_connection,
     verbose         => $verbose,
-    use_syslog => $use_syslog
+    use_syslog      => $use_syslog
   }
   if ($bind_host) {
     class { 'cinder::api':
@@ -87,4 +93,3 @@ class openstack::cinder(
     }
   }
 }
-
