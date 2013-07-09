@@ -4,7 +4,7 @@ $controller_internal_addresses = parsejson($ctrl_management_addresses)
 $controller_public_addresses = parsejson($ctrl_public_addresses)
 $controller_storage_addresses = parsejson($ctrl_storage_addresses)
 $controller_hostnames = keys($controller_internal_addresses)
-$galera_nodes = values($controller_internal_addresses)
+$galera_nodes = sort(values($controller_internal_addresses))
 $custom_mysql_setup_class = 'pacemaker_mysql'
 
 $create_networks = true
@@ -61,7 +61,7 @@ else {
 }
 
 # can be 'qpid' or 'rabbitmq' only
-$queue_provider = 'rabbitmq'
+$queue_provider = 'qpid'
 
 # do not edit the below line
 validate_re($queue_provider,  'rabbitmq|qpid')
