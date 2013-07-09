@@ -104,7 +104,7 @@ class nova(
     require => Package['python-greenlet']
   }
 
-case $queue_provider{
+  case $queue_provider{
     'rabbitmq': {
       if $rabbit_nodes {
         package { ['python-kombu', 'python-anyjson', 'python-amqp']:
@@ -118,9 +118,8 @@ case $queue_provider{
       package { ['python-qpid', 'python-anyjson', 'python-amqp']:
         ensure => present
       }
- }
+    }
   }
-
   # turn on rabbitmq ha/cluster mode
 
   if (defined(Exec['update-kombu']))
@@ -247,8 +246,6 @@ else {
 #     Nova_config <<| tag == "${::deployment_id}::${::environment}" and title == 'rabbit_host' |>>
 #  }
 
-
-  
   # I may want to support exporting and collecting these
   case $queue_provider {
     "rabbitmq": {
@@ -277,7 +274,7 @@ else {
       nova_config {
         'DEFAULT/qpid_password':     value => $qpid_password;
         'DEFAULT/qpid_port':         value => $qpid_port;
-        'DEFAULT/qpid_userid':       value => $qpid_userid;
+        'DEFAULT/qpid_username':       value => $qpid_userid;
         'DEFAULT/rpc_backend':       value => 'nova.rpc.impl_qpid';
       }
     }
