@@ -37,9 +37,8 @@ class nova::metadata_api (
   }
   Package[$::nova::params::meta_api_package_name] -> Nova_config<||>
   Nova_config<||> ~> Service[$::nova::params::meta_api_service_name]
- 
-  
-case $queue_provider {
+
+  case $queue_provider {
     'rabbitmq': {
       if $rabbit_ha_virtual_ip {
         $rabbit_hosts = "${rabbit_ha_virtual_ip}:5672"
@@ -62,14 +61,15 @@ case $queue_provider {
       }
       nova_config {
         'DEFAULT/qpid_hosts':              value => $qpid_hosts;
-        'DEFAULT/qpid_userid':             value => $qpid_user;
+        'DEFAULT/qpid_username':             value => $qpid_user;
         'DEFAULT/qpid_password':           value => $qpid_password;
         'DEFAULT/rpc_backend':             value => 'nova.rpc.impl_qpid';
       }
     }
   }
+
   $memcached_servers = join(regsubst($controller_nodes, '$', ':11211'), ',')
-  
+
   nova_config {'DEFAULT/quantum_connection_host':   value => $service_endpoint }
 
   if !defined(Nova_config['DEFAULT/sql_connection']) {
@@ -77,7 +77,7 @@ case $queue_provider {
   }
   #if ! $quantum_netnode_on_cnt {
     nova_config {
-      'DEFAULT/quantum_auth_strategy':     value => $auth_strategy; 
+      'DEFAULT/quantum_auth_strategy':     value => $auth_strategy;
       'DEFAULT/quantum_admin_auth_url':    value => $admin_auth_url;
       'DEFAULT/quantum_admin_password':    value => $auth_password;
       'DEFAULT/quantum_admin_username':    value => 'quantum';
