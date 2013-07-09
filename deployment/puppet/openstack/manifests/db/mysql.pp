@@ -63,7 +63,8 @@ class openstack::db::mysql (
     $enabled                = true,
     $galera_cluster_name    = 'openstack',
     $primary_controller     = false,
-    $galera_node_address = '127.0.0.1',
+    $galera_node_address    = '127.0.0.1',
+    $db_host                = '127.0.0.1',
     $galera_nodes = ['127.0.0.1'],
     $mysql_skip_name_resolve = false,
     $custom_setup_class = undef
@@ -84,7 +85,7 @@ class openstack::db::mysql (
       # 'root_password' => $mysql_root_password,
       'bind_address'  => '0.0.0.0'
     },
-    galera_cluster_name	=> $galera_cluster_name,
+    galera_cluster_name    => $galera_cluster_name,
     primary_controller => $primary_controller,
     galera_node_address	=> $galera_node_address,
     galera_nodes      => $galera_nodes,
@@ -106,6 +107,7 @@ class openstack::db::mysql (
       password      => $keystone_db_password,
       dbname        => $keystone_db_dbname,
       allowed_hosts => $allowed_hosts,
+      host          => $db_host
     }
 
     # Create the Glance db
@@ -114,6 +116,7 @@ class openstack::db::mysql (
       password      => $glance_db_password,
       dbname        => $glance_db_dbname,
       allowed_hosts => $allowed_hosts,
+      host          => $db_host
     }
 
     # Create the Nova db
@@ -122,6 +125,7 @@ class openstack::db::mysql (
       password      => $nova_db_password,
       dbname        => $nova_db_dbname,
       allowed_hosts => $allowed_hosts,
+      host          => $db_host
     }
 
     # create cinder db
@@ -131,6 +135,7 @@ class openstack::db::mysql (
         password      => $cinder_db_password,
         dbname        => $cinder_db_dbname,
         allowed_hosts => $allowed_hosts,
+        host          => $db_host
       }
     }
 
@@ -141,6 +146,7 @@ class openstack::db::mysql (
         password      => $quantum_db_password,
         dbname        => $quantum_db_dbname,
         allowed_hosts => $allowed_hosts,
+        host          => $db_host
       }
     }
   }
