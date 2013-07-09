@@ -181,9 +181,18 @@ class corosync (
     }
   }
 
+exec {'corosync-restart':
+    command => 'service corosync restart',
+    path    => [ '/bin', '/usr/bin', '/sbin', '/usr/sbin' ],
+    subscribe => File[ [ '/etc/corosync/corosync.conf', '/etc/corosync/service.d' ] ],
+  } ->
+
   service { 'corosync':
     ensure    => running,
     enable    => true,
     subscribe => File[['/etc/corosync/corosync.conf', '/etc/corosync/service.d']],
+    hasstatus  => true,
+    hasrestart => true,
+    require   => Exec['corosync-restart'],
   }
 }
