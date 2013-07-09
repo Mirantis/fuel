@@ -70,7 +70,7 @@ class openstack::compute (
   $qpid_host                     = false,
   $qpid_user                     = 'nova',
   # Glance
-  $glance_api_servers            = undef,
+  $glance_api_servers            = false,
   # Virtualization
   $libvirt_type                  = 'kvm',
   # VNC
@@ -112,8 +112,7 @@ class openstack::compute (
   $use_syslog              = false,
   $nova_rate_limits = undef,
   $cinder_rate_limits = undef,
-  $create_networks = false,
-  $state_path              = '/var/lib/nova'
+  $create_networks = false
 ) {
 
   #
@@ -164,8 +163,7 @@ class openstack::compute (
   nova_config {'DEFAULT/memcached_servers':
     value => $memcached_addresses
   }
-
-case $queue_provider {
+  case $queue_provider {
     'rabbitmq': {
       class { 'nova':
           ensure_package       => $::openstack_version['nova'],
@@ -180,7 +178,6 @@ case $queue_provider {
           use_syslog           => $use_syslog,
           api_bind_address     => $internal_address,
           rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-           state_path           => $state_path,
       }
     }
     'qpid': {
@@ -197,17 +194,15 @@ case $queue_provider {
         ensure_package     => $ensure_package,
         api_bind_address   => $api_bind_address,
         use_syslog         => $use_syslog,
-         state_path           => $state_path,
       }
     }
- 
   }
 
   #Cinder setup
     $enabled_apis = 'metadata'
     package {'python-cinderclient': ensure => present}
     if $cinder and $manage_volumes {
-   case $queue_provider {
+      case $queue_provider {
         'rabbitmq': {
           class {'openstack::cinder':
               sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
@@ -247,6 +242,7 @@ case $queue_provider {
           }
         }
       }
+
     }
 
 
@@ -385,7 +381,7 @@ case $queue_provider {
 
     $enable_tunneling = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
 
-  case $queue_provider {
+    case $queue_provider {
       'rabbitmq': {
         class { '::quantum':
           verbose         => $verbose,
@@ -402,7 +398,7 @@ case $queue_provider {
           verbose         => $verbose,
           debug           => $verbose,
           queue_provider  => $queue_provider,
-         qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
+          qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
           qpid_user       => $qpid_user,
           qpid_password   => $qpid_password,
           use_syslog      => $use_syslog,
