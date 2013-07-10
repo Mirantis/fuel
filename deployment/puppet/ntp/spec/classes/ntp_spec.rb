@@ -19,10 +19,10 @@ describe 'ntp' do
       it { should contain_service('ntp').with_name('ntp') }
       it 'should use the debian ntp servers by default' do
         content = param_value(subject, 'file', '/etc/ntp.conf', 'content')
-        expected_lines = ['server 0.debian.pool.ntp.org iburst',
-         'server 1.debian.pool.ntp.org iburst',
-         'server 2.debian.pool.ntp.org iburst',
-         'server 3.debian.pool.ntp.org iburst']
+        expected_lines = ['server 0.debian.pool.ntp.org burst iburst',
+         'server 1.debian.pool.ntp.org burst iburst',
+         'server 2.debian.pool.ntp.org burst iburst',
+         'server 3.debian.pool.ntp.org burst iburst']
         (content.split("\n") & expected_lines).should == expected_lines
       end
     end
@@ -36,9 +36,9 @@ describe 'ntp' do
       it 'should use the redhat ntp servers by default' do
         content = param_value(subject, 'file', '/etc/ntp.conf', 'content')
         expected_lines = [
-         'server 0.centos.pool.ntp.org',
-         'server 1.centos.pool.ntp.org',
-         'server 2.centos.pool.ntp.org']
+         'server 0.centos.pool.ntp.org burst iburst',
+         'server 1.centos.pool.ntp.org burst iburst',
+         'server 2.centos.pool.ntp.org burst iburst',]
         (content.split("\n") & expected_lines).should == expected_lines
       end
     end
@@ -86,6 +86,22 @@ describe 'ntp' do
         )}
       end
 
+    end
+
+    describe "for virtual machines" do
+
+      let(:params) {{}}
+      let(:facts) { { :operatingsystem => 'Archlinux',
+                      :osfamily        => 'Linux',
+                      :isvirtual       => 'false' } }
+
+      it 'should not use local clock as a time source' do
+        content = param_value(subject, 'file', '/etc/ntp.conf', 'content')
+        expected_lines = [
+          'server  127.127.1.0  # local clock',
+          'fudge  127.127.1.0 stratum 10' ]
+        (content.split("\n") & expected_lines).should_not == expected_lines
+      end
     end
 
     describe "for operating system Archlinux" do

@@ -1,3 +1,5 @@
 pkg/
 metadata.json
 Gemfile.lock
+.project
+.DS_Store
