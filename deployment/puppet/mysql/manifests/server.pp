@@ -32,13 +32,14 @@ class mysql::server (
   $rep_user = 'replicator',
   $rep_pass = 'replicant666',
 ) inherits mysql::params {
-    
+
+  Exec {path => '/usr/bin:/bin:/usr/sbin:/sbin'}    
   if ($custom_setup_class == undef) {
     include mysql
     Class['mysql::server'] -> Class['mysql::config']
     Class['mysql']         -> Class['mysql::server']
 
-    create_resources( 'class', { 'mysql::config' => $config_hash } )
+    create_resources( 'class', { 'mysql::config' => $config_hash })
 #    exec { "debug-mysql-server-installation" :
 #      command     => "/usr/bin/yum -d 10 -e 10 -y install MySQL-server-5.5.28-6 2>&1 | tee mysql_install.log",
 #      before => Package["mysql-server"],
@@ -65,8 +66,7 @@ class mysql::server (
       provider => $service_provider,
     }
   }
-  
-   elsif ($custom_setup_class == 'pacemaker_mysql')  {
+  elsif ($custom_setup_class == 'pacemaker_mysql')  {
     include mysql
     Package[mysql-server] -> Class['mysql::config']
     Package[mysql-client] -> Package[mysql-server]
@@ -103,11 +103,70 @@ class mysql::server (
 #    #}->
 #    cs_commit { 'mysqlvip' : cib => "mysqlvip" } ->
 
-  file { "/tmp/repl_create.sql" :
-    ensure  => present,
-    content => template("mysql/repl_create.sql.erb"),
-  } ->
-
+    file { "/tmp/repl_create.sql" :
+      ensure  => present,
+      content => template("mysql/repl_create.sql.erb"),
+      owner => 'root',
+      group => 'root',
+      mode => 0644,
+  
+    ### Start hacks
+    } ->
+    file { '/usr/lib/ocf/resource.d/heartbeat/mysql': 
+      ensure => present,
+      source => 'puppet:///modules/mysql/ocf-mysql',
+      owner => 'root',
+      group => 'root',
+      mode => 0755,
+    } ->
+    file { '/root/.ssh/id_rsa_mysql':
+      ensure => present,
+      source => 'puppet:///modules/mysql/id_rsa_mysql',
+      owner => 'root',
+      group => 'root',
+      mode => 0600,
+    } ->
+    file { '/root/.ssh/id_rsa_mysql.pub':  
+      ensure => present,
+      source => 'puppet:///modules/mysql/id_rsa_mysql.pub',
+      owner => 'root',
+      group => 'root',
+      mode => 0600,
+    } ->
+    exec { 'add_mysql_ssh_pubkey':
+      command => 'cat /root/.ssh/id_rsa_mysql.pub > /root/.ssh/authorized_keys2 && chmod 600 /root/.ssh/authorized_keys2',
+      path => '/bin:/usr/bin:/sbin:/usr/sbin',
+      unless => 'test -f /root/authorized_keys2 && grep -q "$(cat /root/.ssh/id_rsa.mysql.pub)" /root/authorized_keys2',
+    }
+    notify { "xxxstart": }
+    notify { "xxx${::hostname}": }
+    notify { "xxx${galera_node_address}": }
+    notify { "galera0": message => $galera_nodes[0], }
+    notify { "galera1": message => $galera_nodes[1], }
+    notify { "galera2": message => $galera_nodes[2], }
+    notify { "xxxend": }
+    if ( $::hostname == $galera_nodes[2] ) or ( $galera_node_address == $galera_nodes[2] ) {
+      $existing_slave = $galera_nodes[1]
+      exec { 'stop_mysql_slave_on_second_controller':
+         command => "ssh -i /root/.ssh/id_rsa_mysql -o StrictHostKeyChecking=no root@${existing_slave} 'mysql -NBe \"stop slave;\"'",
+         require => Exec['add_mysql_ssh_pubkey'],
+         unless  => "mysql -NBe 'show slave status;' | grep -q ${rep_user}",
+         before  => Exec['copy_mysql_data_dir'],
+      }
+      exec { 'copy_mysql_data_dir': 
+         command => "rsync -e 'ssh -i /root/.ssh/id_rsa_mysql -o StrictHostKeyChecking=no' -vaz root@${existing_slave}:/var/lib/mysql/. /var/lib/mysql/.",
+         require => Exec['add_mysql_ssh_pubkey'],
+         unless  => "mysql -NBe 'show slave status;' | grep -q ${rep_user}",
+      } ->
+      exec { 'start_mysql_slave_on_second_controller':
+         command => "ssh -i /root/.ssh/id_rsa_mysql -o StrictHostKeyChecking=no root@${existing_slave} 'mysql -NBe \"start slave;\"'",
+         require => Exec['add_mysql_ssh_pubkey'],
+         unless  => "mysql -NBe 'show slave status;' | grep -q ${rep_user}",
+         #before  => Cs_shadow['mysql'],
+      }
+    }
+ 
+         
     cs_shadow { 'mysql': cib => 'mysql' } ->
     cs_resource { "p_mysql":
       ensure          => present,
@@ -152,14 +211,13 @@ class mysql::server (
       require    => [Cs_resource['p_mysql'], Cs_commit['mysql']],
     } 
 
-  } 
-  
+  }
   elsif ($custom_setup_class == 'galera')  {
     Class['galera'] -> Class['mysql::server']
     class { 'galera':
-	    cluster_name => $galera_cluster_name,
-	    primary_controller => $primary_controller,
-	    node_address => $galera_node_address,
+      cluster_name => $galera_cluster_name,
+      primary_controller => $primary_controller,
+      node_address => $galera_node_address,
       node_addresses => $galera_nodes,
         skip_name_resolve => $mysql_skip_name_resolve,
     }
@@ -170,3 +228,4 @@ class mysql::server (
     require($custom_setup_class)
   }
 }
+
