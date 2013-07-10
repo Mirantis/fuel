@@ -46,7 +46,9 @@ class mysql::config(
   $ssl_key           = $mysql::params::ssl_key,
   $log_error         = $mysql::params::log_error,
   $default_engine    = 'UNSET',
-  $root_group        = $mysql::params::root_group
+  $root_group        = $mysql::params::root_group,
+  $custom_setup_class = undef,
+  $server_id         = $mysql::params::server_id,
 ) inherits mysql::params {
 
   if $custom_setup_class != "pacemaker_mysql" {
