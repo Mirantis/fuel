@@ -5,6 +5,7 @@ class openstack::cinder(
   $rabbit_host     = false,
   $rabbit_nodes    = ['127.0.0.1'],
   $rabbit_ha_virtual_ip = false,
+  $glance_api_servers,
   $queue_provider  = 'rabbitmq',
   $qpid_password   = 'qpid_pw',
   $qpid_user       = 'nova',
@@ -18,7 +19,7 @@ class openstack::cinder(
   $bind_host          = '0.0.0.0',
   $iscsi_bind_host    = '0.0.0.0',
   $use_syslog         = false,
-  $cinder_rate_limits = undef
+  $cinder_rate_limits = undef,
 ) {
   include cinder::params
   #  if ($purge_cinder_config) {
@@ -27,8 +28,10 @@ class openstack::cinder(
   # }
   #}
   #  There are two assumptions - everyone should use keystone auth
-  #  and we had rabbit_ha_virtual_ip set in every mode except single
-  #  when service should authenticate itself against localhost anyway.
+  #  and we had glance_api_servers set globally in every mode except 
+  #  single when service should authenticate itself against 
+  #  localhost anyway.
+
 
   cinder_config { 'DEFAULT/auth_strategy': value => 'keystone' }
   cinder_config { 'DEFAULT/glance_api_servers': value => $glance_api_servers }
