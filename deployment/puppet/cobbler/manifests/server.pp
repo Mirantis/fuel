@@ -1,6 +1,6 @@
 class cobbler::server {
   include cobbler::packages
-  
+
   Exec {
     path => '/usr/bin:/bin:/usr/sbin:/sbin'
   }

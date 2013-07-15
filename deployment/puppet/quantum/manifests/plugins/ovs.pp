@@ -85,7 +85,7 @@ class quantum::plugins::ovs (
           ensure  => latest,
         }
       }
-    } 
+    }
   }
 
 }

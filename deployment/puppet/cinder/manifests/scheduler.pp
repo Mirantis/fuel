@@ -6,7 +6,7 @@ class cinder::scheduler (
 
   include cinder::params
 
-  if ($::cinder::params::scheduler_package) { 
+  if ($::cinder::params::scheduler_package) {
     $scheduler_package = $::cinder::params::scheduler_package
     package { 'cinder-scheduler':
       name   => $scheduler_package,

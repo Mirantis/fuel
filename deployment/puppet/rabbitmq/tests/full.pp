@@ -1,4 +1,4 @@
-class { 'rabbitmq::repo::apt': 
+class { 'rabbitmq::repo::apt':
   pin => '900',
 }->
 class { 'rabbitmq::server':
@@ -10,7 +10,7 @@ rabbitmq_user { 'dan':
   password => 'pass',
   provider => 'rabbitmqctl',
 }->
-rabbitmq_vhost { 'myhost': 
+rabbitmq_vhost { 'myhost':
   provider => 'rabbitmqctl',
 }
 rabbitmq_user_permissions { 'dan@myhost':

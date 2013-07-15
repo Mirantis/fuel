@@ -33,7 +33,7 @@ define l23network::l2::port (
   if ! $::l23network::l2::use_ovs {
     fail('You must enable Open vSwitch by setting the l23network::l2::use_ovs to true.')
   }
-  
+
   if ! defined (L2_ovs_port[$port]) {
     l2_ovs_port { $port :
       ensure        => $ensure,

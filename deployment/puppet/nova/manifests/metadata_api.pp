@@ -33,15 +33,15 @@ class nova::metadata_api (
   }
   Package[$::nova::params::meta_api_package_name] -> Nova_config<||>
   Nova_config<||> ~> Service[$::nova::params::meta_api_service_name]
- 
-  
+
+
   if $rabbit_ha_virtual_ip {
     $rabbit_hosts = "${rabbit_ha_virtual_ip}:5672"
   } else {
     $rabbit_hosts = join(regsubst($controller_nodes, '$', ':5672'), ',')
   }
   $memcached_servers = join(regsubst($controller_nodes, '$', ':11211'), ',')
-  
+
   nova_config {'DEFAULT/quantum_connection_host':   value => $service_endpoint }
 
   if !defined(Nova_config['DEFAULT/sql_connection']) {
@@ -49,7 +49,7 @@ class nova::metadata_api (
   }
   #if ! $quantum_netnode_on_cnt {
     nova_config {
-      'DEFAULT/quantum_auth_strategy':     value => $auth_strategy; 
+      'DEFAULT/quantum_auth_strategy':     value => $auth_strategy;
       'DEFAULT/rabbit_hosts':              value => $rabbit_hosts;
       'DEFAULT/quantum_admin_auth_url':    value => $admin_auth_url;
       'DEFAULT/quantum_admin_password':    value => $auth_password;

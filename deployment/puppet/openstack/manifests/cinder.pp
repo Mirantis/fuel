@@ -24,8 +24,8 @@ class openstack::cinder(
   # }
   #}
   #  There are two assumptions - everyone should use keystone auth
-  #  and we had glance_api_servers set globally in every mode except 
-  #  single when service should authenticate itself against 
+  #  and we had glance_api_servers set globally in every mode except
+  #  single when service should authenticate itself against
   #  localhost anyway.
 
   cinder_config { 'DEFAULT/auth_strategy': value => 'keystone' }

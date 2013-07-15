@@ -30,7 +30,7 @@ class openstack::quantum_router (
   $exported_resources       = true,
   $quantum_gre_bind_addr    = $internal_address,
   $quantum_network_node     = false,
-  $quantum_netnode_on_cnt   = false,  
+  $quantum_netnode_on_cnt   = false,
   $tenant_network_type      = 'gre',
   $use_syslog               = false,
   $ha_mode                  = false,

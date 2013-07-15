@@ -5,7 +5,7 @@
 # It's automatically included if $firewall=yes
 #
 # Usage:
-# Automatically included if $firewall=yes 
+# Automatically included if $firewall=yes
 #
 class squid::firewall {
 

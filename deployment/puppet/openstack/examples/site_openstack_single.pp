@@ -1,7 +1,7 @@
 #
 # Parameter values in this file should be changed, taking into consideration your
 # networking setup and desired OpenStack settings.
-# 
+#
 # Please consult with the latest Fuel User Guide before making edits.
 #
 
@@ -109,7 +109,7 @@ $floating_range  = '10.0.204.128/28'
 
 # These parameters are passed to the previously specified network manager , e.g. nova-manage network create.
 # Not used in Quantum.
-# Consult openstack docs for corresponding network manager. 
+# Consult openstack docs for corresponding network manager.
 # https://fuel-dev.mirantis.com/docs/0.2/pages/0050-installation-instructions.html#network-setup
 $num_networks    = 1
 $network_size    = 31
@@ -118,7 +118,7 @@ $vlan_start      = 300
 # Quantum
 
 # Segmentation type for isolating traffic between tenants
-# Consult Openstack Quantum docs 
+# Consult Openstack Quantum docs
 $tenant_network_type     = 'gre'
 
 # Which IP address will be used for creating GRE tunnels.
@@ -151,7 +151,7 @@ $auto_assign_floating_ip = false
 # Database connections
 $sql_connection = "mysql://nova:${nova_db_password}@${controller_internal_address}/nova"
 
-$public_int   = $public_interface 
+$public_int   = $public_interface
 $internal_int = $internal_interface
 
 #Network configuration
@@ -204,7 +204,7 @@ class node_netconfig (
 
 
 # This parameter specifies the the identifier of the current cluster. This is needed in case of multiple environments.
-# installation. Each cluster requires a unique integer value. 
+# installation. Each cluster requires a unique integer value.
 # Valid identifier range is 1 to 254
 $deployment_id = '69'
 
@@ -235,12 +235,12 @@ $cinder_iscsi_bind_addr = $internal_address
 # Below you can add physical volumes to cinder. Please replace values with the actual names of devices.
 # This parameter defines which partitions to aggregate into cinder-volumes or nova-volumes LVM VG
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED, 
+# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED,
 # IT WILL AGGREGATE THE VOLUMES INTO AN LVM VOLUME GROUP
 # AND ALL THE DATA THAT RESIDES ON THESE VOLUMES WILL BE LOST!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Leave this parameter empty if you want to create [cinder|nova]-volumes VG by yourself
-$nv_physical_volume     = ['/dev/sdz', '/dev/sdy', '/dev/sdx'] 
+$nv_physical_volume     = ['/dev/sdz', '/dev/sdy', '/dev/sdx']
 
 #Evaluate cinder node selection
 if ($cinder) {
@@ -332,13 +332,13 @@ $nova_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 $cinder_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 
 
@@ -369,7 +369,7 @@ Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
 
 
 ### END OF PUBLIC CONFIGURATION PART ###
-# Normally, you do not need to change anything after this string 
+# Normally, you do not need to change anything after this string
 
 # Globally apply an environment-based tag to all resources on each node.
 tag("${::deployment_id}::${::environment}")
@@ -383,7 +383,7 @@ class { 'openstack::mirantis_repos':
   repo_proxy=>$repo_proxy,
   use_upstream_mysql=>$use_upstream_mysql
 }
- stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] } 
+ stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] }
  class { '::openstack::firewall':
       stage => 'openstack-firewall'
  }

@@ -6,7 +6,7 @@
 # be very brittle, since even small changes can throw this off.
 #
 # If the line is not present yet, it will be appended to the file.
-# 
+#
 # The name of the define is not used. Just keep it (globally) unique and
 # descriptive.
 #

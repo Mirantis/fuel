@@ -10,7 +10,7 @@ class puppet::service ($enable_service = false) inherits puppet::params
 	                  ],
 	  }
 	}
-	
+
 	else {
     service { "puppetmaster":
         enable => false,
@@ -20,7 +20,7 @@ class puppet::service ($enable_service = false) inherits puppet::params
                     Class["puppet::master_config"]
                     ],
     }
-    
+
   }
-	  
+
 }

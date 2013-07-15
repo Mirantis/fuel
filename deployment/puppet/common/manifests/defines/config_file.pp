@@ -3,13 +3,13 @@
 # See LICENSE for the full license granted to you.
 
 # A simple wrapper to give all configuration files common defaults.
-# 
+#
 # Usage:
 #  config_file { filename:
 #  	content => "....\n",
 #  }
 #
-# Examples: 
+# Examples:
 #
 # To create the file /etc/vservers/${vs_name}/context with specific
 # content:
@@ -54,7 +54,7 @@ define config_file (
 		'': { }
 		default: { File[$name] { content => $content } }
 	}
-				
+
 }
 
 

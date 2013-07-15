@@ -10,11 +10,11 @@
 # This define uses perl regular expressions.
 #
 # Use this only for very trivial stuff. Usually replacing the whole file is a
-# more stable solution with less maintenance headaches afterwards. 
-# 
+# more stable solution with less maintenance headaches afterwards.
+#
 # Usage:
 #
-# replace { description: 
+# replace { description:
 #           file => "filename",
 #           pattern => "regexp",
 #           replacement => "replacement"
@@ -28,7 +28,7 @@
 #  		file => "/etc/munin/munin-node.conf",
 #  		pattern => "^port (?!$port)[0-9]*",
 #  		replacement => "port $port"
-#  }  
+#  }
 define replace($file, $pattern, $replacement) {
 	$pattern_no_slashes = regsubst($pattern, '/', '\\/', 'G', 'U')
 	$replacement_no_slashes = regsubst($replacement, '/', '\\/', 'G', 'U')

@@ -16,7 +16,7 @@ class glance::registry(
   $enabled           = true,
   $use_syslog = false
 ) inherits glance {
-  
+
     if $use_syslog
   {
  glance_registry_config {'DEFAULT/log_config': value => "/etc/glance/logging.conf";}
@@ -113,7 +113,7 @@ class glance::registry(
   {
  package {'glance-registry':
 	 name => $::glance::params::registry_package_name,
- 	 ensure => $package_ensure 
+ 	 ensure => $package_ensure
  }
   File['/etc/glance/glance-registry.conf'] -> Glance_registry_config<||>
   Package['glance-registry']->Service['glance-registry']

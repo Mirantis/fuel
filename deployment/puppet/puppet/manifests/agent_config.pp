@@ -10,19 +10,18 @@ class puppet::agent_config(
     section => 'agent',
     path    => "${puppet_confdir}/puppet.conf",
   }
-  
+
   if ($server) {
     ini_setting {'agent_server':
       setting => 'server',
       value   => $server,
     }
   }
-  
+
   ini_setting {'agent_pluginsync':
     setting => 'pluginsync',
     value   => $pluginsync,
   }
-  
+
 
 }
-  

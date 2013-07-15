@@ -240,7 +240,7 @@ class keystone(
       ensure => directory,
     }
 
-    # keystone-manage pki_setup Should be run as the same system user that will be running the Keystone service to ensure 
+    # keystone-manage pki_setup Should be run as the same system user that will be running the Keystone service to ensure
     # proper ownership for the private key file and the associated certificates
     exec { 'keystone-manage pki_setup':
       path        => '/usr/bin',

@@ -8,7 +8,7 @@ class mysql::server::account_security {
   }
 
   }
-  
+
   database_user { [ 'root@127.0.0.1', "root@${::hostname}", "@${::hostname}", '@localhost', '@%' ]:
     ensure  => 'absent',
     require => Class['mysql::config'],

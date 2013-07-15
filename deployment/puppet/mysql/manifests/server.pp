@@ -29,7 +29,7 @@ class mysql::server (
   $mysql_skip_name_resolve = false,
   $use_syslog              = false,
 ) inherits mysql::params {
-    
+
   if ($custom_setup_class == undef) {
     include mysql
     Class['mysql::server'] -> Class['mysql::config']
@@ -53,7 +53,7 @@ class mysql::server (
      #require=> Package['mysql-shared'],
     }
     Package[mysql-client] -> Package[mysql-server]
- 
+
     service { 'mysqld':
       name     => $service_name,
       ensure   => $enabled ? { true => 'running', default => 'stopped' },
@@ -74,7 +74,7 @@ class mysql::server (
     }
 #    require($galera_class)
   }
-  
+
    else {
     require($custom_setup_class)
   }

@@ -4,7 +4,7 @@
 # It's automatically included and used if $puppi=yes
 #
 class squid::puppi {
-    
+
     puppi::info::module { "squid":
         packagename => "${squid::params::packagename}",
         servicename => "${squid::params::servicename}",
