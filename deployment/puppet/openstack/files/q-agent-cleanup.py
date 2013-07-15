@@ -51,6 +51,11 @@ class QuantumCleaner(object):
         'dhcp': 'qdhcp',
         'l3':   'qrouter',
     }
+    AGENT_BINARY_NAME = {
+        'dhcp': 'quantum-dhcp-agent',
+        'l3':   'quantum-l3-agent',
+        'ovs':  'quantum-openvswitch-agent'
+    }
 
     CMD__remove_ovs_port = ['ovs-vsctl', '--', '--if-exists', 'del-port']
     CMD__remove_ip_addr = ['ip', 'address', 'delete']
@@ -226,6 +231,39 @@ class QuantumCleaner(object):
                             break
         #
 
+    def _get_agents(self):
+        ret_count = self.options.get('retries')
+        while True:
+            if ret_count <= 0 :
+                self.log.error("Q-server error: no more retries for connect to keystone server.")
+                sys.exit(1)
+            try:
+                rv = self.client.list_agents()['agents']
+                break
+            except Exception as e:
+                errmsg = e.message.strip()
+                if re.search(r"Connection\s+refused", errmsg, re.I) or\
+                   re.search(r"Connection\s+timed\s+out", errmsg, re.I) or\
+                   re.search(r"503\s+Service\s+Unavailable", errmsg, re.I) or\
+                   re.search(r"No\s+route\s+to\s+host", errmsg, re.I):
+                      self.log.info("Can't connect to {0}, wait for server ready...".format(self.keystone.service_catalog.url_for(service_type='network')))
+                      time.sleep(self.sleep)
+                else:
+                    self.log.error("Quantum error:\n{0}".format(e.message))
+                    raise e
+            ret_count -= 1
+        return rv
+
+    def _get_agent_by_type(self, agent):
+        self.log.debug("_get_agent_by_type: start.")
+        rv = []
+        agents = self._get_agents()
+        for i in agents:
+            if i['binary'] == self.AGENT_BINARY_NAME.get(agent):
+                rv.append(i)
+        self.log.debug("_get_agent_by_type: end, rv: {0}".format(rv))
+        return rv
+
     def _cleanup_ports(self, agent, activeonly=False):
         self.log.debug("_cleanup_ports: start.")
         rv = False
@@ -237,8 +275,7 @@ class QuantumCleaner(object):
         ip_list = [x[1] for x in port_ip_list]
         self._cleanup_ip_addresses(ip_list)
         self.log.debug("_cleanup_ports: end.")
-        return rv
-
+        #return rv
 
 
     def _cleanup_ns(self, agent):
@@ -246,7 +283,18 @@ class QuantumCleaner(object):
         pass
 
     def _cleanup_agent(self, agent):
-        self.log.debug("_cleanup_agent -- not implemented")
+        self.log.debug("_cleanup_agent: start.")
+        agents = self._get_agent_by_type(agent)
+        for i in agents:
+            aid = i['id']
+            self.log.debug("Removing agent {id} trought API".format(id=aid))
+            if self.options.get('noop'):
+                self.log.info("NOOP-API-call:{0}".format(aid))
+                rc = 204
+            else:
+                rc = self.client.delete_agent(aid)
+            self.log.debug("Agent {id} rc={rc}".format(id=aid, rc=rc))
+        self.log.debug("_cleanup_agent: end.")
         
     def do(self, agent):
         if self.options.get('cleanup-ports'):
