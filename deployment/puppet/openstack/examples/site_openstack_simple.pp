@@ -119,6 +119,7 @@ $quantum_db_dbname       = 'quantum'
 # Consult OpenStack documentation for differences between them.
 $quantum                 = true
 $quantum_netnode_on_cnt  = true
+$quantum_use_namespaces  = false
 
 # Specify network creation criteria:
 # Should puppet automatically create networks?
@@ -503,6 +504,7 @@ class simple_controller (
       db_host               => $controller_internal_address,
       service_endpoint      => $controller_internal_address,
       auth_host             => $controller_internal_address,
+      nova_api_vip          => $controller_internal_address,
       internal_address      => $internal_address,
       public_interface      => $public_int,
       private_interface     => $private_interface,

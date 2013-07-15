@@ -161,9 +161,13 @@ $quantum_db_dbname       = 'quantum'
 # Consult OpenStack documentation for differences between them.
 $quantum                 = true
 $quantum_netnode_on_cnt  = true
+$quantum_use_namespaces  = false
 
 #$quantum_host            = $internal_virtual_ip
 
+# a string "password" value that should be configured to authenticate requests for metadata
+# from quantum-metadata-proxy to nova-api
+$quantum_metadata_proxy_shared_secret = "connecting_nova-api_and_quantum-metadata-agent"
 
 # Specify network creation criteria:
 # Should puppet automatically create networks?
@@ -217,6 +221,7 @@ $network_manager = 'nova.network.manager.FlatDHCPManager'
 $auto_assign_floating_ip = false
 
 # Database connection for Quantum configuration (quantum.conf)
+#todo: check passing following line to quantum::*
 $quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${$internal_virtual_ip}/${quantum_db_dbname}"
 
 
@@ -690,6 +695,7 @@ node /fuel-quantum/ {
       db_host               => $internal_virtual_ip,
       service_endpoint      => $internal_virtual_ip,
       auth_host             => $internal_virtual_ip,
+      nova_api_vip          => $internal_virtual_ip,
       internal_address      => $internal_address,
       public_interface      => $public_int,
       private_interface     => $private_interface,
