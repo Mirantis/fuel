@@ -4,8 +4,14 @@ $controller_internal_addresses = parsejson($ctrl_management_addresses)
 $controller_public_addresses = parsejson($ctrl_public_addresses)
 $controller_storage_addresses = parsejson($ctrl_storage_addresses)
 $controller_hostnames = keys($controller_internal_addresses)
-$galera_nodes = sort(values($controller_internal_addresses))
+$controller_nodes = sort(values($controller_internal_addresses))
 $custom_mysql_setup_class = 'pacemaker_mysql'
+
+if $auto_assign_floating_ip == 'true' {
+  $bool_auto_assign_floating_ip = true
+} else {
+  $bool_auto_assign_floating_ip = false
+}
 
 $create_networks = true
 
@@ -99,7 +105,7 @@ class compact_controller {
     network_size                  => $network_size,
     network_config                => $network_config,
     verbose                       => $verbose,
-    auto_assign_floating_ip       => $auto_assign_floating_ip,
+    auto_assign_floating_ip       => $bool_auto_assign_floating_ip,
     mysql_root_password           => $mysql_hash[root_password],
     admin_email                   => $access_hash[email],
     admin_user                    => $access_hash[user],
@@ -114,13 +120,11 @@ class compact_controller {
     queue_provider                => $queue_provider,
     rabbit_password               => $rabbit_hash[password],
     rabbit_user                   => $rabbit_user,
-    rabbit_nodes                  => $controller_hostnames,
+    rabbit_nodes                  => $controller_nodes,
     qpid_password                 => $rabbit_hash[password],
     qpid_user                     => $rabbit_user,
-    qpid_nodes                    => $controller_hostnames,
-    ha_provider                   => 'pacemaker',
-    use_unicast_corosync          => true,
-    memcached_servers             => $controller_hostnames,
+    qpid_nodes                    => $controller_nodes,
+    memcached_servers             => $controller_nodes,
     export_resources              => false,
     glance_backend                => $glance_backend,
     swift_proxies                 => $controller_internal_addresses,
@@ -131,12 +135,12 @@ class compact_controller {
     quantum_db_dbname             => $quantum_db_dbname,
     tenant_network_type           => $tenant_network_type,
     segment_range                 => $segment_range,
-    cinder                        => $use_cinder,
+    cinder                        => $true,
     cinder_user_password          => $cinder_hash[user_password],
     cinder_iscsi_bind_addr        => $internal_address,
     cinder_db_password            => $cinder_hash[db_password],
     manage_volumes                => false,
-    galera_nodes                  => $galera_nodes,
+    galera_nodes                  => $controller_nodes,
     custom_mysql_setup_class      => $custom_mysql_setup_class,
     mysql_skip_name_resolve       => true,
     use_syslog                    => true,
@@ -164,9 +168,10 @@ class compact_controller {
       class { compact_controller: }
       class { 'openstack::swift::storage_node':
         storage_type          => 'loopback',
+        loopback_size         => '5243780',
         swift_zone            => $uid,
         swift_local_net_ip    => $storage_address,
-        master_swift_proxy_ip => $controller_storage_addresses[$master_hostname],
+        master_swift_proxy_ip => $controller_internall_addresses[$master_hostname],
         sync_rings            => ! $primary_proxy
       }
       if $primary_proxy {
@@ -177,10 +182,10 @@ class compact_controller {
       class { 'openstack::swift::proxy':
         swift_user_password     => $swift_hash[user_password],
         swift_proxies           => $controller_internal_addresses,
-        primary_proxy                  => $primary_proxy,
+        primary_proxy           => $primary_proxy,
         controller_node_address => $management_vip,
         swift_local_net_ip      => $internal_address,
-        master_swift_proxy_ip => $controller_internal_addresses[$master_hostname],
+        master_swift_proxy_ip   => $controller_internal_addresses[$master_hostname],
       }
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
       nova_config { 'DEFAULT/use_cow_images': value => $use_cow_images }
@@ -221,19 +226,20 @@ class compact_controller {
         rabbit_ha_virtual_ip   => $management_vip,
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,
-        rabbit_nodes           => $controller_hostnames,
+        rabbit_nodes           => $controller_nodes,
         qpid_password          => $rabbit_hash[password],
         qpid_user              => $rabbit_user,
-        qpid_nodes             => $controller_hostnames,
+        qpid_nodes             => $controller_nodes,
+        auto_assign_floating_ip => $bool_auto_assign_floating_ip,
         glance_api_servers     => "${management_vip}:9292",
         vncproxy_host          => $public_vip,
         verbose                => $verbose,
         vnc_enabled            => true,
         manage_volumes         => false,
         nova_user_password     => $nova_hash[user_password],
-        cache_server_ip        => $controller_hostnames,
+        cache_server_ip        => $controller_nodes,
         service_endpoint       => $management_vip,
-        cinder                 => $use_cinder,
+        cinder                 => true,
         cinder_iscsi_bind_addr => $internal_address,
         cinder_user_password   => $cinder_hash[user_password],
         cinder_db_password     => $cinder_hash[db_password],
@@ -266,17 +272,18 @@ class compact_controller {
       }
       class { 'openstack::cinder':
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${management_vip}/cinder?charset=utf8",
+        glance_api_servers   => "${management_vip}:9292",
         queue_provider       => $queue_provider,
         rabbit_password      => $rabbit_hash[password],
         rabbit_host          => false,
-        rabbit_nodes         => $controller_hostnames,
+        rabbit_nodes         => $management_vip,
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_user,
         qpid_nodes           => $controller_hostnames,
         volume_group         => 'cinder',
         manage_volumes       => true,
         enabled              => true,
-        auth_host            => $service_endpoint,
+        auth_host            => $management_vip
         iscsi_bind_host      => $storage_address,
         cinder_user_password => $cinder_hash[user_password],
         use_syslog           => true,

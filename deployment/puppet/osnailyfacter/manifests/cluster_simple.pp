@@ -20,6 +20,12 @@ $access_hash   = parsejson($access)
 $extra_rsyslog_hash = parsejson($syslog)
 $floating_hash = parsejson($floating_network_range)
 
+if $auto_assign_floating_ip == 'true' {
+  $bool_auto_assign_floating_ip = true
+} else {
+  $bool_auto_assign_floating_ip = false
+}
+
 $base_syslog_hash  = parsejson($base_syslog)
 $base_syslog_rserver  = {
   'remote_type' => 'udp',
@@ -73,7 +79,7 @@ Exec { logoutput => true }
         network_size            => $network_size,
         network_config          => $network_config,
         verbose                 => $verbose,
-        auto_assign_floating_ip => $auto_assign_floating_ip,
+        auto_assign_floating_ip => $bool_auto_assign_floating_ip,
         mysql_root_password     => $mysql_hash[root_password],
         admin_email             => $access_hash[email],
         admin_user              => $access_hash[user],
@@ -92,7 +98,7 @@ Exec { logoutput => true }
         qpid_user               => $rabbit_user,
         export_resources        => false,
         quantum                 => $quantum,
-        cinder                  => $use_cinder,
+        cinder                  => true,
         cinder_user_password    => $cinder_hash[user_password],
         cinder_db_password      => $cinder_hash[db_password],
         manage_volumes          => false,
@@ -159,6 +165,7 @@ Exec { logoutput => true }
         rabbit_nodes           => [$controller_node_address],
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,
+        auto_assign_floating_ip => $bool_auto_assign_floating_ip,
         qpid_nodes             => [$controller_node_address],
         qpid_password          => $rabbit_hash[password],
         qpid_user              => $rabbit_user,
@@ -173,7 +180,7 @@ Exec { logoutput => true }
         #quantum_user_password  => $quantum_user_password,
         #tenant_network_type    => $tenant_network_type,
         service_endpoint       => $controller_node_address,
-        cinder                 => $use_cinder,
+        cinder                 => true,
         cinder_user_password   => $cinder_hash[user_password],
         cinder_db_password     => $cinder_hash[db_password],
         manage_volumes         => false,
@@ -201,6 +208,7 @@ Exec { logoutput => true }
       }
       class { 'openstack::cinder':
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${controller_node_address}/cinder?charset=utf8",
+        glance_api_servers   => "${controller_node_address}:9292",
         queue_provider       => $queue_provider,
         rabbit_password      => $rabbit_hash[password],
         rabbit_host          => false,
@@ -211,7 +219,7 @@ Exec { logoutput => true }
         volume_group         => 'cinder',
         manage_volumes       => true,
         enabled              => true,
-        auth_host            => $service_endpoint,
+        auth_host            => $controller_node_address,
         iscsi_bind_host      => $storage_address,
         cinder_user_password => $cinder_hash[user_password],
         use_syslog           => true,
