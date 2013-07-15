@@ -152,7 +152,7 @@ class horizon(
   }
 
   case $::osfamily {
-    'RedHat': { 
+    'RedHat': {
       file { '/etc/httpd/conf.d/wsgi.conf':
         mode   => 644,
         owner  => root,
@@ -169,19 +169,19 @@ class horizon(
         }
       }
 
-      augeas { "remove_listen_directive": 
+      augeas { "remove_listen_directive":
         context => "/files/etc/httpd/conf/httpd.conf",
-        changes => [ 
+        changes => [
           "rm directive[. = 'Listen']"
         ],
         before  => Service['httpd'],
       }
-      
+
       if $use_syslog {
         file {'/etc/httpd/conf.d/openstack-dashboard.conf':
 	  ensure  => present,
 	} ->
-	file_line { "enable_syslog": 
+	file_line { "enable_syslog":
 	  path => "/etc/httpd/conf.d/openstack-dashboard.conf",
 	  line => 'ErrorLog syslog:local1',
 	  before  => Service['httpd'],

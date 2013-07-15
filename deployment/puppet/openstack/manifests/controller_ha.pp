@@ -57,33 +57,33 @@ define haproxy_service(
       $balancer_port = $port
     }
   }
-  
-  add_haproxy_service { $name : 
-    order                    => $order, 
-    balancers                => $balancers, 
-    virtual_ips              => $virtual_ips, 
-    port                     => $port, 
-    haproxy_config_options   => $haproxy_config_options, 
-    balancer_port            => $balancer_port, 
-    balancermember_options   => $balancermember_options, 
-    define_cookies           => $define_cookies, 
+
+  add_haproxy_service { $name :
+    order                    => $order,
+    balancers                => $balancers,
+    virtual_ips              => $virtual_ips,
+    port                     => $port,
+    haproxy_config_options   => $haproxy_config_options,
+    balancer_port            => $balancer_port,
+    balancermember_options   => $balancermember_options,
+    define_cookies           => $define_cookies,
     define_backend           => $define_backend,
   }
 }
 
-# add_haproxy_service moved to separate define to allow adding custom sections 
+# add_haproxy_service moved to separate define to allow adding custom sections
 # to haproxy config without any default config options, except only required ones.
 define add_haproxy_service (
-    $order, 
-    $balancers, 
-    $virtual_ips, 
-    $port, 
-    $haproxy_config_options, 
-    $balancer_port, 
+    $order,
+    $balancers,
+    $virtual_ips,
+    $port,
+    $haproxy_config_options,
+    $balancer_port,
     $balancermember_options,
     $mode = 'tcp',
-    $define_cookies = false, 
-    $define_backend = false, 
+    $define_cookies = false,
+    $define_backend = false,
     $collect_exported = false
     ) {
     haproxy::listen { $name:
@@ -151,7 +151,7 @@ class openstack::controller_ha (
       group   => '0',
       mode    => '0644',
     } -> Anchor['haproxy_done']
-    
+
 
     # Dirty hack, due Puppet can't send notify between stages
     exec { 'restart_haproxy':
@@ -223,7 +223,7 @@ class openstack::controller_ha (
 
 
     ###
-    # Setup Galera's 
+    # Setup Galera's
 
     package { 'socat': ensure => present }
     exec { 'wait-for-haproxy-mysql-backend':

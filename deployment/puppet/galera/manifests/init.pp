@@ -22,7 +22,7 @@
 #
 # [*skip_name_resolve*]
 #  By default, MySQL tries to do reverse name mapping IP->hostname. In this
-#  case MySQL requests can be timed out by clients in case of broken name  
+#  case MySQL requests can be timed out by clients in case of broken name
 #  resolving system. If you are not sure that your DNS/NIS/whatever are configured
 #  correctly, set this value to true.
 #
@@ -94,7 +94,7 @@ class galera (
       file { '/etc/init.d/mysql':
         ensure  => present,
         mode    => 755,
-        source => 'puppet:///modules/galera/mysql.init' , 
+        source => 'puppet:///modules/galera/mysql.init' ,
         require => Package['MySQL-server'],
         before  => Service['mysql-galera']
       }
@@ -146,7 +146,7 @@ class galera (
   }
 
   if $::galera::params::mysql_version {
-   $wsrep_version = $::galera::params::mysql_version 
+   $wsrep_version = $::galera::params::mysql_version
   }
   else
   {
@@ -236,22 +236,22 @@ class galera (
     try_sleep => 5,
     tries     => 60,
   }
-  
-  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
+
+  Package["MySQL-server"] -> Exec["set-mysql-password"]
+  File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"]
   -> Exec["kill-initial-mysql"] -> Service["mysql-galera"] -> Exec ["wait-for-synced-state"]
   Exec["kill-initial-mysql"] -> Exec["rm-init-file"]
   Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["kill-initial-mysql"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
- 
+
   class { 'galera::galera_master_final_config':
     require        => Exec["wait-for-haproxy-mysql-backend"],
     primary_controller => $primary_controller,
     node_addresses => $node_addresses,
     node_address   => $node_address,
   }
-  
+
   if $primary_controller {
     exec { "start-new-galera-cluster":
       path   => "/usr/bin:/usr/sbin:/bin:/sbin",

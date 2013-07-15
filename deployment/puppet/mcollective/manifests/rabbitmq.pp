@@ -5,7 +5,7 @@ class mcollective::rabbitmq (
   $management_port = "55672",
   $stomp           = false,
   $vhost           = "mcollective",) {
-  
+
   define access_to_rabbitmq_port ($port, $protocol = 'tcp') {
     $rule = "-p $protocol -m state --state NEW -m $protocol --dport $port -j ACCEPT"
 

@@ -216,10 +216,10 @@ class quantum::agents::l3 (
     require => Package[$l3_agent_package],
   }
 
-  Service<| title == 'quantum-server' |>->Service['quantum-l3'] 
+  Service<| title == 'quantum-server' |>->Service['quantum-l3']
 
   if $service_provider == 'pacemaker' {
-    
+
     Service<| title == 'quantum-server' |> -> Cs_shadow['l3']
     Quantum_l3_agent_config <||> -> Cs_shadow['l3']
     cs_resource { "p_${::quantum::params::l3_agent_service}":
@@ -263,11 +263,11 @@ class quantum::agents::l3 (
 
     Cs_commit['l3'] -> Service['quantum-l3']
     ::corosync::cleanup{"p_${::quantum::params::l3_agent_service}":}
-    
+
     Cs_commit['l3'] -> ::Corosync::Cleanup["p_${::quantum::params::l3_agent_service}"]
     Cs_commit['l3'] ~> ::Corosync::Cleanup["p_${::quantum::params::l3_agent_service}"]
     ::Corosync::Cleanup["p_${::quantum::params::l3_agent_service}"]->Service['quantum-l3']
-    
+
     Cs_resource["p_${::quantum::params::l3_agent_service}"] -> Cs_colocation['l3-with-ovs']
     Cs_resource["p_${::quantum::params::l3_agent_service}"] -> Cs_order['l3-after-ovs']
 

@@ -275,12 +275,12 @@ class openstack::all (
       #pv       => '/dev/sdb',
       before   => Class['nova::volume'],
     }
-    
+
     class { 'nova::volume':
       enabled => true,
       require => Class['lvm']
     }
-    
+
     class { 'nova::volume::iscsi': }
   }
 

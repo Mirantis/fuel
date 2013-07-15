@@ -93,7 +93,7 @@ node fuel-pm {
 
   # Ubuntu distribution
   # Uncomment the following section if you want Ubuntu image to be downloaded and imported into Cobbler
-  # Replace "http://address/of" with valid hostname and path to the mirror where the image is stored  
+  # Replace "http://address/of" with valid hostname and path to the mirror where the image is stored
 
   /*
   Class[cobbler::distro::ubuntu_1204_x86_64] ->
@@ -115,7 +115,7 @@ node fuel-pm {
   /*
   Class[cobbler::distro::rhel63_x86_64] ->
   Class[cobbler::profile::rhel63_x86_64]
-  
+
   class { cobbler::distro::rhel63_x86_64:
     http_iso => "http://address/of/rhel-server-6.3-x86_64-boot.iso",
     ks_url   => "http://address/of/rhel/base/mirror/6.3/os/x86_64",
@@ -123,7 +123,7 @@ node fuel-pm {
   }
   class { cobbler::profile::rhel63_x86_64: }
   */
-  
+
   class { cobbler::checksum_bootpc: }
 
   # IT IS NEEDED IN ORDER TO USE cobbler_system.py SCRIPT

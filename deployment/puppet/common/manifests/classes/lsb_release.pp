@@ -11,7 +11,7 @@
 
 # This lightweight class only asserts that $lsbdistcodename is set.
 # If the assertion fails, an error is printed on the server
-# 
+#
 # To fail individual resources on a missing lsbdistcodename, require
 # Exec[assert_lsbdistcodename] on the specific resource
 #

@@ -180,8 +180,8 @@ class openstack::controller (
 
   $rabbit_addresses = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
     $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
- 
-  
+
+
   nova_config {'DEFAULT/memcached_servers':  value => $memcached_addresses; }
 
   ####### DATABASE SETUP ######
@@ -284,7 +284,7 @@ class openstack::controller (
   }
   else {
     $enabled_apis = 'ec2,osapi_compute,osapi_volume'
-  } 
+  }
 
   class { 'openstack::nova::controller':
     # Database
@@ -364,7 +364,7 @@ class openstack::controller (
         rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
       }
     }
-  } else { 
+  } else {
     if $manage_volumes {
       # Set up nova-volume
       class { 'nova::volume':
@@ -376,12 +376,12 @@ class openstack::controller (
         physical_volume  => $nv_physical_volume,
       }
     }
-  } 
+  }
 
   if !defined(Class['memcached']){
     class { 'memcached':
       #listen_ip => $api_bind_address,
-    } 
+    }
   }
 
   ######## Horizon ########

@@ -6,6 +6,6 @@ class swift::xfs {
     ensure => 'present'
   }
   if !(defined(Package['parted'])) {
-    package {"parted": ensure => 'present' } 
+    package {"parted": ensure => 'present' }
   }
 }

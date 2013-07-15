@@ -10,7 +10,7 @@
 # [*vip*]
 #   Specify dictionary of VIP parameters, ex:
 #   {
-#       nic    => 'eth0', 
+#       nic    => 'eth0',
 #       ip     => '10.1.1.253'
 #   }
 #
