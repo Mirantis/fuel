@@ -7,6 +7,7 @@ import argparse
 import logging
 import logging.handlers
 import subprocess
+import StringIO
 from quantumclient.quantum import client as q_client
 from keystoneclient.v2_0 import client as ks_client
 
@@ -52,6 +53,7 @@ class QuantumCleaner(object):
     }
 
     CMD__remove_ovs_port = ['ovs-vsctl', '--', '--if-exists', 'del-port']
+    CMD__remove_ip_addr = ['ip', 'address', 'delete']
 
     def __init__(self, openrc, options, log=None):
         self.log = log
@@ -148,14 +150,9 @@ class QuantumCleaner(object):
         self.log.debug("_get_portnames_and_IPs_for_agent: end, rv='{0}'".format(rv))
         return rv
 
-    def _cleanup_ports(self, agent, activeonly=False):
-        self.log.debug("_cleanup_ports: start.")
-        rv = False
-        port_ip_list = self._get_portnames_and_IPs_for_agent(agent)
-        # Cleanup ports
-        port_list = [x[0] for x in port_ip_list]
-        self.log.debug("_cleanup_ports: ports {0} will be cleaned.".format(port_list))
-        for port in port_list:
+    def _cleanup_ovs_ports(self, portlist):
+        self.log.debug("Ports {0} will be cleaned.".format(portlist))
+        for port in portlist:
             cmd = []
             cmd.extend(self.CMD__remove_ovs_port)
             cmd.append(port)
@@ -171,6 +168,74 @@ class QuantumCleaner(object):
                 rc = process.wait()
                 if rc != 0:
                     self.log.error("ERROR (rc={0}) while execution {1}".format(rc,cmd))            
+        #
+
+    def _cleanup_ip_addresses(self, addrlist):
+        self.log.debug("IP addresses {0} will be cleaned.".format(addrlist))
+        addrs=set([str(x) for x in addrlist])
+        re_inet = re.compile(r'\s*inet\s')
+        re_addrline = re.compile(r'inet\s+(\d+\.\d+\.\d+\.\d+\/\d+)\s+.*\s([\w\-\.\_]+)$')
+        ip2ifaces = {}
+        ifaces2ip = {}
+        # get IP list for this system
+        process = subprocess.Popen(
+            ['ip','addr','show'],
+            shell=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout = process.communicate()[0]
+        rc = process.wait()
+        if rc != 0:
+            self.log.error("ERROR (rc={0}) while execution {1}".format(rc,cmd))
+            return False
+        for i in StringIO.StringIO(stdout):
+            if re_inet.match(i):
+                rgx = re_addrline.search(i)
+                if rgx:
+                    ip, iface = re_addrline.search(i).groups()
+                    # tmp = ip2ifaces.get(ip)
+                    # if not tmp:
+                    #     ip2ifaces[ip] = set([])
+                    #     tmp = ip2ifaces.get(ip)
+                    # tmp.add(iface)
+                    # tmp = ifaces2ip.get(iface)
+                    # if not tmp:
+                    #     ifaces2ip[iface] = set([])
+                    #     tmp = ifaces2ip.get(iface)
+                    # tmp.add(ip)
+                    addr = ip.split('/')[0]
+                    if addr in addrs:
+                        cmd = []
+                        cmd.extend(self.CMD__remove_ip_addr)
+                        cmd.extend([ip,'dev',iface])
+                        if self.options.get('noop'):
+                            self.log.info("NOOP-execution:{0}".format(cmd))
+                        else:
+                            process = subprocess.Popen(
+                                cmd,
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE
+                            )
+                            rc = process.wait()
+                            if rc != 0:
+                                self.log.error("ERROR (rc={0}) while execution {1}".format(rc,cmd))            
+                        addrs.remove(addr)
+                        if len(addrs) == 0:
+                            break
+        #
+
+    def _cleanup_ports(self, agent, activeonly=False):
+        self.log.debug("_cleanup_ports: start.")
+        rv = False
+        port_ip_list = self._get_portnames_and_IPs_for_agent(agent)
+        # Cleanup ports
+        port_list = [x[0] for x in port_ip_list]
+        self._cleanup_ovs_ports(port_list)
+        # Cleanup IP addresses
+        ip_list = [x[1] for x in port_ip_list]
+        self._cleanup_ip_addresses(ip_list)
         self.log.debug("_cleanup_ports: end.")
         return rv
 
