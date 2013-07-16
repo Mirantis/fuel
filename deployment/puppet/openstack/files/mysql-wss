@@ -757,6 +757,13 @@ rebuild_cluster() {
                 WINNER_NODE=$(hostname)
                 MAX_EPOCH=$WSREP_EPOCH
                 crm_attribute -t crm_config --node $(hostname) --name mysqlepoch --update $WSREP_EPOCH
+                # Seems to be more or less legitimate solution explicitly for "datacenter power switch" situation:
+                #  - first of all, more complex logic does not bring more precise knowledge of which node
+                #    should be a master, because it related to such property as an epoch and user may simply
+                #    decide to not start node which was online during entire disaster holding "bad" data.
+                #  - five minutes are enough for man who turns servers in the rack and for crm to push significant
+                #    percentage of the epoch values to the shared resource and not too large for such type of disaster at all.
+                sleep 300
                 for node in "${CRM_ONLINE_NODES[@]}" ; do
                     CUR_EPOCH=$(crm_attribute -t crm_config --node $node --name mysqlepoch --query 2> /dev/null | awk -F\= '{print $4}')
                     if [ -z "$CUR_EPOCH" ] ; then
