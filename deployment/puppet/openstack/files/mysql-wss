@@ -773,6 +773,8 @@ rebuild_cluster() {
                    ocf_log info "Assuming current node as a new master..."
                    /etc/init.d/mysql stop
                    /etc/init.d/mysql start --wsrep-cluster-address="gcomm://"
+                   sleep 3
+                   mysql_promote
                 fi
             else
                 return $OCF_SUCCESS
