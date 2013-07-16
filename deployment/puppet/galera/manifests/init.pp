@@ -240,6 +240,7 @@ class galera (
   exec { "raise-first-setup-flag" :
    path    => "/usr/bin:/usr/sbin:/bin:/sbin",
    command => "crm_attribute -t crm_config --name mysqlprimaryinit --update done",
+   refreshonly => true,
   }
 
   Package["MySQL-server"] -> Exec["set-mysql-password"] 
