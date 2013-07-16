@@ -66,7 +66,7 @@ OCF_RESKEY_log_default="/var/log/mysqld.log"
 OCF_RESKEY_pid_default="/var/mysql/mysqld.pid"
 OCF_RESKEY_socket_default="/var/run/mysql/mysql.sock"
 else
-OCF_RESKEY_binary_default="/usr/bin/safe_mysqld"
+OCF_RESKEY_binary_default="/usr/bin/mysqld_safe"
 OCF_RESKEY_config_default="/etc/my.cnf"
 OCF_RESKEY_datadir_default="/var/lib/mysql"
 OCF_RESKEY_user_default="mysql"
@@ -762,7 +762,7 @@ rebuild_cluster() {
                     if [ -z "$CUR_EPOCH" ] ; then
                       echo "Skipping comparison with node $node"
                     else
-                        if [ "$CUR_EPOCH" -gt "$MAX_EPOCH" ] ; then
+                        if [ "$(echo '$CUR_EPOCH > $MAX_EPOCH' | bc)" -eq '1' ] ; then
                           WINNER_NODE=$node
                           MAX_EPOCH=$CUR_EPOCH
                         fi
