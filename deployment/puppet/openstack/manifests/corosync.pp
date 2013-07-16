@@ -62,7 +62,15 @@ file {'quantum-ovs-agent':
   source => "puppet:///modules/openstack/quantum-agent-ovs",
   before => Service['corosync']
 } 
-
+file {'mysql-wss':
+  path=>'/usr/lib/ocf/resource.d/heartbeat/mysql',
+  mode => 744,
+  require =>Package['corosync'],
+  owner => root,
+  group => root,
+  source => "puppet:///modules/openstack/mysql-wss",
+  before => Service['corosync']
+}
 corosync::service { 'pacemaker':
   version => '0',
   notify  => Service['corosync'],
