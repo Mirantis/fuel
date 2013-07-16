@@ -47,12 +47,9 @@ class mysql::config(
   $log_error         = $mysql::params::log_error,
   $default_engine    = 'UNSET',
   $root_group        = $mysql::params::root_group,
-<<<<<<< HEAD
   $custom_setup_class = undef,
   $server_id         = $mysql::params::server_id,
-=======
   $use_syslog        = false,
->>>>>>> 77e7283... FUEL-682 Added syslog logging to Horizon and MySQL/Galera
 ) inherits mysql::params {
 
   if $custom_setup_class != "pacemaker_mysql" {
