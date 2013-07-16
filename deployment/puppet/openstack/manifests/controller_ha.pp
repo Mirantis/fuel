@@ -263,6 +263,12 @@ class openstack::controller_ha (
 
     #Order dependencies
     Cs_resource['internal-vip'] -> Cs_resource['public-vip'] -> Class['openstack::controller']
+    #Colocate internal and public VIPs together
+    cs_colocation { 'internal-vip_to_public-vip':
+      primitives => ['internal-vip','public-vip'],
+      score      => 'INFINITY',
+    }
+
     sysctl::value { 'net.ipv4.ip_nonlocal_bind': value => '1' }
 
     class { 'haproxy':

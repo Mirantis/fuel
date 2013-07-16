@@ -112,7 +112,7 @@ $controller_hostnames = keys($controller_internal_addresses)
 #Also, if you do not want Quantum HA, you MUST enable $quantum_network_node
 #on the ONLY controller
 $ha_provider = 'pacemaker'
-$use_unicast_corosync = tru/
+$use_unicast_corosync = true
 
 
 # Set nagios master fqdn
@@ -571,8 +571,8 @@ class compact_controller (
     cinder                  => $cinder,
     cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
     manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
-    custom_mysql_setup_class=> $custom_mysql_setup_class,
     galera_nodes            => $controller_hostnames,
+    custom_mysql_setup_class => $custom_mysql_setup_class,
     nv_physical_volume      => $nv_physical_volume,
     use_syslog              => $use_syslog,
     nova_rate_limits        => $nova_rate_limits,
