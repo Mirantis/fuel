@@ -750,7 +750,7 @@ rebuild_cluster() {
     if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] ; then
         mysql_status info
         if [ $? = $OCF_SUCCESS ] ; then
-            CRM_ONLINE_NODES=( $(crm node list | sed 's/\://g') )
+            CRM_ONLINE_NODES=( $(crm node list | grep -v \(offline\) | sed 's/\://g') )
             WSREP_EPOCH=$(echo 'show status;' | mysql -u root | grep wsrep_protocol_version | awk '{print $2}')
             WSREP_STATE=$(echo 'show status;' | mysql -u root | grep wsrep_cluster_status | awk '{print $2}')
             if [ "$WSREP_STATE" = 'non-Primary' ]; then
