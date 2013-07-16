@@ -762,7 +762,7 @@ rebuild_cluster() {
                     if [ -z "$CUR_EPOCH" ] ; then
                       echo "Skipping comparison with node $node"
                     else
-                        if [ "$(echo '$CUR_EPOCH > $MAX_EPOCH' | bc)" -eq '1' ] ; then
+                        if [ "$(echo ''$CUR_EPOCH' > '$MAX_EPOCH'' | bc)" -eq '1' ] ; then
                           WINNER_NODE=$node
                           MAX_EPOCH=$CUR_EPOCH
                         fi
