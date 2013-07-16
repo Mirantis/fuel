@@ -61,7 +61,7 @@ class mcollective::client(
     mode => 0600,
     require => Package[$mcollective_client_package],
   }
-  
+
   file {"${mcollective_agent_path}/puppetd.ddl" :
     content => template("mcollective/puppetd.ddl.erb"),
     owner => root,
@@ -69,7 +69,7 @@ class mcollective::client(
     mode => 0600,
     require => Package[$mcollective_client_package],
   }
-  
+
   file {"${mcollective_agent_path}/puppetd.rb" :
     content => template("mcollective/puppetd.rb.erb"),
     owner => root,

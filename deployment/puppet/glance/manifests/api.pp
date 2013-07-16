@@ -94,7 +94,7 @@ class glance::api(
   } else {
     fail("Invalid db connection ${sql_connection}")
   }
-  
+
 if $use_syslog {
  glance_api_config {
    'DEFAULT/log_config': value => "/etc/glance/logging.conf";

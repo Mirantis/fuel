@@ -21,7 +21,7 @@ class glance::registry(
   $syslog_log_facility = 'LOCAL2',
   $syslog_log_level  = 'WARNING',
 ) inherits glance {
-  
+
 if $use_syslog {
  glance_registry_config {
    'DEFAULT/log_config': value => "/etc/glance/logging.conf";
@@ -131,7 +131,7 @@ if $use_syslog {
   {
  package {'glance-registry':
 	 name => $::glance::params::registry_package_name,
- 	 ensure => $package_ensure 
+ 	 ensure => $package_ensure
  }
   File['/etc/glance/glance-registry.conf'] -> Glance_registry_config<||>
   Package['glance-registry']->Service['glance-registry']

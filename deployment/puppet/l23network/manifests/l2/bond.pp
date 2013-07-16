@@ -28,7 +28,7 @@ define l23network::l2::bond (
   if ! $::l23network::l2::use_ovs {
     fail('You must enable Open vSwitch by setting the l23network::l2::use_ovs to true.')
   }
-  
+
   if ! defined (L2_ovs_bond["$bond"]) {
     l2_ovs_bond { "$bond" :
       ports         => $ports,

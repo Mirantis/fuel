@@ -5,7 +5,7 @@
 #
 # Parameters:
 #  - $mode (enforced|permissive|disabled) - sets the operating state for SELinux.
-# 
+#
 # Actions:
 #  Configures SELinux to a specific state (enforced|permissive|disabled)
 #
@@ -37,7 +37,7 @@ class selinux::config(
     }
 
     case $mode {
-      permissive,disabled: { 
+      permissive,disabled: {
         $sestatus = '0'
 
         # workaround bugfix (http://projects.puppetlabs.com/issues/4466)

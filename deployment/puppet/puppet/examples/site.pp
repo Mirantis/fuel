@@ -1,5 +1,5 @@
   class { "puppet" :  }
-  
+
 #  class { "puppet::storedb" :
 #    puppet_stored_dbname => "puppet",
 #    puppet_stored_dbuser => "puppet",
@@ -9,11 +9,11 @@
 #  }
 
   class {puppet::thin: }
-  
+
   class { "puppet::nginx":
     puppet_master_hostname => "product-centos.localdomain",
   }
-  
+
   class { "puppet::agent_config":
     server => "product-centos.localdomain"
   }

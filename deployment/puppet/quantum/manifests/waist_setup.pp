@@ -1,7 +1,7 @@
 class quantum::waist_setup {
   # pseudo class for divide up and down
   include 'quantum::waistline'
-  
+
   if ! defined(Package[python-amqp]) {
     package { 'python-amqp':
       ensure => present,

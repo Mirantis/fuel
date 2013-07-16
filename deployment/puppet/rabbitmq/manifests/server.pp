@@ -17,7 +17,7 @@
 #  stdlib
 # Sample Usage:
 #
-#  
+#
 #
 #
 # [Remember: No empty lines between comments and class definition]
@@ -35,7 +35,7 @@ class rabbitmq::server(
   $node_ip_address = 'UNSET', #getvar("::ipaddress_${::internal_interface}"),
   $config='UNSET',
   $config_cluster = false,
-  $cluster_disk_nodes = [], 
+  $cluster_disk_nodes = [],
   $env_config='UNSET'
 ) {
 
@@ -104,7 +104,7 @@ class rabbitmq::server(
     mode    => '0644',
     notify  => Class['rabbitmq::service'],
   }
-  
+
   case $::osfamily {
     'RedHat' : {
   file { 'rabbitmq-server':
@@ -133,7 +133,7 @@ class rabbitmq::server(
       }
     }
   }
-  
+
   class { 'rabbitmq::service':
     service_name => $service_name,
     ensure       => $service_ensure,

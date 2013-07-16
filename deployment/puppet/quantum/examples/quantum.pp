@@ -1,4 +1,4 @@
-  class { 'quantum': 
+  class { 'quantum':
     rabbit_password        => '1',
     verbose                => 'True',
     debug                  => 'True',
@@ -21,7 +21,7 @@
     debug            => 'True',
     use_namespaces   => 'False',
   }
-  
+
   class { 'quantum::agents::l3':
     debug                        => 'True',
     auth_url                     => 'http://172.18.66.112:5000/v2.0',
@@ -29,7 +29,7 @@
     use_namespaces               => 'False',
     metadata_ip                  => '172.18.66.112',
   }
-  
+
   class { 'quantum::agents::ovs':
     enable_tunneling     => 'True',
     local_ip             => $::ipaddress_eth2,

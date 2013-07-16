@@ -7,7 +7,7 @@ class rsyslog::config {
     # To avoid dependency loops for custom runstages
     #require => Class["rsyslog::install"],
     notify  => Class["rsyslog::service"],
-  }  
+  }
 
     file { $rsyslog::params::rsyslog_conf:
         ensure  => file,

@@ -58,7 +58,7 @@ define swift::storage::generic(
       hasstatus => true,
       provider  => base,
       subscribe => Package["swift-${name}"],
-    }   
+    }
   }
 
 else

@@ -24,44 +24,44 @@ Cs_property<||>->Cs_shadow<||>
 Cs_property['no-quorum-policy']->Cs_property['stonith-enabled']->Cs_property['start-failure-is-fatal']
 
 file {'filter_quantum_ports.py':
-  path=>'/usr/bin/filter_quantum_ports.py', 
+  path=>'/usr/bin/filter_quantum_ports.py',
   mode => 744,
   #require =>[Package['corosync'],File['/root/openrc']],
   require =>Package['corosync'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/filter_quantum_ports.py",
-} 
+}
 File['filter_quantum_ports.py'] -> File<| title == 'quantum-agent-dhcp' |>
 File['filter_quantum_ports.py'] -> File<| title == 'quantum-l3-agent' |>
 File['filter_quantum_ports.py'] -> File<| title == 'quantum-ovs-agent' |>
 file {'quantum-agent-dhcp':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-dhcp', 
+  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-dhcp',
   mode => 744,
   require =>Package['corosync'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/quantum-agent-dhcp",
   before => Service['corosync']
-} 
+}
 file {'quantum-l3-agent':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-l3', 
+  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-l3',
   mode => 744,
   require =>Package['pacemaker'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/quantum-agent-l3",
   before => Service['corosync']
-} 
+}
 file {'quantum-ovs-agent':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-ovs', 
+  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-ovs',
   mode => 744,
   require =>Package['pacemaker'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/quantum-agent-ovs",
   before => Service['corosync']
-} 
+}
 
 corosync::service { 'pacemaker':
   version => '0',

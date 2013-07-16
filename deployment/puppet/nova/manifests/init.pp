@@ -34,7 +34,7 @@
 # $rabbit_nodes = ['node001', 'node002', 'node003']
 # add rabbit nodes hostname
 # [use_syslog] Rather or not service should log to syslog. Optional.
-# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
 #       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
 #

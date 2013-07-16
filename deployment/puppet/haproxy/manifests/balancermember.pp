@@ -68,7 +68,7 @@
 #  Creating the resource for multiple balancer members at once
 #  (for single-pass installation of haproxy without requiring a first
 #  pass to export the resources if you know the members in advance):
-# 
+#
 #  haproxy::balancermember { 'haproxy':
 #    listening_service => 'puppet00',
 #    ports             => '8140',
@@ -76,7 +76,7 @@
 #    ipaddresses       => ['192.168.56.200', '192.168.56.201'],
 #    options           => 'check',
 #  }
-#  
+#
 #  (this resource can be declared anywhere)
 #
 define haproxy::balancermember (

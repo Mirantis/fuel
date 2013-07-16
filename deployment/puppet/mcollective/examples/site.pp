@@ -27,7 +27,7 @@ node /fuel-mcollective.localdomain/ {
     host => $host,
     stompport => $stompport
   }
-  
+
   class { 'ntp':}
 
 }

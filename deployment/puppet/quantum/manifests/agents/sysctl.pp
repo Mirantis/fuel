@@ -16,9 +16,9 @@ define quantum::agents::sysctl (
       sysctl::value { 'net.ipv4.conf.all.arp_filter': value => '1' }
   }
 
-  Sysctl::Value['net.ipv4.conf.all.arp_announce'] -> 
-    Sysctl::Value['net.ipv4.conf.all.arp_ignore'] -> 
-      Sysctl::Value['net.ipv4.conf.all.arp_filter'] -> 
+  Sysctl::Value['net.ipv4.conf.all.arp_announce'] ->
+    Sysctl::Value['net.ipv4.conf.all.arp_ignore'] ->
+      Sysctl::Value['net.ipv4.conf.all.arp_filter'] ->
         Package <| title == $before_package |>
 
 }

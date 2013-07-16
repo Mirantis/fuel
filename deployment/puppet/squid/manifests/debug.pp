@@ -8,7 +8,7 @@
 #
 class squid::debug {
 
-    # Load the variables used in this module. Check the params.pp file 
+    # Load the variables used in this module. Check the params.pp file
     require squid::params
     include puppet::params
 
