@@ -171,7 +171,7 @@ class compact_controller {
         loopback_size         => '5243780',
         swift_zone            => $uid,
         swift_local_net_ip    => $storage_address,
-        master_swift_proxy_ip => $controller_internall_addresses[$master_hostname],
+        master_swift_proxy_ip => $controller_internal_addresses[$master_hostname],
         sync_rings            => ! $primary_proxy
       }
       if $primary_proxy {
@@ -283,7 +283,7 @@ class compact_controller {
         volume_group         => 'cinder',
         manage_volumes       => true,
         enabled              => true,
-        auth_host            => $management_vip
+        auth_host            => $management_vip,
         iscsi_bind_host      => $storage_address,
         cinder_user_password => $cinder_hash[user_password],
         use_syslog           => true,
