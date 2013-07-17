@@ -2,7 +2,7 @@ class puppet::mongrel(
   $puppet_master_ports = $puppet::params::puppet_master_ports
 ) inherits puppet::params
 {
-  
+
   package {  $puppet::params::mongrel_packages: ensure=>"installed"}
 
 	file { $puppet::params::daemon_config_file:
@@ -16,5 +16,5 @@ class puppet::mongrel(
 	    ],
 	    notify => Service["puppetmaster"],
   }
-  
+
 }

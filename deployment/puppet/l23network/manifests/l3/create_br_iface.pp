@@ -9,8 +9,8 @@
 #   Bridge name
 #
 # [*interface*]
-#   Interface that will be added to the bridge. 
-#   If you set the interface parameter as an array of interface names 
+#   Interface that will be added to the bridge.
+#   If you set the interface parameter as an array of interface names
 #   then Open vSwitch will create bond with given interfaces.
 #   In this case you must set ovs_bond_name and ovs_bond_properties parameters.
 #
@@ -21,12 +21,12 @@
 #   Network mask.
 #
 # [*gateway*]
-#   You can specify default gateway IP address, or 'save' for save default route 
+#   You can specify default gateway IP address, or 'save' for save default route
 #   if it lies through this interface now.
 #
 # [*dns_nameservers*]
 #   Dns nameservers to use
-# 
+#
 # [*dns_domain*]
 #   Describe DNS domain
 #
@@ -61,7 +61,7 @@ define l23network::l3::create_br_iface (
     if ! $::l23network::l2::use_ovs {
       fail('You must enable Open vSwitch by setting the l23network::l2::use_ovs to true.')
     }
-    
+
     if ! $external_ids {
       $ext_ids = "bridge-id=${bridge}"
     }

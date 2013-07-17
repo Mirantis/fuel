@@ -25,7 +25,7 @@ class cobbler::distro::rhel63_x86_64(
   # rhel-server-6.3-x86_64-boot
   $iso_name = extension_basename($http_iso, "true")
   # rhel-server-6.3-x86_64-boot.iso
-  $iso_basename = extension_basename($http_iso) 
+  $iso_basename = extension_basename($http_iso)
   # /var/www/cobbler/ks_mirror/rhel-server-6.3-x86_64-boot.iso
   $iso = "${ks_mirror}/${iso_basename}"
   # /var/www/cobbler/ks_mirror/rhel-server-6.3-x86_64-boot
@@ -66,7 +66,7 @@ class cobbler::distro::rhel63_x86_64(
     target => $iso_mnt,
   }
 
-  
+
   cobbler_distro { "rhel63_x86_64":
     kernel => "${iso_mnt}/isolinux/vmlinuz",
     initrd => "${iso_mnt}/isolinux/initrd.img",

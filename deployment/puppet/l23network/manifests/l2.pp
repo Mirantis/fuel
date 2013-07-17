@@ -10,11 +10,11 @@ class l23network::l2 (
   include ::l23network::params
 
   if $use_ovs {
-    #include ::l23network::l2::use_ovs    
+    #include ::l23network::l2::use_ovs
     package {$::l23network::params::ovs_packages:
       ensure  => present,
       before  => Service['openvswitch-service'],
-    } 
+    }
     service {'openvswitch-service':
       ensure    => running,
       name      => $::l23network::params::ovs_service_name,
@@ -35,7 +35,7 @@ class l23network::l2 (
   if !defined(Package["$l23network::params::lnx_vlan_tools"]) {
     package {"$l23network::params::lnx_vlan_tools":
       ensure => installed
-    } 
+    }
   }
 
   if !defined(Package["$l23network::params::lnx_ethernet_tools"]) {

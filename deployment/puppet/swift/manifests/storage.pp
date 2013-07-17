@@ -22,5 +22,5 @@
 class swift::storage(
   $storage_local_net_ip
 ) {
-  
+
 }

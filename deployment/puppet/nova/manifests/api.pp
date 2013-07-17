@@ -47,11 +47,11 @@ class nova::api(
         Package<| title == 'nova-api' |> -> Nova_config<| |>
     }
   }
-  
+
   Package<| title == 'nova-common' |> -> Nova_paste_api_ini<| |>
   Nova_paste_api_ini<| |> ~> Exec['post-nova_config']
   Nova_paste_api_ini<| |> ~> Service['nova-api']
-  
+
 
   nova_paste_api_ini {
       'filter:authtoken/service_port': ensure => absent;
@@ -65,8 +65,8 @@ class nova::api(
       'filter:authtoken/admin_password': ensure => absent;
       'filter:authtoken/signing_dir': ensure => absent;
       'filter:authtoken/signing_dirname': ensure => absent;
-  } 
-    
+  }
+
   if $nova_rate_limits {
       class{'::nova::limits': limits => $nova_rate_limits}
   }
@@ -80,7 +80,7 @@ class nova::api(
     package_name   => $::nova::params::api_package_name,
     service_name   => $::nova::params::api_service_name,
   }
-  
+
   if $cinder {
     $volume_api_class = 'nova.volume.cinder.API'
   } else {
@@ -112,5 +112,5 @@ class nova::api(
    #user         => User[nova],
     logoutput    => true,
   }
- 
+
 }

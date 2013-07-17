@@ -1,7 +1,7 @@
 define ssh::server::configline ($ensure = present, $value = false) {
     include ssh::server
 
-    Augeas { 
+    Augeas {
         context => "/files${ssh::params::sshd_config}",
         notify  => Class['ssh::server::service'],
         require => Class['ssh::server::config'],

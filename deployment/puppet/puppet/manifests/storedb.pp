@@ -4,9 +4,9 @@ class puppet::storedb (
   $puppet_stored_dbpassword,
   $puppet_stored_dbsocket,
   $mysql_root_password,
-  
+
 ) inherits puppet::params {
-  
+
   package { $puppet::params::mysql_packages : ensure=> "installed"}
 
   # http://projects.puppetlabs.com/issues/9290
@@ -23,21 +23,21 @@ class puppet::storedb (
   case $::osfamily {
     'RedHat': {
        package { "mysql":
-          provider => "gem", 
+          provider => "gem",
           ensure => "2.8.1",
        }
-       
+
     }
   }
-  
+
   class { "puppet::mysql":
     puppet_stored_dbname => $puppet_stored_dbname,
     puppet_stored_dbuser => $puppet_stored_dbuser,
     puppet_stored_dbpassword => $puppet_stored_dbpassword,
     mysql_root_password => $mysql_root_password,
   }
- 
-  
+
+
   file { "/etc/puppet/puppet.conf":
     content => template("puppet/puppet.conf.erb"),
     owner   => "puppet",

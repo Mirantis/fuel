@@ -37,10 +37,10 @@ define nova::generic_service(
   # I need to mark that ths package should be
   # installed before nova_config
   if ($package_name) {
-    # some packages gives in config as array of packages. 
+    # some packages gives in config as array of packages.
     # we can't check defined this array or not.
     # temporary allow thah packages without check
-    # 
+    #
     # TODO: Write methods defined_all, defined_any, undefined_one
     # and put it to stdlib
     if is_array($package_name) or !defined(Package[$package_name]) {

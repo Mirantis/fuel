@@ -24,7 +24,7 @@ module_dir { "common/cf": }
 #
 # Depend on File[$name] to change if and only if its contents change. Notify
 # Exec["concat_${name}"] if you want to force an update.
-# 
+#
 # Usage:
 #  concatenated_file { "/etc/some.conf":
 #  	dir => "/etc/some.conf.d",
@@ -81,7 +81,7 @@ define concatenated_file (
 			'' => '',
 			default => "| cat - '${footer}' "
 		},
-		default => $footer ? { 
+		default => $footer ? {
 			'' => "| cat '${header}' - ",
 			default => "| cat '${header}' - '${footer}' "
 		}
@@ -103,7 +103,7 @@ define concatenated_file (
 # The file can be referenced as File["cf_part_${name}"]
 define concatenated_file_part (
 	$dir, $content = '', $ensure = present,
-	$mode = 0644, $owner = root, $group = 0 
+	$mode = 0644, $owner = root, $group = 0
 	)
 {
 

@@ -78,7 +78,7 @@ class openstack::mirantis_repos (
 
       # Below we set our internal repos for testing purposes. Some of them may match with external ones.
       if $type == 'custom' {
-        
+
         apt::pin { 'precise-fuel-grizzly':
           order      => 19,
           priority   => 1001,
@@ -162,7 +162,7 @@ class openstack::mirantis_repos (
 
       # added internal (custom)/external (default) network mirror
       if $type == 'default' {
-        
+
         yumrepo { 'centos-base':
             descr      => 'Mirantis-CentOS-Base',
             name       => 'base',
@@ -179,7 +179,7 @@ class openstack::mirantis_repos (
             gpgkey     => 'http://download.mirantis.com/epel-fuel-grizzly/mirantis.key',
             mirrorlist => absent,
         }
-        
+
         yumrepo { 'openstack-epel-fuel-grizzly':
             descr      => 'Mirantis OpenStack grizzly Custom Packages',
             baseurl    => 'http://download.mirantis.com/epel-fuel-grizzly-3.1',
@@ -187,7 +187,7 @@ class openstack::mirantis_repos (
             gpgkey     => 'http://download.mirantis.com/epel-fuel-grizzly-3.1/mirantis.key',
             mirrorlist => absent,
         }
-        
+
       # completely disable additional out-of-box repos
         yumrepo { 'extras':
                 descr => 'CentOS-$releasever - Extras',

@@ -15,7 +15,7 @@ class cinder::api (
 
   include cinder::params
 
-  if ($::cinder::params::api_package) { 
+  if ($::cinder::params::api_package) {
     $api_package = $::cinder::params::api_package
     package { 'cinder-api':
       name   => $api_package,
@@ -48,7 +48,7 @@ if $cinder_rate_limits {
   Package[$api_package] -> Cinder_config<||>
     }
   }
- 
+
  #  package { 'python-keystone':
  #   ensure => $package_ensure,
  # }

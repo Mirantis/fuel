@@ -9,7 +9,7 @@ class nova::utilities {
   }
   case $::osfamily {
  'Debian': {
-      file { "/tmp/guestfs.seed":   
+      file { "/tmp/guestfs.seed":
         ensure => present,
         source => 'puppet:///modules/nova/guestfs.seed'
       }->

@@ -41,8 +41,8 @@
 # [*collect_exported*]
 #    Boolean, default 'true'. True means 'collect exported @@balancermember resources'
 #    (for the case when every balancermember node exports itself), false means
-#    'rely on the existing declared balancermember resources' (for the case when you 
-#    know the full set of balancermembers in advance and use haproxy::balancermember 
+#    'rely on the existing declared balancermember resources' (for the case when you
+#    know the full set of balancermembers in advance and use haproxy::balancermember
 #    with array arguments, which allows you to deploy everything in 1 run)
 #
 #
@@ -91,7 +91,7 @@ define haproxy::listen (
   if $collect_exported {
     Haproxy::Balancermember <<| tag == "${::deployment_id}::${::environment}" and listening_service == "${name}" |>>
   }
-  else 
+  else
   {
     Haproxy::Balancermember <| listening_service == "${name}" |>
   }

@@ -6,9 +6,9 @@ class puppet::fileserver_config(
     allow=>'*',
     deny => undef,
   },],
-  $notify_service = "thin" 
+  $notify_service = "thin"
 ){
-  
+
   if (! defined(Service[$notify_service])) {
     service {$notify_service:}
   }
@@ -17,7 +17,6 @@ class puppet::fileserver_config(
       content => template("puppet/fileserver.conf.erb"),
       notify => Service[$notify_service],
   }
- 
+
 
 }
-  

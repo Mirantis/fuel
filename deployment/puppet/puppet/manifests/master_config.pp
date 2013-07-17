@@ -10,19 +10,19 @@ class puppet::master_config(
     section => 'master',
     path    => "${puppet_confdir}/puppet.conf",
   }
-  
-  
+
+
   ini_setting {'pluginsync':
     setting => 'pluginsync',
     value   => $pluginsync,
   }
-  
+
   ini_setting {'autosign':
     setting => 'autosign',
     value   => $autosign,
   }
-  
-  if ($dns_alt_names) {  
+
+  if ($dns_alt_names) {
 	  ini_setting {'dns_alt_names':
 	    setting => 'dns_alt_names',
 	    value   => $dns_alt_names,
@@ -30,4 +30,3 @@ class puppet::master_config(
 	}
 
 }
-  

@@ -41,7 +41,7 @@ $swift_shared_secret  = 'changeme'
 $swift_local_net_ip   = $ipaddress_eth0
 
 $swift_proxy_address    = '192.168.1.16'
-$controller_node_public = '192.168.122.100' 
+$controller_node_public = '192.168.122.100'
 
 $verbose                = true
 
@@ -101,7 +101,7 @@ node swift_base  {
     swift_hash_suffix => 'swift_shared_secret',
     package_ensure    => latest,
   }
-  
+
   class { 'rsync::server':
     use_xinetd => true,
     address    => $swift_local_net_ip,

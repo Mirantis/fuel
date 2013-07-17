@@ -61,25 +61,25 @@ define haproxy_service(
       $balancermember_options = ''
       $balancer_port = ''
      }
-     
+
      "nova-api-1": {
        $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source',  }
        $balancermember_options = 'check'
        $balancer_port = $port
      }
-     
+
      "nova-api-3": {
        $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
        $balancermember_options = 'check'
        $balancer_port = $port
      }
-     
+
      "glance-reg": {
        $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
        $balancermember_options = 'check'
        $balancer_port = $port
      }
-     
+
 
     default: {
       $haproxy_config_options = { 'option' => ['httplog', 'httpchk'], 'balance' => 'source', 'mode' => 'http' }

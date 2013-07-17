@@ -10,7 +10,7 @@
 #
 class squid {
 
-    # Load the variables used in this module. Check the params.pp file 
+    # Load the variables used in this module. Check the params.pp file
     require squid::params
 
     # Re-sets variables needed in templates (to get default values)

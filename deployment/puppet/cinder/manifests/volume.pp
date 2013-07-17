@@ -6,7 +6,7 @@ class cinder::volume (
 
   include cinder::params
 
-  if ($::cinder::params::volume_package) { 
+  if ($::cinder::params::volume_package) {
     $volume_package = $::cinder::params::volume_package
     Package['cinder'] -> Package[$volume_package]
 
@@ -17,7 +17,7 @@ class cinder::volume (
   } else {
     $volume_package = $::cinder::params::package_name
   }
-  
+
   case $::osfamily {
     "Debian":  {
       File[$::cinder::params::cinder_conf] -> Cinder_config<||>

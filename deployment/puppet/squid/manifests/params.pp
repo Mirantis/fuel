@@ -1,7 +1,7 @@
 # Class: squid::params
 #
 # Sets internal variables and defaults for squid module
-# This class is automatically loaded in all the classes that use the values set here 
+# This class is automatically loaded in all the classes that use the values set here
 #
 class squid::params (
    $cache_size = 4096,
@@ -195,7 +195,7 @@ class squid::params (
         ubuntu  => "/etc/default/squid",
         default => "/etc/sysconfig/squid",
     }
-    
+
     # Used by monitor class
     $pidfile = $operatingsystem ? {
         default => "/var/run/squid.pid",
@@ -216,7 +216,7 @@ class squid::params (
     # parts in firewall.pp and monitor.pp
     $protocol = "tcp"
     $port = "${http_port}"
-    
+
 
 
 ## DEFAULTS FOR MONITOR CLASS
@@ -227,7 +227,7 @@ class squid::params (
 # - If the user has set a host-wide variable (ex: $monitor_target ) that one is set
 # - The host-wide variable can be overriden by a module specific one (ex: $squid_monitor_target)
 
-    # How the monitor server refers to the monitor target 
+    # How the monitor server refers to the monitor target
     $monitor_target_real = $squid_monitor_target ? {
         ''      => $monitor_target ? {
            ''      => "${fqdn}",
@@ -251,7 +251,7 @@ class squid::params (
         default => "${squid_monitor_url_pattern}",
     }
 
-    # If squid port monitoring is enabled 
+    # If squid port monitoring is enabled
     $monitor_port_enable = $squid_monitor_port ? {
         ''      => $monitor_port ? {
            ''      => true,
@@ -260,7 +260,7 @@ class squid::params (
         default => $squid_monitor_port,
     }
 
-    # If squid url monitoring is enabled 
+    # If squid url monitoring is enabled
     $monitor_url_enable = $squid_monitor_url ? {
         ''      => $monitor_url ? {
            ''      => false,
@@ -269,7 +269,7 @@ class squid::params (
         default => $squid_monitor_url,
     }
 
-    # If squid process monitoring is enabled 
+    # If squid process monitoring is enabled
     $monitor_process_enable = $squid_monitor_process ? {
         ''      => $monitor_process ? {
            ''      => true,
@@ -278,7 +278,7 @@ class squid::params (
         default => $squid_monitor_process,
     }
 
-    # If squid plugin monitoring is enabled 
+    # If squid plugin monitoring is enabled
     $monitor_plugin_enable = $squid_monitor_plugin ? {
         ''      => $monitor_plugin ? {
            ''      => false,
@@ -291,7 +291,7 @@ class squid::params (
 # These are settings that influence the (optional) squid::backup class
 # You can define these variables or leave the defaults
 
-    # How the backup server refers to the backup target 
+    # How the backup server refers to the backup target
     $backup_target_real = $squid_backup_target ? {
         ''      => $backup_target ? {
            ''      => "${fqdn}",
@@ -299,7 +299,7 @@ class squid::params (
         },
         default => "$squid_backup_target",
     }
-  
+
     # Frequency of backups
     $backup_frequency = $squid_backup_frequency ? {
         ''      => "daily",
@@ -352,7 +352,7 @@ class squid::params (
 # In order to provide files from different sources without modifying the module
 # you can override the default source path setting the variable $base_source
 # Ex: $base_source="puppet://ip.of.fileserver" or $base_source="puppet://$servername/myprojectmodule"
-# What follows automatically manages the new source standard (with /modules/) from 0.25 
+# What follows automatically manages the new source standard (with /modules/) from 0.25
 
     case $base_source {
         '': {

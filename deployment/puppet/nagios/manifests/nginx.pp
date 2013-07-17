@@ -38,17 +38,17 @@ $apache_user = $nagios::params::apache_user,
         mode   => '0755',
         source => 'puppet:///modules/nagios/nginx/init/spawn-fcgi-php',
       }
-      
+
       file {'/etc/sysconfig/spawn-fcgi-php':
         source => 'puppet:///modules/nagios/nginx/spawn-fcgi-php',
       }
-      
+
       file {'/etc/sysconfig/spawn-fcgi':
         source => 'puppet:///modules/nagios/nginx/spawn-fcgi',
       }
     }
   }
-  
+
   exec {'cgi.conf':
     command     => "sed -i 's%^\(url_html_path=\).*$%\1/%' /etc/${nagios_name}/cgi.cfg",
     require     => Package[$nginx_pkgs],
@@ -74,9 +74,9 @@ $apache_user = $nagios::params::apache_user,
   #  ensure   => purged,
   #  require  => Package[$nginx_pkgs],
   #}
-  
+
   Service {require => Package[$nginx_pkgs]}
-  
+
   service {$php_service:
     ensure  => running,
     before => Service[$nginx_service],

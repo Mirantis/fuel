@@ -1,5 +1,5 @@
 class cinder::limits (
-  $limits = 
+  $limits =
 { 'POST' => '10',
  'POST_SERVERS' => '50',
  'PUT' => 10, 'GET' => 3,
@@ -14,6 +14,6 @@ class cinder::limits (
 
 
  cinder_api_paste_ini {"filter:ratelimit/limits": value => "(POST, \"*\", .*, $post_limit, MINUTE);(POST, \"*/servers\", ^/servers, $post_servers_limit, DAY);(PUT, \"*\", .*, $put_limit, MINUTE);(GET, \"*changes-since*\", .*changes-since.*, $get_limit, MINUTE);(DELETE, \"*\", .*, $delete_limit, MINUTE)"}
-  
+
 }
 

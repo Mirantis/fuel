@@ -10,15 +10,15 @@ class puppet (
   Class["puppet::iptables"] ->
   Class["puppet::master"] ->
   Anchor<| title == "puppet-end" |>
-  
+
   class { "puppet::selinux": }
 
   class { "puppet::iptables": }
-    
+
   class { "puppet::master":
       puppet_master_version => $puppet_master_version,
       enable_service => $enable_service,
   }
 
-  
+
 }

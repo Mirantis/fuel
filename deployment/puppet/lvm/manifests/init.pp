@@ -14,12 +14,12 @@ class lvm(
   }
 
   if  $pv {
-  
-    physical_volume { $pv: 
+
+    physical_volume { $pv:
       ensure => $ensure,
       require => Package['lvm2'],
     }
-  
+
     volume_group { $vg:
       ensure           => $ensure,
       physical_volumes => $pv,
