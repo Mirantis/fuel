@@ -782,7 +782,8 @@ rebuild_cluster() {
                    if [ "$WINNER_NODE" = "$(hostname)" ] ; then
                        crm_attribute -t crm_config --name mysqlmaster --update 1
                        ocf_log info "Assuming current node as a new master..."
-                       mysql_promote
+                       service mysql stop
+                       service mysql start --wsrep-cluster-address="gcomm://"
                        crm_attribute -t crm_config --name mysqlmaster --delete
                    fi
                 else
