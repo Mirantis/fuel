@@ -778,7 +778,7 @@ rebuild_cluster() {
                         fi
                     fi
                 done
-                if [ -z "$RAISED_MASTER" ]; then 
+                if [ "$RAISED_MASTER" != '1' ]; then 
                    if [ "$WINNER_NODE" = "$(hostname)" ] ; then
                        crm_attribute -t crm_config --name mysqlmaster --update 1
                        ocf_log info "Assuming current node as a new master..."
