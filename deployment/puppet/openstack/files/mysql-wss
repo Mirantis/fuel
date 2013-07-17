@@ -764,6 +764,9 @@ rebuild_cluster() {
                 #  - five minutes are enough for man who turns servers in the rack and for crm to push significant
                 #    percentage of the epoch values to the shared resource and not too large for such type of disaster at all.
                 sleep 300
+                # Check if someone already decided to declare himself master...
+                RAISED_MASTER=$(crm_attribute -t crm_config --name mysqlmaster --query 2> /dev/null | awk -F\= '{print $4}')
+                # ... and if nobody did:
                 for node in "${CRM_ONLINE_NODES[@]}" ; do
                     CUR_EPOCH=$(crm_attribute -t crm_config --node $node --name mysqlepoch --query 2> /dev/null | awk -F\= '{print $4}')
                     if [ -z "$CUR_EPOCH" ] ; then
@@ -775,13 +778,15 @@ rebuild_cluster() {
                         fi
                     fi
                 done
-                echo $WINNER_NODE
-                if [ "$WINNER_NODE" = "$(hostname)" ] ; then
-                   ocf_log info "Assuming current node as a new master..."
-                   /etc/init.d/mysql stop
-                   /etc/init.d/mysql start --wsrep-cluster-address="gcomm://"
-                   sleep 3
-                   mysql_promote
+                if [ -z "$RAISED_MASTER" ]; then 
+                   if [ "$WINNER_NODE" = "$(hostname)" ] ; then
+                       crm_attribute -t crm_config --name mysqlmaster --update 1
+                       ocf_log info "Assuming current node as a new master..."
+                       mysql_promote
+                       crm_attribute -t crm_config --name mysqlmaster --delete
+                   fi
+                else
+                      ocf_log info "Master flag was already set, skipping our (probably legitimate yet) promotion"
                 fi
             else
                 return $OCF_SUCCESS
