@@ -63,7 +63,7 @@ file {'quantum-ovs-agent':
   before => Service['corosync']
 } 
 file {'mysql-wss':
-  path=>'/usr/lib/ocf/resource.d/heartbeat/mysql',
+  path=>'/usr/lib/ocf/resource.d/pacemaker/mysql',
   mode => 744,
   require =>Package['corosync'],
   owner => root,

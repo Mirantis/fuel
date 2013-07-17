@@ -29,7 +29,46 @@ class mysql::server (
   $mysql_skip_name_resolve = false,
   $use_syslog              = false,
 ) inherits mysql::params {
-    
+
+ if $service_provider == 'pacemaker' {
+
+    cs_resource { "mysql":
+      ensure          => present,
+      cib             => 'mysql',
+      primitive_class => 'ocf',
+      provided_by     => 'pacemaker',
+      primitive_type  => 'mysql',
+      require => File['mysql-wss'],
+      operations      => {
+        'monitor'  => {
+          'interval' => '20',
+          'timeout'  => '30'
+        }
+        ,
+        'start'    => {
+          'timeout' => '420'
+        }
+        ,
+        'stop'     => {
+          'timeout' => '420'
+       }
+     }
+   }
+   Cs_commit['mysql'] -> Service['mysql']
+   cs_shadow { 'mysql': cib => 'mysql' }
+   cs_commit { 'mysql': cib => 'mysql' }
+   service { 'mysql':
+     name       => "mysql",
+     enable     => $enabled,
+     ensure     => $ensure,
+     hasstatus  => true,
+     hasrestart => false,
+     provider   => $service_provider,
+     require    => [Package[mysql-server], Class['mysql'], Service['mysql']],
+    }
+
+
+ } else {
   if ($custom_setup_class == undef) {
     include mysql
     Class['mysql::server'] -> Class['mysql::config']
@@ -78,4 +117,5 @@ class mysql::server (
    else {
     require($custom_setup_class)
   }
+ }
 }
