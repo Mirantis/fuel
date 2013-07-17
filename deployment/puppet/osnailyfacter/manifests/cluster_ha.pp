@@ -135,7 +135,7 @@ class compact_controller {
     quantum_db_dbname             => $quantum_db_dbname,
     tenant_network_type           => $tenant_network_type,
     segment_range                 => $segment_range,
-    cinder                        => $true,
+    cinder                        => true,
     cinder_user_password          => $cinder_hash[user_password],
     cinder_iscsi_bind_addr        => $internal_address,
     cinder_db_password            => $cinder_hash[db_password],
