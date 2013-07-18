@@ -642,7 +642,6 @@ node /fuel-controller-[\d+]/ {
     qpid_nodes             => $controller_internal_addresses,
     qpid_password          => $rabbit_password,
     qpid_user              => $rabbit_user,
-u
   }
 
   if $primary_proxy {
