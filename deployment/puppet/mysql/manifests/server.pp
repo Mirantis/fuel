@@ -211,7 +211,14 @@ class mysql::server (
       primitives => ['internal-vip','master_p_mysql:Master'],
       score      => 'INFINITY',
       require    => [Cs_resource['p_mysql'], Cs_commit['mysql']],
-    } 
+    }
+
+    #Tie public-vip to p_mysql
+    cs_colocation { 'mysql_to_public-vip':
+      primitives => ['public-vip','master_p_mysql:Master'],
+      score      => 'INFINITY',
+      require    => [Cs_resource['p_mysql'], Cs_commit['mysql']],
+    }
 
   }
   elsif ($custom_setup_class == 'galera')  {
