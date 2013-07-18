@@ -135,7 +135,7 @@ class compact_controller {
     quantum_db_dbname             => $quantum_db_dbname,
     tenant_network_type           => $tenant_network_type,
     segment_range                 => $segment_range,
-    cinder                        => $true,
+    cinder                        => true,
     cinder_user_password          => $cinder_hash[user_password],
     cinder_iscsi_bind_addr        => $internal_address,
     cinder_db_password            => $cinder_hash[db_password],
@@ -144,6 +144,7 @@ class compact_controller {
     custom_mysql_setup_class      => $custom_mysql_setup_class,
     mysql_skip_name_resolve       => true,
     use_syslog                    => true,
+    use_unicast_corosync          => true,
   }
 
   class { "::rsyslog::client":
