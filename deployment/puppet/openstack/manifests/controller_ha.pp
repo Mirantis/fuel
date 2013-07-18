@@ -46,13 +46,37 @@ define haproxy_service(
       $balancer_port = 4369
     }
     "rabbitmq-openstack": {
-      $haproxy_config_options = { 'option' => ['tcpka'], 'timeout client' => '48h', 'timeout server' => '48h', 'balance' => 'roundrobin', 'mode' => 'tcp'}
+      $haproxy_config_options = { 'option' => ['tcpka'], 'timeout client' => '48h', 'timeout server' => '48h', 'balance' => 'source', 'mode' => 'tcp'}
       $balancermember_options = 'check inter 5000 rise 2 fall 3'
       $balancer_port = 5673
     }
+     
+     "nova-api-1": {
+       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source',  }
+       $balancermember_options = 'check'
+       $balancer_port = $port
+     }
+     
+     "nova-api-3": {
+       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
+       $balancermember_options = 'check'
+       $balancer_port = $port
+     }
+     
+     "glance-reg": {
+       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
+       $balancermember_options = 'check'
+       $balancer_port = $port
+     }
+     
+     "swift": {
+       $haproxy_config_options = { 'option' => ['httplog'], 'balance' => 'source' }
+       $balancermember_options = 'check'
+       $balancer_port = $port
+     }
 
     default: {
-      $haproxy_config_options = { 'option' => ['httplog'], 'balance' => 'roundrobin' }
+      $haproxy_config_options = { 'option' => ['httplog', 'httpchk'], 'balance' => 'source', 'mode' => 'http' }
       $balancermember_options = 'check'
       $balancer_port = $port
     }
