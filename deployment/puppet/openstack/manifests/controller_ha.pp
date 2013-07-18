@@ -46,74 +46,44 @@ define haproxy_service(
       $balancer_port = 4369
     }
     "rabbitmq-openstack": {
-      $haproxy_config_options = { 'option' => ['tcpka'], 'timeout client' => '48h', 'timeout server' => '48h', 'balance' => 'source', 'mode' => 'tcp'}
+      $haproxy_config_options = { 'option' => ['tcpka'], 'timeout client' => '48h', 'timeout server' => '48h', 'balance' => 'roundrobin', 'mode' => 'tcp'}
       $balancermember_options = 'check inter 5000 rise 2 fall 3'
       $balancer_port = 5673
     }
 
-    "stats": {
-       $haproxy_config_options = {
-        'timeout'     => ['client 5000', 'server 30000', 'connect 4000'],
-        'balance' => '',
-        'stats'  => ['uri /haproxy_stats', 'realm HAProxy\ Statistics', 'auth admin:admin', 'admin if TRUE'],
-        'mode'        => 'http'
-      }
-      $balancermember_options = ''
-      $balancer_port = ''
-     }
-     
-     "nova-api-1": {
-       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source',  }
-       $balancermember_options = 'check'
-       $balancer_port = $port
-     }
-     
-     "nova-api-3": {
-       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
-       $balancermember_options = 'check'
-       $balancer_port = $port
-     }
-     
-     "glance-reg": {
-       $haproxy_config_options = { 'option' => ['tcplog'], 'balance' => 'source' }
-       $balancermember_options = 'check'
-       $balancer_port = $port
-     }
-     
-
     default: {
-      $haproxy_config_options = { 'option' => ['httplog', 'httpchk'], 'balance' => 'source', 'mode' => 'http' }
+      $haproxy_config_options = { 'option' => ['httplog'], 'balance' => 'roundrobin' }
       $balancermember_options = 'check'
       $balancer_port = $port
     }
   }
-  
-  add_haproxy_service { $name : 
-    order                    => $order, 
-    balancers                => $balancers, 
-    virtual_ips              => $virtual_ips, 
-    port                     => $port, 
-    haproxy_config_options   => $haproxy_config_options, 
-    balancer_port            => $balancer_port, 
-    balancermember_options   => $balancermember_options, 
-    define_cookies           => $define_cookies, 
+
+  add_haproxy_service { $name :
+    order                    => $order,
+    balancers                => $balancers,
+    virtual_ips              => $virtual_ips,
+    port                     => $port,
+    haproxy_config_options   => $haproxy_config_options,
+    balancer_port            => $balancer_port,
+    balancermember_options   => $balancermember_options,
+    define_cookies           => $define_cookies,
     define_backend           => $define_backend,
   }
 }
 
-# add_haproxy_service moved to separate define to allow adding custom sections 
+# add_haproxy_service moved to separate define to allow adding custom sections
 # to haproxy config without any default config options, except only required ones.
 define add_haproxy_service (
-    $order, 
-    $balancers, 
-    $virtual_ips, 
-    $port, 
-    $haproxy_config_options, 
-    $balancer_port, 
+    $order,
+    $balancers,
+    $virtual_ips,
+    $port,
+    $haproxy_config_options,
+    $balancer_port,
     $balancermember_options,
     $mode = 'tcp',
-    $define_cookies = false, 
-    $define_backend = false, 
+    $define_cookies = false,
+    $define_backend = false,
     $collect_exported = false
     ) {
     haproxy::listen { $name:
@@ -146,7 +116,7 @@ class openstack::controller_ha (
    $rabbit_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
    $quantum = false, $quantum_user_password='', $quantum_db_password='', $quantum_db_user = 'quantum',
    $quantum_db_dbname  = 'quantum', $cinder = false, $cinder_iscsi_bind_addr = false, $tenant_network_type = 'gre', $segment_range = '1:4094',
-   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $use_syslog = false, $syslog_log_level = 'WARNING', 
+   $nv_physical_volume = undef, $manage_volumes = false,$galera_nodes, $use_syslog = false, $syslog_log_level = 'WARNING',
    $syslog_log_facility_glance   = 'LOCAL2',
    $syslog_log_facility_cinder   = 'LOCAL3',
    $syslog_log_facility_quantum  = 'LOCAL4',
@@ -176,17 +146,12 @@ class openstack::controller_ha (
 
     Class['cluster::haproxy'] -> Anchor['haproxy_done']
 
-    file { '/etc/rsyslog.d/haproxy.conf':
-        ensure => present,
-        content => 'local0.* -/var/log/haproxy.log'
-    } -> Anchor['haproxy_done']
-
     concat { '/etc/haproxy/haproxy.cfg':
       owner   => '0',
       group   => '0',
       mode    => '0644',
     } -> Anchor['haproxy_done']
-    
+
 
     # Dirty hack, due Puppet can't send notify between stages
     exec { 'restart_haproxy':
@@ -258,7 +223,7 @@ class openstack::controller_ha (
 
 
     ###
-    # Setup Galera's 
+    # Setup Galera's
 
     package { 'socat': ensure => present }
     exec { 'wait-for-haproxy-mysql-backend':
@@ -324,7 +289,7 @@ class openstack::controller_ha (
       rabbit_ha_virtual_ip    => $internal_virtual_ip,
       cache_server_ip         => $memcached_servers,
       export_resources        => false,
-      api_bind_address        => $internal_address,
+      api_bind_address        => $internal_virtual_ip,
       db_host                 => $internal_virtual_ip,
       service_endpoint        => $internal_virtual_ip,
       glance_backend          => $glance_backend,
