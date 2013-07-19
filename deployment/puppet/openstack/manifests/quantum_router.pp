@@ -97,6 +97,7 @@ class openstack::quantum_router (
         metadata_ip   => $nova_api_vip,
         auth_password => $quantum_user_password,
         shared_secret => $::quantum_metadata_proxy_shared_secret,
+        service_provider => $service_provider
       }
       class { 'quantum::agents::dhcp':
         verbose          => $verbose,

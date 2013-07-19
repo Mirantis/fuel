@@ -351,19 +351,6 @@ class quantum::agents::l3 (
       provider   => "pacemaker",
     }
 
-    # # Quantum metadata agent starts only under pacemaker
-    # # and co-located with l3-agent
-    # class {'quantum::agents::metadata':
-    #   debug         => $debug,
-    #   auth_tenant   => $auth_tenant,
-    #   auth_user     => $auth_user,
-    #   auth_url      => $auth_url,
-    #   auth_region   => $auth_region,
-    #   metadata_ip   => $nova_api_vip,
-    #   metadata_port => $metadata_port,
-    #   auth_password => $auth_password,
-    #   shared_secret => $::quantum_metadata_proxy_shared_secret
-    # }
   } else {
     Quantum_config <| |> ~> Service['quantum-l3']
     Quantum_l3_agent_config <| |> ~> Service['quantum-l3']
