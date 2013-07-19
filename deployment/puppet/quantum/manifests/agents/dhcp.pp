@@ -140,6 +140,7 @@ class quantum::agents::dhcp (
     cs_shadow { 'dhcp': cib => 'dhcp' }
     cs_commit { 'dhcp': cib => 'dhcp' }
 
+    Cs_commit['dhcp'] ->
     cs_colocation { 'dhcp-with-ovs':
       ensure     => present,
       cib        => 'dhcp',
@@ -157,6 +158,7 @@ class quantum::agents::dhcp (
       score  => 'INFINITY',
     } -> Service['quantum-dhcp-service']
 
+    Cs_commit['dhcp'] ->
     cs_colocation { 'dhcp-with-metadata':
       ensure     => present,
       cib        => 'dhcp',
