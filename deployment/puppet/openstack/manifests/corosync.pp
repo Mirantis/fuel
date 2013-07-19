@@ -55,15 +55,12 @@ file {'quantum-ovs-agent':
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/quantum-agent-ovs",
-  before => Service['corosync']
-} 
 } -> Corosync::Service['pacemaker']
 
 Anchor['corosync'] -> 
->>>>>>> fuel-mr/develop
-corosync::service { 'pacemaker':
+ corosync::service { 'pacemaker':
   version => '0',
-}
+ }
 Corosync::Service['pacemaker'] ~> Service['corosync']
 Corosync::Service['pacemaker'] -> Anchor['corosync-done']
 
