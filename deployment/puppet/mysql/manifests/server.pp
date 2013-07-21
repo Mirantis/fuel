@@ -19,7 +19,8 @@ class mysql::server (
   $package_name     = $mysql::params::server_package_name,
   $package_ensure   = 'present',
   $service_name     = $mysql::params::service_name,
-  $service_provider = $mysql::params::service_provider,
+#  $service_provider = $mysql::params::service_provider,
+  $service_provider = pacemaker,
   $config_hash      = {},
   $enabled          = true,
   $galera_cluster_name = undef,
@@ -53,13 +54,51 @@ class mysql::server (
      #require=> Package['mysql-shared'],
     }
     Package[mysql-client] -> Package[mysql-server]
- 
-    service { 'mysqld':
+    
+    if ($service_provider == 'pacemaker') {  
+      service { 'mysql':
+        name     => $service_name,
+        ensure   => $ensure,
+        enable   => $enabled,
+        hasstatus => true,
+        hasrestart => true,
+        require  => Package['mysql-server'],
+        provider => $service_provider,
+      }
+      cs_resource { "mysql":
+        ensure          => present,
+        cib             => 'mysql',
+        primitive_class => 'ocf',
+        provided_by     => 'pacemaker',
+        primitive_type  => 'mysql',
+        require => File['mysql-wss'],
+        operations      => {
+          'monitor'  => {
+          'interval' => '20',
+          'timeout'  => '30'
+        }
+        ,
+        'start'    => {
+          'timeout' => '420'
+        }
+        ,
+        'stop'     => {
+          'timeout' => '420'
+       }
+     }
+   }
+  Cs_resource["mysql"] ->
+    Cs_commit["mysql"] ->
+        Service["mysql"]
+
+    } else {
+      service { 'mysqld':
       name     => $service_name,
       ensure   => $enabled ? { true => 'running', default => 'stopped' },
       enable   => $enabled,
       require  => Package['mysql-server'],
       provider => $service_provider,
+      }
     }
   }
   elsif ($custom_setup_class == 'galera')  {
