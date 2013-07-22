@@ -159,7 +159,7 @@ class galera (
   service { "$res_name":
     name       => "mysql",
     enable     => true,
-    ensure     => running,
+    ensure     => "running",
     require    => [Package["MySQL-server", "galera"]],
 #    hasrestart => true,
     hasstatus  => true,
