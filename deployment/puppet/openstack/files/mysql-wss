@@ -144,6 +144,7 @@ The 'start' operation starts the database.
 The 'stop' operation stops the database.
 The 'status' operation reports whether the database is running
 The 'monitor' operation reports whether the database seems to be working
+The 'rebuild_cluster' should be called only when restoring cluster from broken state
 The 'promote' operation makes this mysql server run as master
 The 'demote' operation makes this mysql server run as slave
 The 'validate-all' operation reports whether the parameters are valid
