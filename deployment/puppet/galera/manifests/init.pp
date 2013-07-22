@@ -79,10 +79,6 @@ class galera (
         ensure => present,
       }
 
-      package { 'bc':
-        ensure => present,
-      }
-
       package { 'perl':
         ensure => present,
         before => Package['MySQL-client']
@@ -235,13 +231,7 @@ class galera (
     try_sleep => 5,
     tries     => 60,
   }
-
-  exec { "raise-first-setup-flag" :
-   path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-   command => "crm_attribute -t crm_config --name mysqlprimaryinit --update done",
-   refreshonly => true,
-  }
-
+  
   Package["MySQL-server"] -> Exec["set-mysql-password"] 
   File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
   -> Exec["kill-initial-mysql"] -> Service["mysql-galera"] -> Exec ["wait-for-synced-state"]
@@ -265,7 +255,6 @@ class galera (
       onlyif    => "[ -f /var/lib/mysql/grastate.dat ] && (cat /var/lib/mysql/grastate.dat | awk '\$1 == \"uuid:\" {print \$2}' | awk '{if (\$0 == \"00000000-0000-0000-0000-000000000000\") exit 0; else exit 1}')",
       require    => Service["mysql-galera"],
       before     => Exec ["wait-for-synced-state"],
-      notify     => Exec ["raise-first-setup-flag"],
     }
   }
 }
