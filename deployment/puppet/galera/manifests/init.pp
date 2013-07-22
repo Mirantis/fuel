@@ -50,6 +50,9 @@ class galera (
   ) {
   include galera::params
 
+  $cib_name = "mysql"
+  $res_name = "p_$cib_name"
+
   $mysql_user = $::galera::params::mysql_user
   $mysql_password = $::galera::params::mysql_password
   $libgalera_prefix = $::galera::params::libgalera_prefix
@@ -61,13 +64,13 @@ class galera (
         ensure  => present,
         mode    => 755,
         require => Package['MySQL-server'],
-        before  => Service['mysql-galera']
+        before  => Service["$res_name"]
       }
 
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
-        before => Service['mysql-galera']
+        before => Service["$res_name"]
       }
 
       package { 'MySQL-client':
@@ -95,13 +98,13 @@ class galera (
         mode    => 755,
         source => 'puppet:///modules/galera/mysql.init' , 
         require => Package['MySQL-server'],
-        before  => Service['mysql-galera']
+        before  => Service["$res_name"]
       }
 
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
-        before => Service['mysql-galera']
+        before => Service["$res_name"]
       }
 
       package { 'wget':
@@ -123,21 +126,50 @@ class galera (
         before => Package['MySQL-server']
       }
 
-      package { 'libc6':
-        ensure => latest,
-        before => Package['MySQL-server']
-      }
     }
   }
+ cs_shadow { $res_name: cib => $cib_name }
+ cs_commit { $res_name: cib => $cib_name }
+ cs_resource { "$res_name":
+      ensure => present,
+      cib => $cib_name,
+      primitive_class => 'ocf',
+      provided_by     => 'mirantis', 
+      primitive_type => 'mysql',
+      multistate_hash => {
+        'type' => 'clone',
+      },
+      ms_metadata => {
+        'interleave' => 'true',
+      },
+      operations => {
+        'monitor' => {
+          'interval' => '60',
+          'timeout' => '30'
+        },
+        'start' => {
+          'timeout' => '450'
+        },
+        'stop' => {
+          'timeout' => '150'
+        },
+     },
+   }
 
-  service { "mysql-galera":
+  service { "$res_name":
     name       => "mysql",
     enable     => true,
-    ensure     => "running",
+    ensure     => running,
     require    => [Package["MySQL-server", "galera"]],
-    hasrestart => true,
+#    hasrestart => true,
     hasstatus  => true,
+    provider   => "pacemaker",
   }
+  Package['pacemaker'] -> File['mysql-wss']
+
+   Cs_resource["$res_name"] ->
+      Cs_commit["$res_name"] ->
+          Service["$res_name"]
 
   package { [$::galera::params::libssl_package, $::galera::params::libaio_package]:
     ensure => present,
@@ -182,8 +214,8 @@ class galera (
     }
     File["/etc/mysql/conf.d/wsrep.cnf"] -> Exec['set-mysql-password']
     File["/etc/mysql/conf.d/wsrep.cnf"] ~> Exec['set-mysql-password']
-    File["/etc/mysql/conf.d/wsrep.cnf"] -> Service['mysql-galera']
-    File["/etc/mysql/conf.d/wsrep.cnf"] ~> Service['mysql-galera']
+    File["/etc/mysql/conf.d/wsrep.cnf"] -> Service["$res_name"]
+    File["/etc/mysql/conf.d/wsrep.cnf"] ~> Service["$res_name"]
     File["/etc/mysql/conf.d/wsrep.cnf"] -> Package['MySQL-server']
   }
 
@@ -244,7 +276,7 @@ class galera (
 
   Package["MySQL-server"] -> Exec["set-mysql-password"] 
   File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
-  -> Exec["kill-initial-mysql"] -> Service["mysql-galera"] -> Exec ["wait-for-synced-state"]
+  -> Exec["kill-initial-mysql"] -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
   Exec["kill-initial-mysql"] -> Exec["rm-init-file"]
   Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["kill-initial-mysql"]
 
@@ -263,7 +295,7 @@ class galera (
       logoutput => true,
       command   => '/etc/init.d/mysql stop; sleep 10; killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10; /etc/init.d/mysql start --wsrep-cluster-address=gcomm:// &',
       onlyif    => "[ -f /var/lib/mysql/grastate.dat ] && (cat /var/lib/mysql/grastate.dat | awk '\$1 == \"uuid:\" {print \$2}' | awk '{if (\$0 == \"00000000-0000-0000-0000-000000000000\") exit 0; else exit 1}')",
-      require    => Service["mysql-galera"],
+      require    => Service["$res_name"],
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
     }

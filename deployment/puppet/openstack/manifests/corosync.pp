@@ -40,7 +40,7 @@ file {'filter_quantum_ports.py':
 File['filter_quantum_ports.py'] -> File<| title == 'quantum-ovs-agent' |>
 
 file {'mysql-wss':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/mysql',
+  path=>'/usr/lib/ocf/resource.d/mirantis/mysql',
   mode => 744,
   require =>Package['corosync'],
   owner => root,
