@@ -354,29 +354,22 @@ class openstack::compute (
 
     $enable_tunneling = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
 
-    case $queue_provider {
-      'rabbitmq': {
-        class { '::quantum':
-          verbose         => $verbose,
-          debug           => $verbose,
-          rabbit_host     => $rabbit_nodes ? { false => $rabbit_host, default => $rabbit_nodes },
-          rabbit_user     => $rabbit_user,
-          rabbit_password => $rabbit_password,
-          use_syslog           => $use_syslog,
-          rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-        }
-      }
-      'qpid': {
-        class { '::quantum':
-          verbose         => $verbose,
-          debug           => $verbose,
-          queue_provider  => $queue_provider,
-          qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
-          qpid_user       => $qpid_user,
-          qpid_password   => $qpid_password,
-          use_syslog      => $use_syslog,
-        }
-      }
+    class { '::quantum':
+      verbose         => $verbose,
+      debug           => $verbose,
+      queue_provider  => $queue_provider,
+      rabbit_host     => $rabbit_nodes ? { false => $rabbit_host, default => $rabbit_nodes },
+      rabbit_user     => $rabbit_user,
+      rabbit_password => $rabbit_password,
+      qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
+      qpid_user       => $qpid_user,
+      qpid_password   => $qpid_password,
+      use_syslog           => $use_syslog,
+      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      auth_host       => $auth_host,
+      auth_tenant     => 'services',
+      auth_user       => 'quantum',
+      auth_password   => $quantum_user_password,
     }
 
     class { 'quantum::plugins::ovs':

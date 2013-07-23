@@ -1,6 +1,12 @@
 #
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for non verbose and non debug mode. Optional.
+#
 class quantum (
   $rabbit_password,
+  $auth_password,
   $enabled                = true,
   $package_ensure         = 'present',
   $verbose                = 'False',
@@ -27,19 +33,28 @@ class quantum (
   $qpid_password          = 'guest',
   $qpid_host              = 'localhost',
   $server_ha_mode         = false,
-  $use_syslog = false
+  $auth_type        = 'keystone',
+  $auth_host        = 'localhost',
+  $auth_port        = '35357',
+  $auth_tenant      = 'services',
+  $auth_user        = 'quantum',
+  $log_file               = '/var/log/quantum/server.log',
+  $use_syslog = false,
+  $syslog_log_facility    = 'LOCAL4',
+  $syslog_log_level = 'WARNING',
 ) {
   include 'quantum::params'
 
-  Package['quantum'] -> Quantum_config<||>
-  Package['quantum'] -> Quantum_api_config<||>
+  anchor {'quantum-init':}
 
-  file {'/etc/quantum':
-    ensure  => directory,
-    owner   => 'quantum',
-    group   => 'root',
-    mode    => 770,
-    require => Package['quantum']
+  if ! defined(File['/etc/quantum']) {
+    file {'/etc/quantum':
+      ensure  => directory,
+      owner   => 'root',
+      group   => 'root',
+      mode    => 755,
+      #require => Package['quantum']
+    }
   }
 
   package {'quantum':
@@ -47,6 +62,25 @@ class quantum (
     ensure => $package_ensure
   }
 
+  file {'q-agent-cleanup.py':
+    path   => '/usr/bin/q-agent-cleanup.py', 
+    mode   => 755,
+    owner  => root,
+    group  => root,
+    source => "puppet:///modules/quantum/q-agent-cleanup.py",
+  } 
+
+  file {'/var/cache/quantum':
+    ensure  => directory,
+    path   => '/var/cache/quantum', 
+    mode   => 755,
+    owner  => quantum,
+    group  => quantum,
+  } 
+  Quantum_config<||> -> Service<| title == 'quantum-server' |>
+  Quantum_config<||> -> Service<| title == 'quantum-plugin-ovs-service' |>
+  Quantum_config<||> -> Service<| title == 'quantum-l3' |>
+  Quantum_config<||> -> Service<| title == 'quantum-dhcp-agent' |>
   case $queue_provider {
     'rabbitmq': {
       if is_array($rabbit_host) and size($rabbit_host) > 1 {
@@ -55,10 +89,10 @@ class quantum (
         } else {
           $rabbit_hosts = inline_template("<%= @rabbit_host.map {|x| x + ':' + @rabbit_port}.join ',' %>")
         }
-        Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-server' |>
-        Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-plugin-ovs-service' |>
-        Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-l3' |>
-        Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-dhcp-agent' |>
+        #Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-server' |>
+        #Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-plugin-ovs-service' |>
+        #Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-l3' |>
+        #Quantum_config['DEFAULT/rabbit_ha_queues'] -> Service<| title == 'quantum-dhcp-agent' |>
         quantum_config {
           'DEFAULT/rabbit_ha_queues': value => 'True';
           'DEFAULT/rabbit_hosts':     value => $rabbit_hosts;
@@ -90,7 +124,7 @@ class quantum (
       }
       quantum_config {
         'DEFAULT/rpc_backend':          value => 'quantum.openstack.common.rpc.impl_qpid';
-        'DEFAULT/qpid_username':          value => $qpid_user;
+        'DEFAULT/qpid_username':        value => $qpid_user;
         'DEFAULT/qpid_password':        value => $qpid_password;
       }
     }
@@ -115,19 +149,65 @@ class quantum (
     'DEFAULT/allow_bulk':             value => $allow_bulk;
     'DEFAULT/allow_overlapping_ips':  value => $allow_overlapping_ips;
     'DEFAULT/control_exchange':       value => $control_exchange;
+    'DEFAULT/use_syslog':             value => $use_syslog;
+    'keystone_authtoken/auth_host':         value => $auth_host;
+    'keystone_authtoken/auth_port':         value => $auth_port;
+    'keystone_authtoken/admin_tenant_name': value => $auth_tenant;
+    'keystone_authtoken/admin_user':        value => $auth_user;
+    'keystone_authtoken/admin_password':    value => $auth_password;
   }
-
   if $use_syslog {
-    quantum_config {'DEFAULT/log_config': value => "/etc/quantum/logging.conf";}
+    quantum_config {
+      'DEFAULT/log_config': value => "/etc/quantum/logging.conf";
+      'DEFAULT/log_file': ensure=> absent;
+      'DEFAULT/logdir': ensure=> absent;
+    }
+
+    File['/etc/quantum'] -> File['quantum-logging.conf']
     file { "quantum-logging.conf":
       content => template('quantum/logging.conf.erb'),
-      path => "/etc/quantum/logging.conf",
-      owner => "quantum",
-      group => "quantum",
+      path  => "/etc/quantum/logging.conf",
+      owner => "root",
+      group => "root",
+      mode  => 644,
     }
+    file { "quantum-all.log":
+      path => "/var/log/quantum-all.log",
+    }
+
+    # We must setup logging before start services under pacemaker
+    File['quantum-logging.conf'] -> Service<| title == 'quantum-server' |>
+    File['quantum-logging.conf'] -> Anchor<| title == 'quantum-ovs-agent' |>
+    File['quantum-logging.conf'] -> Anchor<| title == 'quantum-l3' |>
+    File['quantum-logging.conf'] -> Anchor<| title == 'quantum-dhcp-agent' |>
+
   } else {
-    quantum_config {'DEFAULT/log_config': ensure=> absent;}
+    quantum_config {
+      'DEFAULT/log_config': ensure=> absent;
+      'DEFAULT/log_file':   value => $log_file;
+    }
+    # file { "quantum-logging.conf":
+    #   content => template('quantum/logging.conf-nosyslog.erb'),
+    #   path  => "/etc/quantum/logging.conf",
+    #   owner => "root",
+    #   group => "root",
+    #   mode  => 644,
+    # }
   }
 
-  # SELINUX=permissive
+
+  if defined(Anchor['quantum-server-config-done']) {
+    $endpoint_quantum_main_configuration = 'quantum-server-config-done'
+  } else {
+    $endpoint_quantum_main_configuration = 'quantum-init-done'
+  }
+
+  Anchor['quantum-init'] -> 
+    Package['quantum'] -> 
+      File['/var/cache/quantum'] ->
+        Quantum_config<||> -> 
+          Quantum_api_config<||> ->
+            Anchor[$endpoint_quantum_main_configuration]
+
+  anchor {'quantum-init-done':}
 }

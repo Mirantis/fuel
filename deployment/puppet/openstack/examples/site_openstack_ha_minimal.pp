@@ -156,6 +156,10 @@ $quantum_db_dbname       = 'quantum'
 $quantum                 = true
 $quantum_netnode_on_cnt  = true
 
+# a string "password" value that should be configured to authenticate requests for metadata
+# from quantum-metadata-proxy to nova-api
+$quantum_metadata_proxy_shared_secret = "connecting_nova-api_and_quantum-metadata-agent"
+
 #$quantum_host            = $internal_virtual_ip
 
 
