@@ -128,6 +128,11 @@ class galera (
 
     }
   }
+#  file { "/tmp/mysql-puppetrun":
+#     ensure => file,
+#     content => "",
+#     mode    => 644,
+# }
  cs_shadow { $res_name: cib => $cib_name }
  cs_commit { $res_name: cib => $cib_name }
  cs_resource { "$res_name":
@@ -165,7 +170,7 @@ class galera (
     provider   => "pacemaker",
   }
   Package['pacemaker'] -> File['mysql-wss']
-
+#  Package['pacemaker'] -> File['/tmp/mysql-puppetrun']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
           Service["$res_name"]
@@ -254,11 +259,6 @@ class galera (
    refreshonly => true,
   }
 
-  file { '/tmp/mysql-puppetrun':
-   ensure  => present,
-   content => "",
-   before  => Service["$res_name"]
-  }
 
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
