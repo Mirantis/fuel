@@ -226,14 +226,15 @@ class galera (
   file { "/tmp/wsrep-init-file":
     ensure  => present,
     content => template("galera/wsrep-init-file.erb"),
+    before => Service["$res_name"],
   }
 
 # This exec calls mysqld_safe with aforementioned file as --init-file argument, thus creating replication user.
-  exec { "set-mysql-password":
-    unless      => "/usr/bin/mysql -u${mysql_user} -p${mysql_password}",
-    command     => "/usr/bin/mysqld_safe --init-file=/tmp/wsrep-init-file --port=3307 &",
-    refreshonly => true,
-  }
+  #exec { "set-mysql-password":
+  #  unless      => "/usr/bin/mysql -u${mysql_user} -p${mysql_password}",
+  #  command     => "/usr/bin/mysqld_safe --init-file=/tmp/wsrep-init-file --port=3307 &",
+  #  refreshonly => true,
+  #}
 
 # This exec waits for initial sync of galera cluster after mysql replication user creation.
 
@@ -273,10 +274,10 @@ class galera (
    refreshonly => true,
   }
 
-  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
+#  Package["MySQL-server"] -> Exec["set-mysql-password"] 
+  File['/tmp/wsrep-init-file'] -> Exec["wait-initial-sync"] 
   -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
-  Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
+  Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
  
