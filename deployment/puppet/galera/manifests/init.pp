@@ -67,13 +67,6 @@ class galera (
         before  => Service["$res_name"]
       }
 
-      file { '/tmp/mysql-puppetrun':
-        ensure  => present,
-        mode    => 644,
-        require => Package['MySQL-server'],
-        before  => Service["$res_name"]
-      }
-
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
@@ -104,13 +97,6 @@ class galera (
         ensure  => present,
         mode    => 644,
         source => 'puppet:///modules/galera/mysql.init' , 
-        require => Package['MySQL-server'],
-        before  => Service["$res_name"]
-      }
-
-      file { '/tmp/mysql-puppetrun':
-        ensure  => present,
-        mode    => 644,
         require => Package['MySQL-server'],
         before  => Service["$res_name"]
       }
@@ -267,6 +253,13 @@ class galera (
    command => "crm_attribute -t crm_config --name mysqlprimaryinit --update done",
    refreshonly => true,
   }
+
+  file { '/tmp/mysql-puppetrun':
+   ensure  => present,
+   content => "",
+   before  => Service["$res_name"]
+  }
+
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
   Exec["wait-initial-sync"] 
