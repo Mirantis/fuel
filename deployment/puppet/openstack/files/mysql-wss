@@ -764,7 +764,7 @@ rebuild_cluster() {
                 #    decide to not start node which was online during entire disaster holding "bad" data.
                 #  - five minutes are enough for man who turns servers in the rack and for crm to push significant
                 #    percentage of the epoch values to the shared resource and not too large for such type of disaster at all.
-                sleep 30
+                sleep 300
                 # Check if someone already decided to declare himself master...
                 RAISED_MASTER=$(crm_attribute -t crm_config --name mysqlmaster --query 2> /dev/null | awk -F\= '{print $4}')
                 # ... and if nobody did:
