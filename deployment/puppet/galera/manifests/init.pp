@@ -62,7 +62,7 @@ class galera (
 
       file { '/etc/init.d/mysql':
         ensure  => present,
-        mode    => 755,
+        mode    => 644,
         require => Package['MySQL-server'],
         before  => Service["$res_name"]
       }
