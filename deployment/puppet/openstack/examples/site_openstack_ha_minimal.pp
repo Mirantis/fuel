@@ -1,7 +1,7 @@
 #
 # Parameter values in this file should be changed, taking into consideration your
 # networking setup and desired OpenStack settings.
-# 
+#
 # Please consult with the latest Fuel User Guide before making edits.
 #
 
@@ -22,9 +22,21 @@ $private_interface   = 'eth2'
 # Public and Internal VIPs. These virtual addresses are required by HA topology and will be managed by keepalived.
 $internal_virtual_ip = '10.0.0.253'
 # Change this IP to IP routable from your 'public' network,
-# e. g. Internet or your office LAN, in which your public 
+# e. g. Internet or your office LAN, in which your public
 # interface resides
 $public_virtual_ip   = '10.0.204.253'
+
+$vips = { # Do not convert to ARRAY, It's can't work in 2.7
+  public_old => {
+    nic    => $public_br,
+    ip     => $public_virtual_ip,
+  },
+  management_old => {
+    nic    => $internal_br,
+    ip     => $internal_virtual_ip,
+  },
+}
+
 
 $nodes_harr = [
   {
@@ -106,6 +118,7 @@ $controller_internal_ipaddresses = sort(values($controller_internal_addresses))
 $ha_provider = 'pacemaker'
 $use_unicast_corosync = true
 
+$nagios = false
 # Set nagios master fqdn
 $nagios_master        = 'nagios-server.localdomain'
 ## proj_name  name of environment nagios configuration
@@ -148,6 +161,8 @@ $quantum_db_dbname       = 'quantum'
 
 ### GENERAL CONFIG END ###
 
+
+
 ### NETWORK/QUANTUM ###
 # Specify network/quantum specific settings
 
@@ -155,6 +170,7 @@ $quantum_db_dbname       = 'quantum'
 # Consult OpenStack documentation for differences between them.
 $quantum                 = true
 $quantum_netnode_on_cnt  = true
+$quantum_use_namespaces  = true
 
 # a string "password" value that should be configured to authenticate requests for metadata
 # from quantum-metadata-proxy to nova-api
@@ -162,6 +178,9 @@ $quantum_metadata_proxy_shared_secret = "connecting_nova-api_and_quantum-metadat
 
 #$quantum_host            = $internal_virtual_ip
 
+# a string "password" value that should be configured to authenticate requests for metadata
+# from quantum-metadata-proxy to nova-api
+$quantum_metadata_proxy_shared_secret = "connecting_nova-api_and_quantum-metadata-agent"
 
 # Specify network creation criteria:
 # Should puppet automatically create networks?
@@ -175,7 +194,7 @@ $floating_range  = '10.0.204.128/28'
 
 # These parameters are passed to the previously specified network manager , e.g. nova-manage network create.
 # Not used in Quantum.
-# Consult openstack docs for corresponding network manager. 
+# Consult openstack docs for corresponding network manager.
 # https://fuel-dev.mirantis.com/docs/0.2/pages/0050-installation-instructions.html#network-setup
 $num_networks    = 1
 $network_size    = 31
@@ -184,7 +203,7 @@ $vlan_start      = 300
 # Quantum
 
 # Segmentation type for isolating traffic between tenants
-# Consult Openstack Quantum docs 
+# Consult Openstack Quantum docs
 $tenant_network_type     = 'vlan'
 
 # Which IP address will be used for creating GRE tunnels.
@@ -215,6 +234,7 @@ $network_manager = 'nova.network.manager.FlatDHCPManager'
 $auto_assign_floating_ip = false
 
 # Database connection for Quantum configuration (quantum.conf)
+#todo: check passing following line to quantum::*
 $quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${$internal_virtual_ip}/${quantum_db_dbname}"
 
 
@@ -233,11 +253,16 @@ if $node[0]['role'] == 'primary-controller' {
 }
 
 
-#Network configuration
-stage {'netconfig':
-      before  => Stage['main'],
-}
+#Stages configuration
+stage {'first': } ->
+stage {'openstack-custom-repo': } ->
+stage {'netconfig': } ->
+stage {'corosync_setup': } ->
+stage {'cluster_head': } ->
+stage {'openstack-firewall': } -> Stage['main']
 
+
+#Network configuration
 class {'l23network': use_ovs=>$quantum, stage=> 'netconfig'}
 class node_netconfig (
   $mgmt_ipaddr,
@@ -282,7 +307,7 @@ class node_netconfig (
 
 
 # This parameter specifies the the identifier of the current cluster. This is needed in case of multiple environments.
-# installation. Each cluster requires a unique integer value. 
+# installation. Each cluster requires a unique integer value.
 # Valid identifier range is 1 to 254
 $deployment_id = '89'
 
@@ -313,12 +338,12 @@ $cinder_iscsi_bind_addr = $internal_address
 # Below you can add physical volumes to cinder. Please replace values with the actual names of devices.
 # This parameter defines which partitions to aggregate into cinder-volumes or nova-volumes LVM VG
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED, 
+# USE EXTREME CAUTION WITH THIS SETTING! IF THIS PARAMETER IS DEFINED,
 # IT WILL AGGREGATE THE VOLUMES INTO AN LVM VOLUME GROUP
 # AND ALL THE DATA THAT RESIDES ON THESE VOLUMES WILL BE LOST!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # Leave this parameter empty if you want to create [cinder|nova]-volumes VG by yourself
-$nv_physical_volume     = ['/dev/sdz', '/dev/sdy', '/dev/sdx'] 
+$nv_physical_volume     = ['/dev/sdz', '/dev/sdy', '/dev/sdx']
 
 #Evaluate cinder node selection
 if ($cinder) {
@@ -357,16 +382,64 @@ $swift_loopback = false
 
 ### Syslog ###
 # Enable error messages reporting to rsyslog. Rsyslog must be installed in this case.
-$use_syslog = false
+$use_syslog = true
+# Default log level would have been used, if non verbose and non debug
+$syslog_log_level             = 'ERROR'
+# Syslog facilities for main openstack services, choose any, may overlap if needed
+# local0 is reserved for HA provisioning and orchestration services,
+# local1 is reserved for openstack-dashboard
+$syslog_log_facility_glance   = 'LOCAL2'
+$syslog_log_facility_cinder   = 'LOCAL3'
+$syslog_log_facility_quantum  = 'LOCAL4'
+$syslog_log_facility_nova     = 'LOCAL6'
+$syslog_log_facility_keystone = 'LOCAL7'
+
 if $use_syslog {
-  class { "::rsyslog::client":
-    log_local => true,
+  class { "::openstack::logging":
+    stage          => 'first',
+    role           => 'client',
+    show_timezone => true,
+    # log both locally include auth, and remote
+    log_remote     => true,
+    log_local      => true,
     log_auth_local => true,
-    server => '127.0.0.1',
-    port => '514'
+    # keep four weekly log rotations, force rotate if 300M size have exceeded
+    rotation       => 'weekly',
+    keep           => '4',
+    # should be > 30M
+    limitsize      => '300M',
+    # remote servers to send logs to
+    rservers       => [{'remote_type'=>'udp', 'server'=>'master', 'port'=>'514'},],
+    # should be true, if client is running at virtual node
+    virtual        => true,
+    # facilities
+    syslog_log_facility_glance   => $syslog_log_facility_glance,
+    syslog_log_facility_cinder   => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum  => $syslog_log_facility_quantum,
+    syslog_log_facility_nova     => $syslog_log_facility_nova,
+    syslog_log_facility_keystone => $syslog_log_facility_keystone,
+    # Rabbit doesn't support syslog directly, should be >= syslog_log_level,
+    # otherwise none rabbit's messages would have gone to syslog
+    rabbit_log_level => $syslog_log_level,
   }
 }
 
+# Example for server role class definition for remote logging node:
+#   class {::openstack::logging:
+#      role           => 'server',
+#      log_remote     => false,
+#      log_local      => true,
+#      log_auth_local => true,
+#      rotation       => 'daily',
+#      keep           => '7',
+#      limitsize      => '100M',
+#      port           => '514',
+#      proto          => 'udp',
+#     #high precision timespamps
+#      show_timezone  => true,
+#     #should be true, if server is running at virtual node
+#     #virtual        => false,
+#   }
 ### Syslog END ###
 case $::osfamily {
     "Debian":  {
@@ -377,7 +450,7 @@ case $::osfamily {
     }
 }
 #
-# OpenStack packages and customized component versions to be installed. 
+# OpenStack packages and customized component versions to be installed.
 # Use 'latest' to get the most recent ones or specify exact version if you need to install custom version.
 $openstack_version = {
   'keystone'         => 'latest',
@@ -401,8 +474,13 @@ $repo_proxy = undef
 #$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
 
 # This parameter specifies the verbosity level of log messages
-# in openstack components config. Currently, it disables or enables debugging.
+# in openstack components config.
+# Debug would have set DEBUG level and ignore verbose settings, if any.
+# Verbose would have set INFO level messages
+# In case of non debug and non verbose - WARNING, default level would have set.
+# Note: if syslog on, this default level may be configured (for syslog) with syslog_log_level option.
 $verbose = true
+$debug = true
 
 #Rate Limits for cinder and Nova
 #Cinder and Nova can rate-limit your requests to API services.
@@ -412,13 +490,13 @@ $nova_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 $cinder_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
-  'DELETE' => 1000 
+  'DELETE' => 1000
 }
 
 
@@ -449,23 +527,21 @@ Exec<| title == 'clocksync' |>->Exec<| title == 'post-nova_config' |>
 
 
 ### END OF PUBLIC CONFIGURATION PART ###
-# Normally, you do not need to change anything after this string 
+# Normally, you do not need to change anything after this string
 
 # Globally apply an environment-based tag to all resources on each node.
 tag("${::deployment_id}::${::environment}")
 
 
-stage { 'openstack-custom-repo': before => Stage['netconfig'] }
 class { 'openstack::mirantis_repos':
   stage => 'openstack-custom-repo',
   type=>$mirror_type,
   enable_test_repo=>$enable_test_repo,
   repo_proxy=>$repo_proxy,
 }
- stage {'openstack-firewall': before => Stage['main'], require => Stage['netconfig'] } 
- class { '::openstack::firewall':
-      stage => 'openstack-firewall'
- }
+class { '::openstack::firewall':
+    stage => 'openstack-firewall'
+}
 
 if !defined(Class['selinux']) and ($::osfamily == 'RedHat') {
   class { 'selinux':
@@ -490,6 +566,16 @@ sysctl::value { 'net.ipv4.conf.all.rp_filter': value => '0' }
 $horizon_use_ssl = false
 
 
+# Class for calling corosync::virtual_ip in the specifis stage
+$vip_keys = keys($vips)
+class virtual_ips () {
+  cluster::virtual_ips { $vip_keys:
+    vips => $vips,
+  }
+}
+
+
+
 class compact_controller (
   $quantum_network_node = $quantum_netnode_on_cnt
 ) {
@@ -511,6 +597,7 @@ class compact_controller (
     network_size            => $network_size,
     network_config          => { 'vlan_start' => $vlan_start },
     verbose                 => $verbose,
+    debug                   => $debug,
     auto_assign_floating_ip => $auto_assign_floating_ip,
     mysql_root_password     => $mysql_root_password,
     admin_email             => $admin_email,
@@ -549,6 +636,12 @@ class compact_controller (
     custom_mysql_setup_class => $custom_mysql_setup_class,
     nv_physical_volume      => $nv_physical_volume,
     use_syslog              => $use_syslog,
+    syslog_log_level        => $syslog_log_level,
+    syslog_log_facility_glance   => $syslog_log_facility_glance,
+    syslog_log_facility_cinder => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum => $syslog_log_facility_quantum,
+    syslog_log_facility_nova => $syslog_log_facility_nova,
+    syslog_log_facility_keystone => $syslog_log_facility_keystone,
     nova_rate_limits        => $nova_rate_limits,
     cinder_rate_limits      => $cinder_rate_limits,
     horizon_use_ssl         => $horizon_use_ssl,
@@ -561,7 +654,7 @@ class compact_controller (
 node /fuel-controller-[\d+]/ {
   include stdlib
   class { 'operatingsystem::checksupported':
-      stage => 'setup'
+      stage => 'first'
   }
 
   class {'::node_netconfig':
@@ -571,16 +664,33 @@ node /fuel-controller-[\d+]/ {
       public_netmask => $::public_netmask,
       stage          => 'netconfig',
   }
-  class {'nagios':
-    proj_name       => $proj_name,
-    services        => [
-      'host-alive','nova-novncproxy','keystone', 'nova-scheduler',
-      'nova-consoleauth', 'nova-cert', 'haproxy', 'nova-api', 'glance-api',
-      'glance-registry','horizon', 'rabbitmq', 'mysql'
-    ],
-    whitelist       => ['127.0.0.1', $nagios_master],
-    hostgroup       => 'controller',
+  if $nagios {
+    class {'nagios':
+      proj_name       => $proj_name,
+      services        => [
+        'host-alive','nova-novncproxy','keystone', 'nova-scheduler',
+        'nova-consoleauth', 'nova-cert', 'haproxy', 'nova-api', 'glance-api',
+        'glance-registry','horizon', 'rabbitmq', 'mysql'
+      ],
+      whitelist       => ['127.0.0.1', $nagios_master],
+      hostgroup       => 'controller',
+    }
   }
+
+  ###
+  # cluster init
+  class { '::cluster': stage => 'corosync_setup' } ->
+  class { 'virtual_ips':
+    stage => 'corosync_setup'
+  }
+  include ::haproxy::params
+  class { 'cluster::haproxy':
+    global_options   => merge($::haproxy::params::global_options, {'log' => "/dev/log local0"}),
+    defaults_options => merge($::haproxy::params::defaults_options, {'mode' => 'http'}),
+    stage => 'cluster_head',
+  }
+  #
+  ###
   class { compact_controller: }
 }
 
@@ -589,18 +699,20 @@ node /fuel-controller-[\d+]/ {
 node /fuel-compute-[\d+]/ {
   include stdlib
   class { 'operatingsystem::checksupported':
-      stage => 'setup'
+      stage => 'first'
   }
 
-  class {'nagios':
-    proj_name       => $proj_name,
-    services        => [
-      'host-alive', 'nova-compute','nova-network','libvirt'
-    ],
-    whitelist       => ['127.0.0.1', $nagios_master],
-    hostgroup       => 'compute',
+  if $nagios {
+    class {'nagios':
+      proj_name       => $proj_name,
+      services        => [
+        'host-alive', 'nova-compute','nova-network','libvirt'
+      ],
+      whitelist       => ['127.0.0.1', $nagios_master],
+      hostgroup       => 'compute',
+    }
   }
-  
+
   class { 'openstack::compute':
     public_interface       => $public_int,
     private_interface      => $private_interface,
@@ -610,6 +722,7 @@ node /fuel-compute-[\d+]/ {
     network_manager        => $network_manager,
     network_config         => { 'vlan_start' => $vlan_start },
     multi_host             => $multi_host,
+    auto_assign_floating_ip => $auto_assign_floating_ip,
     sql_connection         => "mysql://nova:${nova_db_password}@${internal_virtual_ip}/nova",
     queue_provider         => $queue_provider,
     rabbit_nodes           => $controller_hostnames,
@@ -622,6 +735,7 @@ node /fuel-compute-[\d+]/ {
     glance_api_servers     => "${internal_virtual_ip}:9292",
     vncproxy_host          => $public_virtual_ip,
     verbose                => $verbose,
+    debug                  => $debug,
     vnc_enabled            => true,
     nova_user_password     => $nova_user_password,
     cache_server_ip        => $controller_hostnames,
@@ -640,6 +754,9 @@ node /fuel-compute-[\d+]/ {
     ssh_private_key        => 'puppet:///ssh_keys/openstack',
     ssh_public_key         => 'puppet:///ssh_keys/openstack.pub',
     use_syslog             => $use_syslog,
+    syslog_log_level       => $syslog_log_level,
+    syslog_log_facility_quantum => $syslog_log_facility_quantum,
+    syslog_log_facility_cinder => $syslog_log_facility_cinder,
     nova_rate_limits       => $nova_rate_limits,
     cinder_rate_limits     => $cinder_rate_limits
   }
@@ -649,7 +766,7 @@ node /fuel-compute-[\d+]/ {
 node /fuel-quantum/ {
   include stdlib
   class { 'operatingsystem::checksupported':
-      stage => 'setup'
+      stage => 'first'
   }
 
   class {'::node_netconfig':
@@ -664,6 +781,7 @@ node /fuel-quantum/ {
       db_host               => $internal_virtual_ip,
       service_endpoint      => $internal_virtual_ip,
       auth_host             => $internal_virtual_ip,
+      nova_api_vip          => $internal_virtual_ip,
       internal_address      => $internal_address,
       public_interface      => $public_int,
       private_interface     => $private_interface,
@@ -672,6 +790,7 @@ node /fuel-quantum/ {
       create_networks       => $create_networks,
       verbose               => $verbose,
       queue_provider        => $queue_provider,
+      debug                 => $debug,
       rabbit_password       => $rabbit_password,
       rabbit_user           => $rabbit_user,
       rabbit_nodes          => $controller_hostnames,
@@ -691,6 +810,8 @@ node /fuel-quantum/ {
       external_ipinfo       => $external_ipinfo,
       api_bind_address      => $internal_address,
       use_syslog            => $use_syslog,
+      syslog_log_level => $syslog_log_level,
+      syslog_log_facility_quantum => $syslog_log_facility_quantum,
     }
     class { 'openstack::auth_file':
       admin_password       => $admin_password,

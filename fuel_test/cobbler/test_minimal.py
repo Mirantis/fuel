@@ -3,7 +3,7 @@ from fuel_test.cobbler.vm_test_case import CobblerTestCase
 from fuel_test.config import Config
 from fuel_test.helpers import write_config
 from fuel_test.manifest import Template, Manifest
-from fuel_test.settings import CREATE_SNAPSHOTS, ASTUTE_USE, PUPPET_AGENT_COMMAND
+from fuel_test.settings import CREATE_SNAPSHOTS, ASTUTE_USE, PUPPET_AGENT_COMMAND, QUANTUM_USE_NAMESPACES, TENANT_NETWORK_TYPE
 
 
 class MinimalTestCase(CobblerTestCase):
@@ -20,7 +20,9 @@ class MinimalTestCase(CobblerTestCase):
             ci=self.ci(),
             controllers=self.nodes().controllers,
             quantums=self.nodes().quantums,
-            quantum=True)
+            quantum=True,
+            quantum_use_namespaces=QUANTUM_USE_NAMESPACES,
+            tenant_network_type=TENANT_NETWORK_TYPE)
         
         Manifest().write_manifest(remote=self.remote(), manifest=manifest)
         
@@ -30,7 +32,7 @@ class MinimalTestCase(CobblerTestCase):
         self.validate(self.nodes().computes, PUPPET_AGENT_COMMAND)
 
     def deploy_by_astute(self):
-        self.remote().check_stderr("astute -f /root/astute.yaml -v")
+        self.remote().check_stderr("astute -f /root/astute.yaml -v", True)
 
     def prepare_astute(self):
         config = Config().generate(
@@ -45,7 +47,7 @@ class MinimalTestCase(CobblerTestCase):
         config_path = "/root/config.yaml"
         write_config(self.remote(), config_path, str(config))
         self.remote().check_call("cobbler_system -f %s" % config_path)
-        self.remote().check_stderr("openstack_system -c %s -o /etc/puppet/manifests/site.pp -a /root/astute.yaml" % config_path)
+        self.remote().check_stderr("openstack_system -c %s -o /etc/puppet/manifests/site.pp -a /root/astute.yaml" % config_path, True)
 
     def test_minimal(self):
         self.deploy()

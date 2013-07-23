@@ -1,6 +1,6 @@
 #This class installs quantum WITHOUT quantum api server which is installed on controller nodes
 # [use_syslog] Rather or not service should log to syslog. Optional.
-# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
 #       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
 
@@ -39,7 +39,7 @@ class openstack::quantum_router (
   $exported_resources       = true,
   $quantum_gre_bind_addr    = $internal_address,
   $quantum_network_node     = false,
-  $quantum_netnode_on_cnt   = false,  
+  $quantum_netnode_on_cnt   = false,
   $tenant_network_type      = 'gre',
   $use_syslog               = false,
   $syslog_log_facility      = 'LOCAL4',
@@ -74,7 +74,7 @@ class openstack::quantum_router (
       auth_tenant          => 'services',
       auth_user            => 'quantum',
       auth_password        => $quantum_user_password,
-    } 
+    }
     #todo: add quantum::server here (into IF)
     class { 'quantum::plugins::ovs':
       bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
@@ -97,15 +97,16 @@ class openstack::quantum_router (
       # Quantum metadata agent starts only under pacemaker
       # and co-located with l3-agent
       class {'quantum::agents::metadata':
-        debug         => $debug,
-        auth_tenant   => 'services',
-        auth_user     => 'quantum',
-        auth_url      => $admin_auth_url,
-        auth_region   => 'RegionOne',
-        metadata_ip   => $nova_api_vip,
-        auth_password => $quantum_user_password,
-        shared_secret => $::quantum_metadata_proxy_shared_secret,
+        verbose          => $verbose,
+        debug            => $debug,
         service_provider => $service_provider,
+        auth_tenant      => 'services',
+        auth_user        => 'quantum',
+        auth_url         => $admin_auth_url,
+        auth_region      => 'RegionOne',
+        auth_password    => $quantum_user_password,
+        shared_secret    => $::quantum_metadata_proxy_shared_secret,
+        metadata_ip      => $nova_api_vip,
       }
       class { 'quantum::agents::dhcp':
         verbose          => $verbose,
@@ -121,6 +122,8 @@ class openstack::quantum_router (
        #enabled             => $quantum_l3_enable,
         verbose             => $verbose,
         debug               => $debug,
+        use_namespaces      => $use_namespaces,
+        service_provider    => $service_provider,
         fixed_range         => $fixed_range,
         floating_range      => $floating_range,
         ext_ipinfo          => $external_ipinfo,
@@ -131,10 +134,8 @@ class openstack::quantum_router (
         auth_tenant         => 'services',
         auth_user           => 'quantum',
         auth_password       => $quantum_user_password,
-        use_namespaces      => $use_namespaces,
         metadata_ip         => $internal_address,
         nova_api_vip        => $nova_api_vip,
-        service_provider    => $service_provider
       }
     }
 

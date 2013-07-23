@@ -1,4 +1,5 @@
-
+# todo: move this file and ocf scripts to cluster module
+# todo: refactor quantum-* ocf scripts
 class openstack::corosync (
   $bind_address = '127.0.0.1',
   $multicast_address = '239.1.1.2',
@@ -8,6 +9,11 @@ class openstack::corosync (
   $expected_quorum_votes = "2",
   $unicast_addresses = undef
 ) {
+
+
+anchor {'corosync':}
+
+Anchor['corosync'] -> Cs_property<||>
 
 #Define shadow CIB
 
@@ -25,46 +31,29 @@ Cs_property['no-quorum-policy']->Cs_property['stonith-enabled']->Cs_property['st
 file {'filter_quantum_ports.py':
   path=>'/usr/bin/filter_quantum_ports.py', 
   mode => 744,
-  require =>[Package['corosync'],File['/root/openrc']],
+  #require =>[Package['corosync'],File['/root/openrc']],
+  #require =>Package['corosync'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/filter_quantum_ports.py",
 } 
-File['filter_quantum_ports.py'] -> File<| title == 'quantum-agent-dhcp' |>
-File['filter_quantum_ports.py'] -> File<| title == 'quantum-l3-agent' |>
 File['filter_quantum_ports.py'] -> File<| title == 'quantum-ovs-agent' |>
-file {'quantum-agent-dhcp':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-dhcp', 
-  mode => 744,
-  require =>Package['corosync'],
-  owner => root,
-  group => root,
-  source => "puppet:///modules/openstack/quantum-agent-dhcp",
-  before => Service['corosync']
-} 
-file {'quantum-l3-agent':
-  path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-l3', 
-  mode => 744,
-  require =>Package['pacemaker'],
-  owner => root,
-  group => root,
-  source => "puppet:///modules/openstack/quantum-agent-l3",
-  before => Service['corosync']
-} 
+
 file {'quantum-ovs-agent':
   path=>'/usr/lib/ocf/resource.d/pacemaker/quantum-agent-ovs', 
   mode => 744,
-  require =>Package['pacemaker'],
   owner => root,
   group => root,
   source => "puppet:///modules/openstack/quantum-agent-ovs",
-  before => Service['corosync']
-} 
+} -> Corosync::Service['pacemaker']
 
+Anchor['corosync'] -> 
 corosync::service { 'pacemaker':
   version => '0',
-  notify  => Service['corosync'],
 }
+Corosync::Service['pacemaker'] ~> Service['corosync']
+Corosync::Service['pacemaker'] -> Anchor['corosync-done']
+
 class { '::corosync':
   enable_secauth    => $secauth,
   bind_address      => $bind_address,
@@ -72,9 +61,6 @@ class { '::corosync':
   unicast_addresses => $unicast_addresses
 }
 
-
-
-anchor {'corosync_pre':}
 
 #cs_property { 'expected-quorum-votes':
 #  ensure => present,
@@ -86,17 +72,17 @@ cs_property { 'no-quorum-policy':
 # cib => 'properties',
   value  => $quorum_policy,
   retries => 5
-}
+} -> Anchor['corosync-done']
 cs_property { 'stonith-enabled':
 #  cib => 'properties',
   ensure => present,
   value  => $stonith,
-}
+} -> Anchor['corosync-done']
 cs_property { 'start-failure-is-fatal':
 #  cib => 'properties',
   ensure => present,
   value  => "false",
-}
+} -> Anchor['corosync-done']
 #
 #cs_property { 'placement-strategy':
 #  cib => 'shadow',
@@ -105,5 +91,5 @@ cs_property { 'start-failure-is-fatal':
 #}
 
 
-anchor {'corosync_post':}
+anchor {'corosync-done':}
 }

@@ -30,7 +30,8 @@
 #   Defaults to false.
 # [network_config] Hash that can be used to pass implementation specifc
 #   network settings. Optioal. Defaults to {}
-# [verbose] Whether to log services at verbose.
+# [verbose] Rather to print more verbose (INFO+) output. If non verbose and non debug, would give syslog_log_level (default is WARNING) output. Optional. Defaults to false.
+# [debug] Rather to print even more verbose (DEBUG+) output. If true, would ignore verbose option. Optional. Defaults to false.
 # [export_resources] Rather to export resources.
 # Horizon related config - assumes puppetlabs-horizon code
 # [secret_key]          secret key to encode cookies, …
@@ -44,6 +45,10 @@
 # [horizon_app_links]     array as in '[ ["Nagios","http://nagios_addr:port/path"],["Ganglia","http://ganglia_addr"] ]'
 # [enabled] Whether services should be enabled. This parameter can be used to
 #   implement services in active-passive modes for HA. Optional. Defaults to true.
+# [use_syslog] Rather or not service should log to syslog. Optional.
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
+#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# [syslog_log_level] logging level for non verbose and non debug mode. Optional.
 #
 # === Examples
 #
@@ -140,6 +145,7 @@ class openstack::controller (
   $horizon_app_links       = undef,
   # General
   $verbose                 = 'False',
+  $debug                   = 'False',
   $export_resources        = true,
   # if the cinder management components should be installed
   $cinder_user_password    = 'cinder_user_pass',
@@ -172,6 +178,12 @@ class openstack::controller (
   $manage_volumes          = false,
   $nv_physical_volume      = undef,
   $use_syslog              = false,
+  $syslog_log_level = 'WARNING',
+  $syslog_log_facility_glance   = 'LOCAL2',
+  $syslog_log_facility_cinder   = 'LOCAL3',
+  $syslog_log_facility_quantum  = 'LOCAL4',
+  $syslog_log_facility_nova     = 'LOCAL6',
+  $syslog_log_facility_keystone = 'LOCAL7',
   $horizon_use_ssl         = false,
   $nova_rate_limits        = undef,
   $cinder_rate_limits      = undef,
@@ -191,8 +203,7 @@ class openstack::controller (
     $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
 
 
-  nova_config {'DEFAULT/memcached_servers':    value => $memcached_addresses;
-  }
+  nova_config {'DEFAULT/memcached_servers':  value => $memcached_addresses; }
 
   ####### DATABASE SETUP ######
   # set up mysql server
@@ -236,6 +247,7 @@ class openstack::controller (
   ####### KEYSTONE ###########
   class { 'openstack::keystone':
     verbose               => $verbose,
+    debug                 => $debug,
     db_type               => $db_type,
     db_host               => $db_host,
     db_password           => $keystone_db_password,
@@ -259,12 +271,15 @@ class openstack::controller (
     enabled               => $enabled,
     package_ensure        => $::openstack_keystone_version,
     use_syslog            => $use_syslog,
+    syslog_log_facility   => $syslog_log_facility_keystone,
+    syslog_log_level      => $syslog_log_level,
   }
 
 
   ######## BEGIN GLANCE ##########
   class { 'openstack::glance':
     verbose                   => $verbose,
+    debug                     => $debug,
     db_type                   => $db_type,
     db_host                   => $db_host,
     glance_db_user            => $glance_db_user,
@@ -278,6 +293,8 @@ class openstack::controller (
     glance_backend            => $glance_backend,
     registry_host             => $service_endpoint,
     use_syslog                => $use_syslog,
+    syslog_log_facility       => $syslog_log_facility_glance,
+    syslog_log_level          => $syslog_log_level,
   }
 
   ######## BEGIN NOVA ###########
@@ -352,12 +369,16 @@ class openstack::controller (
     glance_api_servers      => $glance_api_servers,
     # General
     verbose                 => $verbose,
+    debug                   => $debug,
     enabled                 => $enabled,
     exported_resources      => $export_resources,
     enabled_apis            => $enabled_apis,
     api_bind_address        => $api_bind_address,
     ensure_package          => $::openstack_version['nova'],
     use_syslog              => $use_syslog,
+    syslog_log_facility     => $syslog_log_facility_nova,
+    syslog_log_facility_quantum => $syslog_log_facility_quantum,
+    syslog_log_level        => $syslog_log_level,
     nova_rate_limits        => $nova_rate_limits,
     cinder                  => $cinder
   }
@@ -366,43 +387,45 @@ class openstack::controller (
   if $cinder {
     if !defined(Class['openstack::cinder']) {
       class {'openstack::cinder':
-      sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
-      queue_provider       => $queue_provider,
-      rabbit_password      => $rabbit_password,
-      rabbit_host          => false,
-      rabbit_nodes         => $rabbit_nodes,
-      qpid_password        => $qpid_password,
-      qpid_user            => $qpid_user,
-      qpid_nodes           => $qpid_nodes,
-      volume_group         => $cinder_volume_group,
-      physical_volume      => $nv_physical_volume,
-      manage_volumes       => $manage_volumes,
-      enabled              => true,
-      glance_api_servers   => "${service_endpoint}:9292",
-      auth_host            => $service_endpoint,
-      bind_host            => $api_bind_address,
-      iscsi_bind_host      => $cinder_iscsi_bind_addr,
-      cinder_user_password => $cinder_user_password,
-      use_syslog           => $use_syslog,
-      cinder_rate_limits   => $cinder_rate_limits,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-    }
-    }
-  }
-  else {
-  if $manage_volumes {
-
-    class { 'nova::volume':
-      ensure_package => $::openstack_version['nova'],
-      enabled        => true,
-      }
-    class { 'nova::volume::iscsi':
-      iscsi_ip_address => $api_bind_address,
-      physical_volume  => $nv_physical_volume,
-      }
-  }
-  # Set up nova-volume
-  }
+        sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+        queue_provider       => $queue_provider,
+        rabbit_password      => $rabbit_password,
+        rabbit_host          => false,
+        rabbit_nodes         => $rabbit_nodes,
+        qpid_password        => $qpid_password,
+        qpid_user            => $qpid_user,
+        qpid_nodes           => $qpid_nodes,
+        volume_group         => $cinder_volume_group,
+        physical_volume      => $nv_physical_volume,
+        manage_volumes       => $manage_volumes,
+        enabled              => true,
+        glance_api_servers   => "${service_endpoint}:9292",
+        auth_host            => $service_endpoint,
+        bind_host            => $api_bind_address,
+        iscsi_bind_host      => $cinder_iscsi_bind_addr,
+        cinder_user_password => $cinder_user_password,
+        use_syslog           => $use_syslog,
+        verbose              => $verbose,
+        debug                => $debug,
+        syslog_log_facility  => $syslog_log_facility_cinder,
+        syslog_log_level     => $syslog_log_level,
+        cinder_rate_limits   => $cinder_rate_limits,
+        rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      } # end class
+    } else { # defined
+      if $manage_volumes {
+      # Set up nova-volume
+        class { 'nova::volume':
+          ensure_package => $::openstack_version['nova'],
+          enabled        => true,
+        }
+        class { 'nova::volume::iscsi':
+          iscsi_ip_address => $api_bind_address,
+          physical_volume  => $nv_physical_volume,
+        }
+      } #end manage_volumes
+    } #end else
+  } #end cinder
 
   if !defined(Class['memcached']){
     class { 'memcached':
@@ -423,8 +446,9 @@ class openstack::controller (
     keystone_host     => $service_endpoint,
     use_ssl           => $horizon_use_ssl,
     verbose           => $verbose,
+    debug             => $debug,
     use_syslog        => $use_syslog,
+    log_level         => $syslog_log_level,
   }
 
 }
-

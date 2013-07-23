@@ -46,12 +46,12 @@ class Template(object):
 
     def _replace(self, template, **kwargs):
         for key, value in kwargs.items():
-            template, count = re.subn(
-                '^(\$' + str(key) + ')\s*=.*', "\\1 = " + self.p_(value),
-                template,
-                flags=re.MULTILINE)
-            if count == 0:
-                raise Exception("Variable ${0:>s} not found".format(key))
+            template, count = re.subn('^(\$' + str(key) + ')\s*=.*',
+                                      "\\1 = " + self.p_(value),
+                                      template,
+                                      flags=re.MULTILINE)
+            #if count == 0: #TODO: workaround
+            #    raise Exception("Variable ${0:>s} not found".format(key))
         return template
 
     def replace(self, **kwargs):
@@ -220,10 +220,13 @@ class Manifest(object):
                                     quantum=True,
                                     loopback=True,
                                     cinder=True,
-                                            cinder_nodes=None,
-                                            quantum_netnode_on_cnt=True,
+                                    cinder_nodes=None,
+                                    quantum_netnode_on_cnt=True,
                                     swift=True,
-                                    ha_provider='pacemaker', ha=True):
+                                    ha_provider='pacemaker',
+                                    ha=True,
+                                    quantum_use_namespaces=True,
+                                    tenant_network_type='gre'):
         if not cinder_nodes:
             cinder_nodes = []
         if ha:
@@ -252,10 +255,13 @@ class Manifest(object):
             deployment_id=self.deployment_id(ci),
             public_netmask=ci.public_net_mask(),
             internal_netmask=ci.internal_net_mask(),
-                quantum=quantum,
-                quantum_netnode_on_cnt=quantum_netnode_on_cnt,
-            ha_provider=ha_provider
-            )
+            quantum=quantum,
+            quantum_netnode_on_cnt=quantum_netnode_on_cnt,
+            ha_provider=ha_provider,
+            quantum_use_namespaces=quantum_use_namespaces,
+            tenant_network_type=tenant_network_type
+        )
+
         if swift:
             template.replace(swift_loopback=self.loopback(loopback))
         return template

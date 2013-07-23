@@ -12,6 +12,7 @@ keys = root
 # devel is reserved for future usage
 [handlers]
 keys = production,devel
+
 <% end -%>
 
 [logger_root]
@@ -96,3 +97,4 @@ class = logging.FileHandler
 args = ('/var/log/quantum/metadata.log',)
 formatter = default
 <% end -%>
+

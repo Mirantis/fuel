@@ -1,3 +1,4 @@
+#
 class nova::compute::libvirt (
   $libvirt_type = 'kvm',
   $vncserver_listen = '127.0.0.1'
@@ -39,6 +40,14 @@ class nova::compute::libvirt (
     }
 
     Service['avahi-daemon'] -> Service['libvirt']
+
+    service { 'libvirt-guests':
+      name       => 'libvirt-guests',
+      enable     => false,
+      ensure     => true,
+      hasstatus  => false,
+      hasrestart => false,
+    }
 
   }
 

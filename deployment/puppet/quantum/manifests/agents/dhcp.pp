@@ -82,9 +82,8 @@ class quantum::agents::dhcp (
 
     # OCF script for pacemaker
     # and his dependences
-    # switch back to mirantis
     file {'quantum-dhcp-agent-ocf':
-      path=>'/usr/lib/ocf/resource.d/heartbeat/quantum-agent-dhcp', 
+      path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-dhcp',
       mode => 744,
       owner => root,
       group => root,
@@ -93,13 +92,13 @@ class quantum::agents::dhcp (
     Package['pacemaker'] -> File['quantum-dhcp-agent-ocf']
     File['quantum-dhcp-agent-ocf'] -> Cs_resource["p_${::quantum::params::dhcp_agent_service}"]
     File['q-agent-cleanup.py'] -> Cs_resource["p_${::quantum::params::dhcp_agent_service}"]
-    
+
     File<| title=='quantum-logging.conf' |> ->
     cs_resource { "p_${::quantum::params::dhcp_agent_service}":
       ensure          => present,
       cib             => 'dhcp',
       primitive_class => 'ocf',
-      provided_by     => 'heartbeat',
+      provided_by     => 'mirantis',
       primitive_type  => 'quantum-agent-dhcp',
       #require => File['quantum-agent-dhcp'],
       parameters      => {
@@ -145,7 +144,7 @@ class quantum::agents::dhcp (
       ensure     => present,
       cib        => 'dhcp',
       primitives => [
-        "p_${::quantum::params::dhcp_agent_service}", 
+        "p_${::quantum::params::dhcp_agent_service}",
         "clone_p_${::quantum::params::ovs_agent_service}"
       ],
       score      => 'INFINITY',
@@ -162,11 +161,11 @@ class quantum::agents::dhcp (
       ensure     => present,
       cib        => 'dhcp',
       primitives => [
-        "p_${::quantum::params::dhcp_agent_service}", 
+        "p_${::quantum::params::dhcp_agent_service}",
         "clone_p_quantum-metadata-agent"
       ],
       score      => 'INFINITY',
-    } -> 
+    } ->
     cs_order { 'dhcp-after-metadata':
       ensure => present,
       cib    => 'dhcp',
@@ -187,6 +186,7 @@ class quantum::agents::dhcp (
       require    => [Package[$dhcp_agent_package], Class['quantum']],
     }
 
+    Quantum::Network::Provider_router<||> -> Service<| title=='quantum-dhcp-service' |>
     service { 'quantum-dhcp-service':
       name       => "p_${::quantum::params::dhcp_agent_service}",
       enable     => $enabled,
@@ -214,7 +214,7 @@ class quantum::agents::dhcp (
   Class[quantum::waistline] -> Service[quantum-dhcp-service]
 
   Anchor['quantum-dhcp-agent'] ->
-    Quantum_dhcp_agent_config <| |> ->  
+    Quantum_dhcp_agent_config <| |> ->
       Cs_resource<| title=="p_${::quantum::params::dhcp_agent_service}" |> ->
         Service['quantum-dhcp-service'] ->
           Anchor['quantum-dhcp-agent-done']

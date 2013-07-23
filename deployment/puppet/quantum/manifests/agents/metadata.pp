@@ -4,6 +4,7 @@ class quantum::agents::metadata (
   $package_ensure   = 'present',
   $enabled          = true,
   $debug            = false,
+  $verbose          = false,
   $auth_tenant      = 'services',
   $auth_user        = 'quantum',
   $auth_url         = 'http://localhost:35357/v2.0',
@@ -29,7 +30,7 @@ class quantum::agents::metadata (
   Service<| title=='quantum-server' |> -> Anchor['quantum-metadata-agent']
 
   # add instructions to nova.conf
-  nova_config { 
+  nova_config {
     'DEFAULT/service_quantum_metadata_proxy':       value => true;
     'DEFAULT/quantum_metadata_proxy_shared_secret': value => $shared_secret;
   } -> Nova::Generic_service<| title=='api' |>
@@ -53,8 +54,8 @@ class quantum::agents::metadata (
       ensure => $ensure,
     }
     # do not move it to outside this IF
-    Anchor['quantum-metadata-agent'] -> 
-      Package['quantum-metadata-agent'] -> 
+    Anchor['quantum-metadata-agent'] ->
+      Package['quantum-metadata-agent'] ->
         Quantum_metadata_agent_config<||>
   }
 
@@ -73,9 +74,8 @@ class quantum::agents::metadata (
   } else {
     # OCF script for pacemaker
     # and his dependences
-    #switch back to mirantis
     file {'quantum-metadata-agent-ocf':
-      path=>'/usr/lib/ocf/resource.d/heartbeat/quantum-agent-metadata', 
+      path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-metadata',
       mode => 744,
       owner => root,
       group => root,
@@ -88,7 +88,7 @@ class quantum::agents::metadata (
       enable  => false,
       ensure  => stopped,
     }
-    
+
     Cs_commit <| title == 'ovs' |> -> Cs_shadow <| title == "$res_name" |>
 
     cs_shadow { $res_name: cib => $cib_name }
@@ -96,12 +96,11 @@ class quantum::agents::metadata (
     ::corosync::cleanup { $res_name: }
 
     File<| title=='quantum-logging.conf' |> ->
-    #switch back to mirantis
     cs_resource { "$res_name":
       ensure          => present,
       cib             => $cib_name,
       primitive_class => 'ocf',
-      provided_by     => 'heartbeat',
+      provided_by     => 'mirantis',
       primitive_type  => 'quantum-agent-metadata',
       parameters => {
         #'nic'     => $vip[nic],
@@ -128,9 +127,9 @@ class quantum::agents::metadata (
       },
     }
 
-    Cs_resource["$res_name"] -> 
-      Cs_commit["$res_name"] -> 
-        ::Corosync::Cleanup["$res_name"] -> 
+    Cs_resource["$res_name"] ->
+      Cs_commit["$res_name"] ->
+        ::Corosync::Cleanup["$res_name"] ->
           Service["$res_name"]
 
     service {"$res_name":

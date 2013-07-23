@@ -2,13 +2,13 @@ from ipaddr import IPNetwork
 
 import os
 from fuel_test.ci.ci_base import CiBase
-from fuel_test.helpers import add_nmap, dhcp_checksum
+from fuel_test.helpers import add_nmap
 
 from fuel_test.node_roles import NodeRoles
 from fuel_test.settings import CONTROLLERS, COMPUTES, \
     STORAGES, PROXIES, \
     EMPTY_SNAPSHOT, POOLS, INTERFACE_ORDER, FORWARDING, DHCP, ISO_IMAGE, \
-    SETUP_TIMEOUT
+    SETUP_TIMEOUT, COMPUTE_RAM_SIZE, QUANTUMS
 
 
 class CiVM(CiBase):
@@ -25,11 +25,11 @@ class CiVM(CiBase):
             compute_names=['fuel-compute-%02d' % x for x in range(1, 1 + COMPUTES)],
             storage_names=['fuel-swift-%02d' % x for x in range(1, 1 + STORAGES)],
             proxy_names=['fuel-swiftproxy-%02d' % x for x in range(1, 1 + PROXIES)],
-            quantum_names=['fuel-quantum'],
+            quantum_names=['fuel-quantum-%02d' % x for x in range(1, 1 + QUANTUMS)],
         )
 
     def env_name(self):
-        return os.environ.get('ENV_NAME', 'cobbler')
+        return os.environ.get('ENV_NAME', 'cobbler_grizzly')
 
     def describe_environment(self):
         """
@@ -48,7 +48,7 @@ class CiVM(CiBase):
             self.describe_master_node(name, networks)
 
         for name in self.node_roles().compute_names:
-            self.describe_empty_node(name, networks, memory=2048)
+            self.describe_empty_node(name, networks, memory=COMPUTE_RAM_SIZE)
 
         for name in self.node_roles().controller_names + self.node_roles().storage_names + self.node_roles().quantum_names + self.node_roles().proxy_names:
             self.describe_empty_node(name, networks)
@@ -70,5 +70,4 @@ class CiVM(CiBase):
             node.await('public', timeout=SETUP_TIMEOUT)
         master_remote = master_node.remote('public', login='root', password='r00tme')
         add_nmap(master_remote)
-        dhcp_checksum(master_remote)
         self.environment().snapshot(EMPTY_SNAPSHOT)
