@@ -8,7 +8,6 @@ class nova::manage::floating_range (
   $password = 'nova',
   $auth_url =  undef,
   $authtenant_name = 'admin',
-  $service_type = 'compute',
 ){
   nova_floating_range{$ip_range:
     ensure          => 'present',
@@ -18,6 +17,5 @@ class nova::manage::floating_range (
     auth_method     => $password,
     auth_url        => $auth_url,
     authtenant_name => $authtenant_name,
-    service_type    => $service_type,
   }
 }

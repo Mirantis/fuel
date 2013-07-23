@@ -66,6 +66,7 @@ Puppet::Type.newtype(:nova_floating_range) do
   newparam(:service_type) do
     desc 'Connection type :service_type parameter to "compute", "object-store", "volume" or "network" (defaults to "compute")'
 
+    defaultto 'compute'
 
     munge do |value|
       String value
