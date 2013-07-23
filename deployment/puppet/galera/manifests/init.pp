@@ -247,14 +247,14 @@ class galera (
 
 # This exec kills initialized mysql to allow its management with generic service providers (init/upstart/pacemaker/etc.)
 
-  exec { "kill-initial-mysql":
-    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
-    command     => "killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10",
-    #      onlyif    => "pidof mysqld",
-    try_sleep   => 5,
-    tries       => 6,
-    refreshonly => true,
-  }
+#  exec { "kill-initial-mysql":
+#    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
+#    command     => "killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10",
+#    #      onlyif    => "pidof mysqld",
+#    try_sleep   => 5,
+#    tries       => 6,
+#    refreshonly => true,
+#  }
 
   exec { "rm-init-file":
     command => "/bin/rm /tmp/wsrep-init-file",
@@ -275,9 +275,8 @@ class galera (
 
   Package["MySQL-server"] -> Exec["set-mysql-password"] 
   File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
-  -> Exec["kill-initial-mysql"] -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
-  Exec["kill-initial-mysql"] -> Exec["rm-init-file"]
-  Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["kill-initial-mysql"]
+  -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
+  Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
  
@@ -292,8 +291,8 @@ class galera (
     exec { "start-new-galera-cluster":
       path   => "/usr/bin:/usr/sbin:/bin:/sbin",
       logoutput => true,
-      command   => '/etc/init.d/mysql stop; sleep 10; killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10; /etc/init.d/mysql start --wsrep-cluster-address=gcomm:// &',
-      onlyif    => "[ -f /var/lib/mysql/grastate.dat ] && (cat /var/lib/mysql/grastate.dat | awk '\$1 == \"uuid:\" {print \$2}' | awk '{if (\$0 == \"00000000-0000-0000-0000-000000000000\") exit 0; else exit 1}')",
+      command   => 'echo 0',
+#      onlyif    => "[ -f /var/lib/mysql/grastate.dat ] && (cat /var/lib/mysql/grastate.dat | awk '\$1 == \"uuid:\" {print \$2}' | awk '{if (\$0 == \"00000000-0000-0000-0000-000000000000\") exit 0; else exit 1}')",
       require    => Service["$res_name"],
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
