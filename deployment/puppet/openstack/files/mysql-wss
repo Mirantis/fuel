@@ -748,7 +748,7 @@ get_reader_attr() {
 }
 
 rebuild_cluster() {
-  if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] && [ ! -f /tmp/mysql-puppetrun ]; then
+  if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] && [ ! -f /tmp/wsrep-init-file ]; then
         mysql_status info
         if [ $? = $OCF_SUCCESS ] ; then
             CRM_ONLINE_NODES=( $(crm node list | grep -v \(offline\) | sed 's/\://g') )
@@ -1000,8 +1000,7 @@ mysql_start() {
     if ocf_is_ms; then
         mysql_extra_params="--skip-slave-start"
     fi
-    if [ -f /tmp/mysql-puppetrun ] ; then
-      rm -f /tmp/mysql-puppetrun
+    if [ -f /tmp/wsrep-init-file ] ; then
       if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] ; then
         ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
