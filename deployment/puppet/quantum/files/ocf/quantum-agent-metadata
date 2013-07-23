@@ -316,4 +316,3 @@ case "$1" in
   *)            usage
                 exit $OCF_ERR_UNIMPLEMENTED;;
 esac
-
