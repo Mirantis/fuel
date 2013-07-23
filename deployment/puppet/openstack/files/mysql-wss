@@ -999,24 +999,21 @@ mysql_start() {
     if [ -f /tmp/mysql-puppetrun ] ; then
       rm -f /tmp/mysql-puppetrun
       if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] ; then
-        ${OCF_RESKEY_binary} --defaults-file=$OCF_RESKEY_config \
+        ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
-        --socket=$OCF_RESKEY_socket \
         --datadir=$OCF_RESKEY_datadir \
         --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
         --init-file=/tmp/wsrep-init-file $mysql_extra_params >/dev/null 2>&1 &
       else
-        ${OCF_RESKEY_binary} --defaults-file=$OCF_RESKEY_config \
+        ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
-        --socket=$OCF_RESKEY_socket \
         --datadir=$OCF_RESKEY_datadir \
         --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
         --init-file=/tmp/wsrep-init-file --wsrep-cluster-address=gcomm:// $mysql_extra_params >/dev/null 2>&1 &
       fi
     else
-      ${OCF_RESKEY_binary} --defaults-file=$OCF_RESKEY_config \
+      ${OCF_RESKEY_binary} \
       --pid-file=$OCF_RESKEY_pid \
-      --socket=$OCF_RESKEY_socket \
       --datadir=$OCF_RESKEY_datadir \
       --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
       $mysql_extra_params >/dev/null 2>&1 &
