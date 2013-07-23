@@ -67,6 +67,13 @@ class galera (
         before  => Service["$res_name"]
       }
 
+      file { '/tmp/mysql-puppetrun':
+        ensure  => present,
+        mode    => 644,
+        require => Package['MySQL-server'],
+        before  => Service["$res_name"]
+      }
+
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
@@ -95,8 +102,15 @@ class galera (
 
       file { '/etc/init.d/mysql':
         ensure  => present,
-        mode    => 755,
+        mode    => 644,
         source => 'puppet:///modules/galera/mysql.init' , 
+        require => Package['MySQL-server'],
+        before  => Service["$res_name"]
+      }
+
+      file { '/tmp/mysql-puppetrun':
+        ensure  => present,
+        mode    => 644,
         require => Package['MySQL-server'],
         before  => Service["$res_name"]
       }
@@ -229,13 +243,6 @@ class galera (
     before => Service["$res_name"],
   }
 
-# This exec calls mysqld_safe with aforementioned file as --init-file argument, thus creating replication user.
-  #exec { "set-mysql-password":
-  #  unless      => "/usr/bin/mysql -u${mysql_user} -p${mysql_password}",
-  #  command     => "/usr/bin/mysqld_safe --init-file=/tmp/wsrep-init-file --port=3307 &",
-  #  refreshonly => true,
-  #}
-
 # This exec waits for initial sync of galera cluster after mysql replication user creation.
 
   exec { "wait-initial-sync":
@@ -275,7 +282,7 @@ class galera (
   }
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  File['/tmp/wsrep-init-file'] -> Exec["wait-initial-sync"] 
+  Exec["wait-initial-sync"] 
   -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
   Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
