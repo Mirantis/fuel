@@ -225,8 +225,6 @@ class galera (
       content => template("galera/wsrep.cnf.erb"),
       require => [File["/etc/mysql/conf.d"], File["/etc/mysql"]],
     }
-    File["/etc/mysql/conf.d/wsrep.cnf"] -> Exec['set-mysql-password']
-    File["/etc/mysql/conf.d/wsrep.cnf"] ~> Exec['set-mysql-password']
     File["/etc/mysql/conf.d/wsrep.cnf"] -> Service["$res_name"]
     File["/etc/mysql/conf.d/wsrep.cnf"] ~> Service["$res_name"]
     File["/etc/mysql/conf.d/wsrep.cnf"] -> Package['MySQL-server']
