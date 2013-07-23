@@ -262,8 +262,7 @@ class galera (
 
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  Exec["wait-initial-sync"] 
-  -> Service["$res_name"] -> Exec ["wait-for-synced-state"]
+  Service["$res_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
   Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
