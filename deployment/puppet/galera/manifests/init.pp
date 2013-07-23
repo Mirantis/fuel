@@ -251,17 +251,6 @@ class galera (
     refreshonly => true,
   }
 
-# This exec kills initialized mysql to allow its management with generic service providers (init/upstart/pacemaker/etc.)
-
-#  exec { "kill-initial-mysql":
-#    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
-#    command     => "killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10",
-#    #      onlyif    => "pidof mysqld",
-#    try_sleep   => 5,
-#    tries       => 6,
-#    refreshonly => true,
-#  }
-
   exec { "rm-init-file":
     command => "/bin/rm /tmp/wsrep-init-file",
   }
@@ -297,8 +286,7 @@ class galera (
     exec { "start-new-galera-cluster":
       path   => "/usr/bin:/usr/sbin:/bin:/sbin",
       logoutput => true,
-      command   => 'echo 0',
-#      onlyif    => "[ -f /var/lib/mysql/grastate.dat ] && (cat /var/lib/mysql/grastate.dat | awk '\$1 == \"uuid:\" {print \$2}' | awk '{if (\$0 == \"00000000-0000-0000-0000-000000000000\") exit 0; else exit 1}')",
+      command   => 'echo Primary-controller completed',
       require    => Service["$res_name"],
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
