@@ -229,4 +229,3 @@ class horizon(
     Class['memcached'] -> Class['horizon']
   }
 }
-
