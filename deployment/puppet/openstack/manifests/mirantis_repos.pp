@@ -9,7 +9,8 @@ class openstack::mirantis_repos (
   $deb_updates  = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu',
   $deb_security = 'http://172.18.67.168/ubuntu-repo/mirror.yandex.ru/ubuntu',
   $deb_fuel_folsom_repo      = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
-  $deb_fuel_grizzly_repo  = 'http://osci-gbp.srt.mirantis.net/ubuntu/fuel/',
+  #$deb_fuel_grizzly_repo  = 'http://osci-gbp.srt.mirantis.net/ubuntu/fuel/',
+  $deb_fuel_grizzly_repo  = 'http://172.18.67.13/ubuntu/fuel/',
   $deb_cloud_archive_repo    = 'http://172.18.67.168/ubuntu-cloud.archive.canonical.com/ubuntu',
   $deb_rabbit_repo           = 'http://172.18.67.168/ubuntu-repo/precise-fuel-folsom',
   $enable_epel = false,
@@ -104,7 +105,8 @@ class openstack::mirantis_repos (
           release     => 'precise-3.0',
           repos       => 'main',
           key         => 'F8AF89DD',
-          key_source  => 'http://osci-gbp.srt.mirantis.net/ubuntu/key.gpg',
+          #key_source  => 'http://osci-gbp.srt.mirantis.net/ubuntu/key.gpg',
+          key_source  => 'http://172.18.67.13/ubuntu/key.gpg',
           include_src => false,
         }
 
@@ -174,7 +176,8 @@ class openstack::mirantis_repos (
 
         yumrepo { 'openstack-koji-fuel-grizzly':
             descr      => 'Mirantis OpenStack grizzly Custom Packages',
-            baseurl    => 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0-testing/x86_64',
+            #baseurl    => 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0-testing/x86_64',
+            baseurl    => 'http://172.18.67.8/mash/fuel-3.0-testing/x86_64',
             gpgcheck   => '1',
             gpgkey     => 'http://download.mirantis.com/epel-fuel-grizzly/mirantis.key',
             mirrorlist => absent,
@@ -221,14 +224,16 @@ class openstack::mirantis_repos (
             name       => 'base',
             gpgcheck   => '1',
             mirrorlist => $mirrorlist_base,
-            gpgkey    => 'http://centos.srt.mirantis.net/RPM-GPG-KEY-CentOS-6',
+            #gpgkey    => 'http://centos.srt.mirantis.net/RPM-GPG-KEY-CentOS-6',
+            gpgkey    => 'http://172.18.82.206/RPM-GPG-KEY-CentOS-6',
           }
 
           yumrepo { 'centos-updates':
             name       => 'updates',
             gpgcheck   => '1',
             mirrorlist => $mirrorlist_updates,
-            gpgkey    => 'http://centos.srt.mirantis.net/RPM-GPG-KEY-CentOS-6',
+            #gpgkey    => 'http://centos.srt.mirantis.net/RPM-GPG-KEY-CentOS-6',
+            gpgkey    => 'http://172.18.82.206/RPM-GPG-KEY-CentOS-6',
           }
         }
       }
@@ -236,7 +241,8 @@ class openstack::mirantis_repos (
       if $enable_test_repo {
         yumrepo { 'openstack-osci-repo':
           descr    => 'Mirantis OpenStack OSCI Packages',
-          baseurl  => 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0/x86_64/',
+          #baseurl  => 'http://osci-koji.srt.mirantis.net/mash/fuel-3.0/x86_64/',
+          baseurl  => 'http://172.18.67.8/mash/fuel-3.0/x86_64/',
           gpgcheck => '1',
           gpgkey   => 'http://download.mirantis.com/epel-fuel-grizzly/mirantis.key',
         }
