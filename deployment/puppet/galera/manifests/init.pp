@@ -166,7 +166,6 @@ class galera (
     enable     => true,
     ensure     => "running",
     require    => [Package["MySQL-server", "galera"]],
-    hasstatus  => true,
     provider   => "pacemaker",
   }
   Package['pacemaker'] -> File['mysql-wss']
