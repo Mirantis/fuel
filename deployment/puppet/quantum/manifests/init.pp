@@ -72,13 +72,6 @@ class quantum (
     group  => root,
     source => "puppet:///modules/quantum/q-agent-cleanup.py",
   } 
-  file {'/var/cache/quantum':
-    ensure  => directory,
-    path   => '/var/cache/quantum',
-    mode   => 755,
-    owner  => quantum,
-    group  => quantum,
-  }
 
   file {'/var/cache/quantum':
     ensure  => directory,

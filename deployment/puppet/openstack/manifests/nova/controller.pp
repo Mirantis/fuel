@@ -167,7 +167,6 @@ class openstack::nova::controller (
       }
     }
   }
-<<<<<<< HEAD
 
   case $queue_provider {
     'rabbitmq': {
