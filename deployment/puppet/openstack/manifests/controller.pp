@@ -91,6 +91,8 @@ class openstack::controller (
   # not sure if this works correctly
   $internal_address,
   $admin_address,
+  # AMQP
+  $queue_provider          = 'rabbitmq',
   # Rabbit
   $rabbit_password         = 'rabbit_pw',
   $rabbit_user             = 'nova',
@@ -99,6 +101,13 @@ class openstack::controller (
   $rabbit_node_ip_address  = undef,
   $rabbit_ha_virtual_ip    = false, #Internal virtual IP for HA configuration
   $rabbit_port             = '5672',
+  # Qpid
+  $qpid_password           = 'qpid_pw',
+  $qpid_user               = 'nova',
+  $qpid_cluster            = false,
+  $qpid_nodes              = [$internal_address],
+  $qpid_port               = '5672',
+  $qpid_node_ip_address    = undef,
   # network configuration
   # this assumes that it is a flat network manager
   $network_manager         = 'nova.network.manager.FlatDHCPManager',
@@ -228,6 +237,7 @@ class openstack::controller (
       galera_cluster_name    => $galera_cluster_name,
       primary_controller     => $primary_controller,
       galera_node_address    => $galera_node_address ,
+      #db_host                => $internal_address,
       galera_nodes           => $galera_nodes,
       custom_setup_class     => $custom_mysql_setup_class,
       mysql_skip_name_resolve => $mysql_skip_name_resolve,
@@ -338,6 +348,8 @@ class openstack::controller (
     nova_db_password        => $nova_db_password,
     nova_db_user            => $nova_db_user,
     nova_db_dbname          => $nova_db_dbname,
+    # AMQP
+    queue_provider          => $queue_provider,
     # Rabbit
     rabbit_user             => $rabbit_user,
     rabbit_password         => $rabbit_password,
@@ -346,6 +358,13 @@ class openstack::controller (
     rabbit_node_ip_address  => $rabbit_node_ip_address,
     rabbit_port             => $rabbit_port,
     rabbit_ha_virtual_ip    => $rabbit_ha_virtual_ip,
+    # Qpid
+    qpid_password           => $qpid_password,
+    qpid_user               => $qpid_user,
+    #qpid_cluster            => $qpid_cluster,
+    qpid_nodes              => $qpid_nodes,
+    qpid_port               => $qpid_port,
+    qpid_node_ip_address    => $qpid_node_ip_address,
     # Glance
     glance_api_servers      => $glance_api_servers,
     # General
@@ -369,9 +388,13 @@ class openstack::controller (
     if !defined(Class['openstack::cinder']) {
       class {'openstack::cinder':
         sql_connection       => "mysql://${cinder_db_user}:${cinder_db_password}@${db_host}/${cinder_db_dbname}?charset=utf8",
+        queue_provider       => $queue_provider,
         rabbit_password      => $rabbit_password,
         rabbit_host          => false,
         rabbit_nodes         => $rabbit_nodes,
+        qpid_password        => $qpid_password,
+        qpid_user            => $qpid_user,
+        qpid_nodes           => $qpid_nodes,
         volume_group         => $cinder_volume_group,
         physical_volume      => $nv_physical_volume,
         manage_volumes       => $manage_volumes,
@@ -429,4 +452,3 @@ class openstack::controller (
   }
 
 }
-

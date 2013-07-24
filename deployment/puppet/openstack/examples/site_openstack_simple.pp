@@ -104,6 +104,10 @@ $glance_user_password    = 'nova'
 $nova_db_password        = 'nova'
 $nova_user_password      = 'nova'
 
+#AMQP backend rabbitmq or qpid
+$queue_provider          = 'qpid'
+validate_re($queue_provider,  'rabbitmq|qpid')
+ 
 $rabbit_password         = 'nova'
 $rabbit_user             = 'nova'
 
@@ -531,8 +535,11 @@ class simple_controller (
     glance_user_password    => $glance_user_password,
     nova_db_password        => $nova_db_password,
     nova_user_password      => $nova_user_password,
+    queue_provider          => $queue_provider,
     rabbit_password         => $rabbit_password,
     rabbit_user             => $rabbit_user,
+    qpid_password           => $rabbit_password,
+    qpid_user               => $rabbit_user,
     export_resources        => false,
     quantum                 => $quantum,
     quantum_user_password   => $quantum_user_password,
@@ -573,11 +580,15 @@ class simple_controller (
       fixed_range           => $fixed_range,
       create_networks       => $create_networks,
       verbose               => $verbose,
+      queue_provider        => $queue_provider,
       debug                 => $debug,
       rabbit_password       => $rabbit_password,
       rabbit_user           => $rabbit_user,
       rabbit_ha_virtual_ip  => $controller_internal_address,
-      rabbit_nodes           => [$controller_internal_address],
+      rabbit_nodes          => [$controller_internal_address],
+      qpid_password         => $rabbit_password,
+      qpid_user             => $rabbit_user,
+      qpid_nodes            => [$controller_internal_address],
       quantum               => $quantum,
       quantum_user_password => $quantum_user_password,
       quantum_db_password   => $quantum_db_password,
@@ -656,9 +667,13 @@ node /fuel-compute-[\d+]/ {
     auto_assign_floating_ip => $auto_assign_floating_ip,
     sql_connection         => $sql_connection,
     nova_user_password     => $nova_user_password,
+    queue_provider         => $queue_provider,
     rabbit_nodes           => [$controller_internal_address],
     rabbit_password        => $rabbit_password,
     rabbit_user            => $rabbit_user,
+    qpid_nodes             => [$controller_internal_address],
+    qpid_password          => $rabbit_password,
+    qpid_user              => $rabbit_user,
     glance_api_servers     => "${controller_internal_address}:9292",
     vncproxy_host          => $controller_public_address,
     vnc_enabled            => true,

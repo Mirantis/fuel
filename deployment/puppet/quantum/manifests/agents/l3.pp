@@ -240,7 +240,7 @@ class quantum::agents::l3 (
     # and his dependences
     file {'quantum-l3-agent-ocf':
       path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-l3',
-      mode => 744,
+      mode => 755,
       owner => root,
       group => root,
       source => "puppet:///modules/quantum/ocf/quantum-agent-l3",
@@ -284,8 +284,8 @@ class quantum::agents::l3 (
     cs_commit { 'l3': cib => 'l3' }
 
     ###
-    # Do not remember to be carefylly with Cs_shadow and Cs_commit orders.
-    # at one time onli one Shadow can be without commit
+    # Do not forget to be careful with Cs_shadow and Cs_commit orders.
+    # as of this writing, only one shadow can be uncommitted
     Cs_commit <| title == 'dhcp' |> -> Cs_shadow <| title == 'l3' |>
     Cs_commit <| title == 'ovs' |> -> Cs_shadow <| title == 'l3' |>
     Cs_commit <| title == 'quantum-metadata-agent' |> -> Cs_shadow <| title == 'l3' |>
