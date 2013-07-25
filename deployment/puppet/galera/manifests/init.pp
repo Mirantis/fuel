@@ -161,7 +161,7 @@ class galera (
      },
    }
 
-  service { "$res_name":
+  service { "mysql":
     name       => "p_mysql",
     enable     => true,
     ensure     => "running",
@@ -215,8 +215,6 @@ class galera (
       content => template("galera/wsrep.cnf.erb"),
       require => [File["/etc/mysql/conf.d"], File["/etc/mysql"]],
     }
-    File["/etc/mysql/conf.d/wsrep.cnf"] -> Service["$res_name"]
-    File["/etc/mysql/conf.d/wsrep.cnf"] ~> Service["$res_name"]
     File["/etc/mysql/conf.d/wsrep.cnf"] -> Package['MySQL-server']
   }
 
@@ -241,14 +239,8 @@ class galera (
     refreshonly => true,
   }
 
-
-  exec { "kill-initial-mysql":
-    path        => "/usr/bin:/usr/sbin:/bin:/sbin",
-    command     => "killall -w mysqld && ( killall -w -9 mysqld_safe || : ) && sleep 10",
-    #      onlyif    => "pidof mysqld",
-    try_sleep   => 5,
-    tries       => 6,
-    refreshonly => true,
+  exec { "rm-init-file":
+    command => "/bin/rm /tmp/wsrep-init-file",
   }
 
   exec { "wait-for-synced-state":
@@ -269,19 +261,6 @@ class galera (
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
   Service["$res_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
   Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
-=======
-  
-  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  File['/tmp/wsrep-init-file'] -> Exec["set-mysql-password"] -> Exec["wait-initial-sync"] 
-  -> Exec["kill-initial-mysql"] -> Service["mysql-galera"] -> Exec ["wait-for-synced-state"]
-  
-  Package["MySQL-server"] ~> Exec["set-mysql-password"] ~> Exec ["wait-initial-sync"] ~> Exec["kill-initial-mysql"]
-
-  exec { "raise-first-setup-flag" :
-   path    => "/usr/bin:/usr/sbin:/bin:/sbin",
-   command => "crm_attribute -t crm_config --name mysqlprimaryinit --update done",
-   refreshonly => true,
-  }
 
 # FIXME: This class is deprecated and should be removed in future releases.
  
@@ -299,7 +278,7 @@ class galera (
       command   => 'echo Primary-controller completed',
       require    => Service["$res_name"],
       before     => Exec ["wait-for-synced-state"],
-      notify     => Exec ["raise-first-setup-flag"], 
+      notify     => Exec ["raise-first-setup-flag"],
     }
   }
 }
