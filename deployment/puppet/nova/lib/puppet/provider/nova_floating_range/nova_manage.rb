@@ -1,4 +1,4 @@
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__),'..','..','..','..','..'))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__),'..','..','..','..','..','gems'))
 require 'ruby-openstack/lib/openstack'
 require 'netaddr'
 Puppet::Type.type(:nova_floating_range).provide :nova_manage do
