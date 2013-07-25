@@ -64,13 +64,13 @@ class galera (
         ensure  => present,
         mode    => 644,
         require => Package['MySQL-server'],
-        before  => Service["$res_name"]
+        before  => Service["$cib_name"]
       }
 
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
-        before => Service["$res_name"]
+        before => Service["$cib_name"]
       }
 
       package { 'MySQL-client':
@@ -98,13 +98,13 @@ class galera (
         mode    => 644,
         source => 'puppet:///modules/galera/mysql.init' , 
         require => Package['MySQL-server'],
-        before  => Service["$res_name"]
+        before  => Service["$cib_name"]
       }
 
       file { '/etc/my.cnf':
         ensure => present,
         content => template("galera/my.cnf.erb"),
-        before => Service["$res_name"]
+        before => Service["$cib_name"]
       }
 
       package { 'wget':
@@ -172,7 +172,7 @@ class galera (
 #  Package['pacemaker'] -> File['/tmp/mysql-puppetrun']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
-          Service["$res_name"]
+          Service["$cib_name"]
 
   package { [$::galera::params::libssl_package, $::galera::params::libaio_package]:
     ensure => present,
@@ -226,7 +226,7 @@ class galera (
   file { "/tmp/wsrep-init-file":
     ensure  => present,
     content => template("galera/wsrep-init-file.erb"),
-    before => Service["mysql"],
+    before => Service["$cib_name"],
   }
 
 # This exec waits for initial sync of galera cluster after mysql replication user creation.
@@ -259,7 +259,7 @@ class galera (
 
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  Service["$res_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
+  Service["$cib_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
   Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
@@ -276,7 +276,7 @@ class galera (
       path   => "/usr/bin:/usr/sbin:/bin:/sbin",
       logoutput => true,
       command   => 'echo Primary-controller completed',
-      require    => Service["$res_name"],
+      require    => Service["$cib_name"],
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
     }
