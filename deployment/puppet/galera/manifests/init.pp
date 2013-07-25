@@ -134,7 +134,8 @@ class galera (
 #     mode    => 644,
 # }
  cs_shadow { $res_name: cib => $cib_name }
- cs_commit { $res_name: cib => $cib_name }
+ cs_commit { $res_name: cib => $cib_name } ~> ::Corosync::Cleanup["$res_name"]
+    ::corosync::cleanup { $res_name: }
  cs_resource { "$res_name":
       ensure => present,
       cib => $cib_name,
@@ -172,6 +173,7 @@ class galera (
 #  Package['pacemaker'] -> File['/tmp/mysql-puppetrun']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
+       ::Corosync::Cleanup["$res_name"] ->
           Service["$cib_name"]
 
   package { [$::galera::params::libssl_package, $::galera::params::libaio_package]:
