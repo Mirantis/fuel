@@ -226,7 +226,7 @@ class galera (
   file { "/tmp/wsrep-init-file":
     ensure  => present,
     content => template("galera/wsrep-init-file.erb"),
-    before => Service["$res_name"],
+    before => Service["mysql"],
   }
 
 # This exec waits for initial sync of galera cluster after mysql replication user creation.
@@ -246,7 +246,7 @@ class galera (
   exec { "wait-for-synced-state":
     logoutput => true,
     command   => "/usr/bin/mysql -Nbe \"show status like 'wsrep_local_state_comment'\" | /bin/grep -q Synced && sleep 10",
-    try_sleep => 5,
+    try_sleep => 60,
     tries     => 60,
   }
 
