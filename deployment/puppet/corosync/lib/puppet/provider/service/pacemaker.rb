@@ -201,12 +201,12 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
       if ['promote','start','stop'].include?(last_op.attributes['operation'])
         last_successful_op = last_op.attributes['operation']
       else
-        if last_op.attributes['rc-code'].to_i == 7
-          last_successful_op = 'stop'
-        elsif last_op.attributes['rc-code'].to_i == 0
+        if last_op.attributes['rc-code'].to_i == 0
           last_successful_op = 'start'
         elsif  last_op.attributes['rc-code'].to_i == 8
           last_successful_op = 'start'
+        else
+          last_successful_op = 'stop'
         end
       end
       debug("LAST SUCCESSFUL OP :\n\n #{last_successful_op.inspect}")
