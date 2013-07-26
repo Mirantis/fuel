@@ -9,6 +9,7 @@ echo > /tmp/partition.ks
     #set $clearpart_drives = []
     #set $physical_volumes = []
     #set $grub_drives = []
+    #set $custom_grub_drives = []
     #set $partitions = []
     #set $volume_groups = {}
     #set $raid_volumes = {}
@@ -61,6 +62,7 @@ echo > /tmp/partition.ks
                 ## Installing bootloader
                 #######################################
                 $grub_drives.append("\$(basename `readlink -f /dev/%s`)" % $space_id)
+                $custom_grub_drives.append("`readlink -f /dev/%s`" % $space_id)
             #end if
             #######################################
             ## Configuring plain partitions
@@ -212,4 +214,15 @@ echo "$lv" >> /tmp/post_partition.ks
     #set $drives = ",".join($grub_drives)
 echo "bootloader --location=mbr --driveorder=$drives --append=' biosdevname=0 crashkernel=none'" > /tmp/bootloader.ks
     ##
+    #######################################
+    ## Actual custom bootloader installing
+    #######################################
+echo "stage2_devnum=\\$((\\$(fdisk -l $custom_grub_drives[0] | grep -E '^\/.+\*' | awk '{print \\$1}' | sed s/[^0-9]//g) - 1))" >> /tmp/post_partition.ks
+echo "echo -n > /tmp/grub.script" >> /tmp/post_partition.ks
+    #set $num = 0
+    #for $drive in $custom_grub_drives
+echo "echo \"setup (hd$num) (hd0,\\${stage2_devnum})\" >> /tmp/grub.script" >> /tmp/post_partition.ks
+        #set $num += 1
+    #end for
+echo "cat /tmp/grub.script | chroot /mnt/sysimage /sbin/grub" >> /tmp/post_partition.ks
 #end if
