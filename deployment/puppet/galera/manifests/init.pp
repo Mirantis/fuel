@@ -173,7 +173,6 @@ class galera (
 #  Package['pacemaker'] -> File['/tmp/mysql-puppetrun']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
-       ::Corosync::Cleanup["$res_name"] ->
           Service["$cib_name"]
 
   package { [$::galera::params::libssl_package, $::galera::params::libaio_package]:
@@ -228,7 +227,6 @@ class galera (
   file { "/tmp/wsrep-init-file":
     ensure  => present,
     content => template("galera/wsrep-init-file.erb"),
-    before => Service["$cib_name"],
   }
 
 # This exec waits for initial sync of galera cluster after mysql replication user creation.
@@ -261,7 +259,7 @@ class galera (
 
 
 #  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  Service["$cib_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
+  File["/tmp/wsrep-init-file"] -> Service["$cib_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
   Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
