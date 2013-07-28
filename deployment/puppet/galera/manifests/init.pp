@@ -128,11 +128,6 @@ class galera (
 
     }
   }
-#  file { "/tmp/mysql-puppetrun":
-#     ensure => file,
-#     content => "",
-#     mode    => 644,
-# }
  cs_shadow { $res_name: cib => $cib_name }
  cs_commit { $res_name: cib => $cib_name } ~> ::Corosync::Cleanup["$res_name"]
     ::corosync::cleanup { $res_name: }
@@ -170,7 +165,6 @@ class galera (
     provider   => "pacemaker",
   }
   Package['pacemaker'] -> File['mysql-wss']
-#  Package['pacemaker'] -> File['/tmp/mysql-puppetrun']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
           Service["$cib_name"]
@@ -246,7 +240,7 @@ class galera (
   exec { "wait-for-synced-state":
     logoutput => true,
     command   => "/usr/bin/mysql -Nbe \"show status like 'wsrep_local_state_comment'\" | /bin/grep -q Synced && sleep 10",
-    try_sleep => 60,
+    try_sleep => 5,
     tries     => 60,
   }
 
@@ -258,9 +252,8 @@ class galera (
 
 
 
-#  Package["MySQL-server"] -> Exec["set-mysql-password"] 
-  File["/tmp/wsrep-init-file"] -> Service["$cib_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"]
-  Package["MySQL-server"] ~> Exec ["wait-initial-sync"] ~> Exec["rm-init-file"]
+  File["/tmp/wsrep-init-file"] -> Service["$cib_name"] -> Exec["wait-initial-sync"] -> Exec ["wait-for-synced-state"] -> Exec ["rm-init-file"]
+  Package["MySQL-server"] ~> Exec ["wait-initial-sync"]
 
 # FIXME: This class is deprecated and should be removed in future releases.
  
