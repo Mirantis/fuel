@@ -60,6 +60,24 @@ if $role == 'client' {
     log_level      => $rabbit_log_level,
   }
 
+if $::operatingsystem == 'CentOS' or $::operatingsystem == 'RedHat' {
+# FIXME workaround for FUEL-829
+# would patch handlers.py for python 2.6 to skip BOM insertion
+# see http://bugs.python.org/issue14452 for details
+  file { '/tmp/fix_BOM_python26_handlers.patch':
+    source => 'puppet:///modules/openstack/files/fix_BOM_python26_handlers.patch',
+  } ->
+  exec { 'patch_py26_logging':
+    path    => ["/sbin", "/bin", "/usr/sbin", "/usr/bin"],
+    command => 'patch -p1 < /tmp/fix_BOM_python26_handlers.patch',
+    unless  => "grep -q \#if\ codecs /usr/lib64/python2.6/logging/handlers.py",
+    cwd     => "/usr/lib64/python2.6",
+  }
+#TODO add notify to openstack services
+# skip notify because openstack::logging class is called in the very first stage
+# before any openstack services have been installed
+}
+
 } else { # server
   firewall { "$port $proto rsyslog":
     port    => $port,
