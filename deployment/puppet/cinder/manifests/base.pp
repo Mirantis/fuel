@@ -4,8 +4,7 @@
 # $osapi_volume_extension = cinder.api.openstack.volume.contrib.standard_extensions
 # $root_helper = sudo /usr/local/bin/cinder-rootwrap /etc/cinder/rootwrap.conf
 # $use_syslog = Rather or not service should log to syslog. Optional.
-# $syslog_log_facility = Facility for syslog, if used. Optional. Note: duplicating conf option 
-#       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
+# $syslog_log_facility = Facility for syslog, if used. Optional.
 # $syslog_log_level = logging level for non verbose and non debug mode. Optional.
 
 class cinder::base (
@@ -23,6 +22,7 @@ class cinder::base (
   $use_syslog             = false,
   $syslog_log_facility    = "LOCAL3",
   $syslog_log_level = 'WARNING',
+  $log_dir                = '/var/log/cinder',
 ) {
 
   include cinder::params
@@ -51,11 +51,16 @@ class cinder::base (
     require => Package['cinder'],
   }
 
-if $use_syslog {
+if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
   cinder_config {
     'DEFAULT/log_config': value => "/etc/cinder/logging.conf";
-    'DEFAULT/log_file': ensure=> absent;
-    'DEFAULT/logdir': ensure=> absent;
+    'DEFAULT/log_file':   ensure=> absent;
+    'DEFAULT/log_dir':    ensure=> absent;
+    'DEFAULT/logfile':   ensure=> absent;
+    'DEFAULT/logdir':    ensure=> absent;
+    'DEFAULT/use_stderr': ensure=> absent;
+    'DEFAULT/use_syslog': value => true;
+    'DEFAULT/syslog_log_facility': value =>  $syslog_log_facility;
   }
   file { "cinder-logging.conf":
     content => template('cinder/logging.conf.erb'),
@@ -65,16 +70,30 @@ if $use_syslog {
   file { "cinder-all.log":
     path => "/var/log/cinder-all.log",
   }
-
+}
+else {
+  cinder_config {
+    'DEFAULT/log_config': ensure=> absent;
+    'DEFAULT/use_syslog': ensure=> absent;
+    'DEFAULT/syslog_log_facility': ensure=> absent;
+    'DEFAULT/use_stderr': ensure=> absent;
+    'DEFAULT/logdir':value=> $log_dir;
+    'DEFAULT/logging_context_format_string':
+     value => '%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_id)s %(project_id)s] %(instance)s %(message)s';
+    'DEFAULT/logging_default_format_string':
+     value => '%(asctime)s %(levelname)s %(name)s [-] %(instance)s %(message)s';
+  }
+  # might be used for stdout logging instead, if configured
+  file { "cinder-logging.conf":
+    content => template('cinder/logging.conf-nosyslog.erb'),
+    path => "/etc/cinder/logging.conf",
+    require => File[$::cinder::params::cinder_conf],
+  }
+}
   # We must notify services to apply new logging rules
   File['cinder-logging.conf'] ~> Service<| title == 'cinder-api' |>
   File['cinder-logging.conf'] ~> Service<| title == 'cinder-volume' |>
   File['cinder-logging.conf'] ~> Service<| title == 'cinder-scheduler' |>
-
-}
-else {
-	cinder_config {'DEFAULT/log_config': ensure=>absent;}
-}
 
   file { $::cinder::params::cinder_conf: }
   file { $::cinder::params::cinder_paste_api_ini: }
@@ -107,7 +126,6 @@ else {
     'DEFAULT/debug':               value => $debug;
     'DEFAULT/verbose':             value => $verbose;
     'DEFAULT/api_paste_config':    value => '/etc/cinder/api-paste.ini';
-    'DEFAULT/use_syslog':          value => $use_syslog;
   }
   exec { 'cinder-manage db_sync':
     command     => $::cinder::params::db_sync_command,
