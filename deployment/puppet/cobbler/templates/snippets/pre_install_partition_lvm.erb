@@ -128,6 +128,8 @@ echo > /tmp/partition.ks
                 ## volume_size is less than or equal to 16TB
                 #if $volume_size > 0 and $volume_size <= 16777216
                     #set $fstype = "ext4"
+                    ## we are going to use glance logical volume to store swift files
+                    ## and swift requires xfs filesystem
                     #if $volume_name == "glance"
                         #set $fstype = "xfs"
                     #end if

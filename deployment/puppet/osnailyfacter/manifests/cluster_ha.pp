@@ -36,6 +36,7 @@ $swift_hash    = parsejson($swift)
 $cinder_hash   = parsejson($cinder)
 $access_hash   = parsejson($access)
 $floating_hash = parsejson($floating_network_range)
+# $mp variable is set in astute and it contains mountpoinst to configure swift
 $mp_hash       = parsejson($mp)
 
 if $::hostname == $master_hostname {
