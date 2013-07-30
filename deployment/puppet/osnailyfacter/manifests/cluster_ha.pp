@@ -23,6 +23,8 @@ $multi_host              = true
 $quantum                 = false
 $manage_volumes          = false
 $glance_backend          = 'swift'
+# it can be one of 'loopback' or undef
+$swift_storage_type      = false
 
 $network_manager = "nova.network.manager.${network_manager}"
 $nova_hash     = parsejson($nova)
@@ -34,6 +36,7 @@ $swift_hash    = parsejson($swift)
 $cinder_hash   = parsejson($cinder)
 $access_hash   = parsejson($access)
 $floating_hash = parsejson($floating_network_range)
+$mp_hash       = parsejson($mp)
 
 if $::hostname == $master_hostname {
   $primary_proxy = true
@@ -206,7 +209,9 @@ class virtual_ips () {
       class { compact_controller: }
       class { 'openstack::swift::storage_node':
         storage_base_dir      => '/var/lib/glance/loopback-device',
-        storage_type          => 'loopback',
+        storage_mnt_base_dir  => '/var/lib/glance/node',
+        storage_type          => $swift_storage_type,
+        storage_devices       => $mp_hash[point],
         loopback_size         => '5243780',
         swift_zone            => $uid,
         swift_local_net_ip    => $storage_address,
