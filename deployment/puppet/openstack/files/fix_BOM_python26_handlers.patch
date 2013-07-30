@@ -1,0 +1,13 @@
+--- a/logging/handlers.py
++++ b/logging/handlers.py
+@@ -789,8 +789,8 @@
+         # Treat unicode messages as required by RFC 5424
+         if _unicode and type(msg) is unicode:
+             msg = msg.encode('utf-8')
+-            if codecs:
+-                msg = codecs.BOM_UTF8 + msg
++            #if codecs:
++            #    msg = codecs.BOM_UTF8 + msg
+         try:
+             if self.unixsocket:
+                 try:
