@@ -218,8 +218,6 @@ class quantum::agents::ovs (
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-l3' |>
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-dhcp-agent' |>
 
-  Class[quantum::waistline] -> Service[quantum-plugin-ovs-service]
-  Package[$ovs_agent_package] -> Service[quantum-plugin-ovs-service]
   if $::osfamily == "RedHat" {
     service { 'quantum-ovs-agent-cleanup':
       name       => 'quantum-ovs-cleanup',
