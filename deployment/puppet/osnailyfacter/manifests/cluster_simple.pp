@@ -78,8 +78,6 @@ $quantum_gre_bind_addr = $::internal_address
 
 
 
-
-
   case $role {
     "controller" : {
       include osnailyfacter::test_controller
