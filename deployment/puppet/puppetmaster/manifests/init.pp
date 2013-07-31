@@ -1,6 +1,6 @@
 class puppetmaster (
   $puppet_master_hostname,
-  $puppet_package_version = "2.7.19-1.el6",
+  $puppet_package_version = "3.2.3-1.el6",
   ) {
   anchor { "puppetmaster-begin": }
   anchor { "puppetmaster-end": }
