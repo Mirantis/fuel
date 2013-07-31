@@ -227,5 +227,7 @@ class quantum::agents::ovs (
       hasrestart => false,
     }
     Service['quantum-plugin-ovs-service'] -> Service['quantum-ovs-agent-cleanup']
+  } else {
+    anchor{'quantum-ovs-agent-done': }
   }
 }
