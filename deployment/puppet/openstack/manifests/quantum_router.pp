@@ -100,12 +100,8 @@ class openstack::quantum_router (
         metadata_ip      => $nova_api_vip,
       }
       class { 'quantum::agents::dhcp':
-<<<<<<< HEAD
         verbose          => $verbose,
         debug            => $debug,
-=======
-        debug            => True,
->>>>>>> fuel-mr/ubuntu-3.1
         use_namespaces   => $use_namespaces,
         service_provider => $service_provider,
         auth_url         => $admin_auth_url,
