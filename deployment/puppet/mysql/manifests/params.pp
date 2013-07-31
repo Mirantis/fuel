@@ -67,12 +67,9 @@ class mysql::params {
       $basedir              = '/usr'
       $datadir              = '/var/lib/mysql'
       $service_name         = 'mysql'
-      $client_package_name  = 'mysql-client'
-      $client_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
-      $server_package_name  = 'mysql-server'
-      $server_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
-      $shared_package_name  = 'mysql-common'
-      $shared_version       = '5.5.29-0ubuntu0.12.04.1' # not used now 20130313 /sv
+      $client_package_name  = 'mysql-client-5.5'
+      $server_package_name  = 'mysql-server-wsrep-5.5'
+      $shared_package_name  = 'mysql-wsrep-common'
       $socket               = '/var/run/mysqld/mysqld.sock'
       $pidfile              = '/var/run/mysqld/mysqld.pid'
       $config_file          = '/etc/mysql/my.cnf'
