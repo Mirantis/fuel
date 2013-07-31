@@ -125,10 +125,6 @@ class openstack::quantum_router (
         auth_tenant         => 'services',
         auth_user           => 'quantum',
         auth_password       => $quantum_user_password,
-<<<<<<< HEAD
-=======
-        use_namespaces      => $use_namespaces,
->>>>>>> fuel-mr/ubuntu-3.1
         metadata_ip         => $internal_address,
         nova_api_vip        => $nova_api_vip,
       }
