@@ -49,7 +49,6 @@ class openstack::quantum_router (
     $admin_auth_url = "http://${auth_host}:35357/v2.0"
 
     $use_namespaces = True
-
     class { '::quantum':
       bind_host            => $api_bind_address,
       rabbit_user          => $rabbit_user,
@@ -101,8 +100,12 @@ class openstack::quantum_router (
         metadata_ip      => $nova_api_vip,
       }
       class { 'quantum::agents::dhcp':
+<<<<<<< HEAD
         verbose          => $verbose,
         debug            => $debug,
+=======
+        debug            => True,
+>>>>>>> fuel-mr/ubuntu-3.1
         use_namespaces   => $use_namespaces,
         service_provider => $service_provider,
         auth_url         => $admin_auth_url,
@@ -126,6 +129,10 @@ class openstack::quantum_router (
         auth_tenant         => 'services',
         auth_user           => 'quantum',
         auth_password       => $quantum_user_password,
+<<<<<<< HEAD
+=======
+        use_namespaces      => $use_namespaces,
+>>>>>>> fuel-mr/ubuntu-3.1
         metadata_ip         => $internal_address,
         nova_api_vip        => $nova_api_vip,
       }
