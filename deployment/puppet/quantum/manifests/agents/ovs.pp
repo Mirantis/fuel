@@ -199,6 +199,7 @@ class quantum::agents::ovs (
 
   Class[quantum::waistline] -> Service['quantum-ovs-agent']
 
+  if $::osfamily == "RedHat" {
   #todo: This service must be disabled if Quantum-ovs-agent managed by pacemaker
   service { 'quantum-ovs-cleanup':
     name       => 'quantum-ovs-cleanup',
@@ -218,7 +219,6 @@ class quantum::agents::ovs (
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-l3' |>
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-dhcp-agent' |>
 
-  if $::osfamily == "RedHat" {
     service { 'quantum-ovs-agent-cleanup':
       name       => 'quantum-ovs-cleanup',
       enable     => $enabled,
@@ -229,5 +229,3 @@ class quantum::agents::ovs (
     Service['quantum-plugin-ovs-service'] -> Service['quantum-ovs-agent-cleanup']
   }
 }
-#
-###
