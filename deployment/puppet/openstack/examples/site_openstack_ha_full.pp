@@ -888,7 +888,9 @@ node /fuel-swift-[\d+]/ {
     qpid_user              => $rabbit_user,
     qpid_nodes             => [$internal_virtual_ip],
     sync_rings             => ! $primary_proxy,
-    syslog_log_level => $syslog_log_level,
+    debug                  => $debug,
+    verbose                => $verbose,
+    syslog_log_level       => $syslog_log_level,
     syslog_log_facility_cinder => $syslog_log_facility_cinder,
   }
 
@@ -931,6 +933,9 @@ node /fuel-swiftproxy-[\d+]/ {
     controller_node_address => $internal_virtual_ip,
     swift_local_net_ip      => $swift_local_net_ip,
     master_swift_proxy_ip   => $master_swift_proxy_ip,
+    debug                   => $debug,
+    verbose                 => $verbose,
+    syslog_log_level        => $syslog_log_level,
   }
 }
 
