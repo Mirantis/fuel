@@ -55,7 +55,29 @@ $rabbit_user   = 'nova'
 $sql_connection           = "mysql://nova:${nova_hash[db_password]}@${controller_node_address}/nova"
 $mirror_type = 'external'
 
+# This parameter specifies the verbosity level of log messages
+# in openstack components config.
+# Debug would have set DEBUG level and ignore verbose settings, if any.
+# Verbose would have set INFO level messages
+# In case of non debug and non verbose - WARNING, default level would have set.
+# Note: if syslog on, this default level may be configured (for syslog) with syslog_log_level option.
 $verbose = true
+$debug = true
+
+# Enable error messages reporting to rsyslog. Rsyslog must be installed in this case,
+# and configured to start at the very beginning of puppet agent run.
+$use_syslog = true
+# Default log level would have been used, if non verbose and non debug
+$syslog_log_level             = 'ERROR'
+# Syslog facilities for main openstack services, choose any, may overlap if needed
+# local0 is reserved for HA provisioning and orchestration services (not applicable here),
+# local1 is reserved for openstack-dashboard
+$syslog_log_facility_glance   = 'LOCAL2'
+$syslog_log_facility_cinder   = 'LOCAL3'
+$syslog_log_facility_quantum  = 'LOCAL4'
+$syslog_log_facility_nova     = 'LOCAL6'
+$syslog_log_facility_keystone = 'LOCAL7'
+
 Exec { logoutput => true }
 
   case $role {
@@ -102,11 +124,34 @@ Exec { logoutput => true }
         use_syslog              => true,
       }
 
-      class { "::rsyslog::client":
-        log_local => true,
-        log_auth_local => true,
-        rservers => $rservers,
-      }
+if $use_syslog {
+  class { "::openstack::logging":
+    stage          => 'first',
+    role           => 'client',
+    # use date-rfc3339 timestamps
+    show_timezone => true,
+    # log both locally include auth, and remote
+    log_remote     => true,
+    log_local      => true,
+    log_auth_local => true,
+    # keep four weekly log rotations, force rotate if 300M size have exceeded
+    rotation       => 'weekly',
+    keep           => '4',
+    # should be > 30M
+    limitsize      => '300M',
+    # remote servers to send logs to
+    rservers       => $rservers,
+    # should be true, if client is running at virtual node
+    virtual        => true,
+    # facilities
+    syslog_log_facility_glance   => $syslog_log_facility_glance,
+    syslog_log_facility_cinder   => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum  => $syslog_log_facility_quantum,
+    syslog_log_facility_nova     => $syslog_log_facility_nova,
+    syslog_log_facility_keystone => $syslog_log_facility_keystone,
+    rabbit_log_level => $syslog_log_level,
+  }
+}
 
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
       nova_config { 'DEFAULT/use_cow_images': value => $use_cow_images }
@@ -188,11 +233,34 @@ Exec { logoutput => true }
         state_path             => $nova_hash[state_path],
       }
 
-      class { "::rsyslog::client":
-        log_local => true,
-        log_auth_local => true,
-        rservers => $rservers,
-      }
+if $use_syslog {
+  class { "::openstack::logging":
+    stage          => 'first',
+    role           => 'client',
+    # use date-rfc3339 timestamps
+    show_timezone => true,
+    # log both locally include auth, and remote
+    log_remote     => true,
+    log_local      => true,
+    log_auth_local => true,
+    # keep four weekly log rotations, force rotate if 300M size have exceeded
+    rotation       => 'weekly',
+    keep           => '4',
+    # should be > 30M
+    limitsize      => '300M',
+    # remote servers to send logs to
+    rservers       => $rservers,
+    # should be true, if client is running at virtual node
+    virtual        => true,
+    # facilities
+    syslog_log_facility_glance   => $syslog_log_facility_glance,
+    syslog_log_facility_cinder   => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum  => $syslog_log_facility_quantum,
+    syslog_log_facility_nova     => $syslog_log_facility_nova,
+    syslog_log_facility_keystone => $syslog_log_facility_keystone,
+    rabbit_log_level => $syslog_log_level,
+  }
+}
 
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
       nova_config { 'DEFAULT/use_cow_images': value => $use_cow_images }
@@ -222,11 +290,35 @@ Exec { logoutput => true }
         cinder_user_password => $cinder_hash[user_password],
         use_syslog           => true,
       }
-      class { "::rsyslog::client":
-        log_local => true,
-        log_auth_local => true,
-        rservers => $rservers,
-      }
+if $use_syslog {
+  class { "::openstack::logging":
+    stage          => 'first',
+    role           => 'client',
+    # use date-rfc3339 timestamps
+    show_timezone => true,
+    # log both locally include auth, and remote
+    log_remote     => true,
+    log_local      => true,
+    log_auth_local => true,
+    # keep four weekly log rotations, force rotate if 300M size have exceeded
+    rotation       => 'weekly',
+    keep           => '4',
+    # should be > 30M
+    limitsize      => '300M',
+    # remote servers to send logs to
+    rservers       => $rservers,
+    # should be true, if client is running at virtual node
+    virtual        => true,
+    # facilities
+    syslog_log_facility_glance   => $syslog_log_facility_glance,
+    syslog_log_facility_cinder   => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum  => $syslog_log_facility_quantum,
+    syslog_log_facility_nova     => $syslog_log_facility_nova,
+    syslog_log_facility_keystone => $syslog_log_facility_keystone,
+    rabbit_log_level => $syslog_log_level,
+  }
+}
+
     }
   }
 }
