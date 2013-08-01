@@ -255,7 +255,7 @@ $quantum_gre_bind_addr = $::internal_address
         manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
         db_host                => $controller_node_address,
         verbose                => $verbose,
-        debug                   => $debug,
+        debug                  => $debug,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
