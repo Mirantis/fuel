@@ -65,17 +65,17 @@ if $::operatingsystem == 'CentOS' or $::operatingsystem == 'RedHat' {
 # would patch handlers.py for python 2.6 to skip BOM insertion
 # see http://bugs.python.org/issue14452 for details
   file { '/tmp/fix_BOM_python26_handlers.patch':
-    source => 'puppet:///modules/openstack/files/fix_BOM_python26_handlers.patch',
-  } ->
+    source => 'puppet:///modules/openstack/fix_BOM_python26_handlers.patch',
+  }->
+  package { 'patch': } ->
   exec { 'patch_py26_logging':
     path    => ["/sbin", "/bin", "/usr/sbin", "/usr/bin"],
     command => 'patch -p1 < /tmp/fix_BOM_python26_handlers.patch',
     unless  => "grep -q \#if\ codecs /usr/lib64/python2.6/logging/handlers.py",
     cwd     => "/usr/lib64/python2.6",
   }
-#TODO add notify to openstack services
-# skip notify because openstack::logging class is called in the very first stage
-# before any openstack services have been installed
+# skip notify openstack services because openstack::logging class would be
+# called at the very first stage before any openstack services have been installed
 }
 
 } else { # server
