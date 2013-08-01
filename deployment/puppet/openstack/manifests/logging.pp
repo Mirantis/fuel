@@ -68,6 +68,7 @@ if $::operatingsystem == 'CentOS' or $::operatingsystem == 'RedHat' {
     source => 'puppet:///modules/openstack/files/fix_BOM_python26_handlers.patch',
   } ->
   exec { 'patch_py26_logging':
+    path    => ["/sbin", "/bin", "/usr/sbin", "/usr/bin"],
     command => 'patch -p1 < /tmp/fix_BOM_python26_handlers.patch',
     unless  => "grep -q \#if\ codecs /usr/lib64/python2.6/logging/handlers.py",
     cwd     => "/usr/lib64/python2.6",
