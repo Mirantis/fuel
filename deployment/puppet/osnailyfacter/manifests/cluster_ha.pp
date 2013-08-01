@@ -173,6 +173,12 @@ class compact_controller {
     custom_mysql_setup_class      => $::custom_mysql_setup_class,
     mysql_skip_name_resolve       => true,
     use_syslog                    => true,
+    syslog_log_level              => $syslog_log_level,
+    syslog_log_facility_glance    => $syslog_log_facility_glance,
+    syslog_log_facility_cinder    => $syslog_log_facility_cinder,
+    syslog_log_facility_quantum   => $syslog_log_facility_quantum,
+    syslog_log_facility_nova      => $syslog_log_facility_nova,
+    syslog_log_facility_keystone  => $syslog_log_facility_keystone,
     use_unicast_corosync          => true,
   }
 
@@ -256,7 +262,10 @@ class virtual_ips () {
         swift_zone            => $uid,
         swift_local_net_ip    => $storage_address,
         master_swift_proxy_ip => $controller_internal_addresses[$master_hostname],
-        sync_rings            => ! $primary_proxy
+        sync_rings            => ! $primary_proxy,
+        syslog_log_level      => $syslog_log_level,
+        verbose               => $verbose,
+        debug                 => $debug,
       }
       if $primary_proxy {
         ring_devices {'all':
@@ -270,6 +279,9 @@ class virtual_ips () {
         controller_node_address => $management_vip,
         swift_local_net_ip      => $internal_address,
         master_swift_proxy_ip   => $controller_internal_addresses[$master_hostname],
+        syslog_log_level        => $syslog_log_level,
+        verbose                 => $verbose,
+        debug                   => $debug,
       }
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
       nova_config { 'DEFAULT/use_cow_images': value => $use_cow_images }
@@ -319,6 +331,7 @@ class virtual_ips () {
         glance_api_servers     => "${management_vip}:9292",
         vncproxy_host          => $public_vip,
         verbose                => $verbose,
+        debug                  => $debug,
         vnc_enabled            => true,
         manage_volumes         => false,
         nova_user_password     => $nova_hash[user_password],
@@ -336,6 +349,12 @@ class virtual_ips () {
         tenant_network_type    => $tenant_network_type,
         segment_range          => $segment_range,
         use_syslog             => true,
+        syslog_log_level              => $syslog_log_level,
+        syslog_log_facility_glance    => $syslog_log_facility_glance,
+        syslog_log_facility_cinder    => $syslog_log_facility_cinder,
+        syslog_log_facility_quantum   => $syslog_log_facility_quantum,
+        syslog_log_facility_nova      => $syslog_log_facility_nova,
+        syslog_log_facility_keystone  => $syslog_log_facility_keystone,
         state_path             => $nova_hash[state_path],
       }
 
@@ -394,7 +413,15 @@ if $use_syslog {
         auth_host            => $management_vip,
         iscsi_bind_host      => $storage_address,
         cinder_user_password => $cinder_hash[user_password],
+        verbose              => $verbose,
+        debug                => $debug,
         use_syslog           => true,
+        syslog_log_level              => $syslog_log_level,
+        syslog_log_facility_glance    => $syslog_log_facility_glance,
+        syslog_log_facility_cinder    => $syslog_log_facility_cinder,
+        syslog_log_facility_quantum   => $syslog_log_facility_quantum,
+        syslog_log_facility_nova      => $syslog_log_facility_nova,
+        syslog_log_facility_keystone  => $syslog_log_facility_keystone,
       }
 if $use_syslog {
   class { "::openstack::logging":
