@@ -761,6 +761,8 @@ node /fuel-controller-[\d+]/ {
     rabbit_password        => $rabbit_password,
     rabbit_user            => $rabbit_user,
     rabbit_ha_virtual_ip   => $internal_virtual_ip,
+    debug                  => $debug,
+    verbose                => $verbose,
     syslog_log_level       => $syslog_log_level,
     syslog_log_facility_cinder => $syslog_log_facility_cinder,
     qpid_nodes             => [$internal_virtual_ip],
@@ -781,6 +783,9 @@ node /fuel-controller-[\d+]/ {
     controller_node_address => $internal_virtual_ip,
     swift_local_net_ip      => $swift_local_net_ip,
     master_swift_proxy_ip  => $master_swift_proxy_ip,
+    debug                   => $debug,
+    verbose                 => $verbose,
+    syslog_log_level        => $syslog_log_level,
   }
 
   Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
