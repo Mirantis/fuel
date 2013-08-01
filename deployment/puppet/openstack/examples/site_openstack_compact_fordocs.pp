@@ -676,6 +676,8 @@ node /fuel-controller-[\d+]/ {
     db_host                => $internal_virtual_ip,
     service_endpoint       => $internal_virtual_ip,
     cinder_rate_limits     => $cinder_rate_limits,
+    debug                  => $debug,
+    verbose                => $verbose,
     syslog_log_level       => $syslog_log_level,
     syslog_log_facility_cinder => $syslog_log_facility_cinder,
   }
@@ -693,6 +695,9 @@ node /fuel-controller-[\d+]/ {
     controller_node_address => $internal_virtual_ip,
     swift_local_net_ip      => $swift_local_net_ip,
     master_swift_proxy_ip  => $master_swift_proxy_ip,
+    debug                   => $debug,
+    verbose                 => $verbose,
+    syslog_log_level        => $syslog_log_level,
   }
 
   Class ['openstack::swift::proxy'] -> Class['openstack::swift::storage_node']
