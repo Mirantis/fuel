@@ -208,6 +208,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
@@ -384,6 +386,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
@@ -449,6 +453,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
