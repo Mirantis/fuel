@@ -33,7 +33,9 @@ class openstack::swift::storage_node (
   $service_endpoint       = '127.0.0.1',
   $use_syslog             = false,
   $syslog_log_facility_cinder = 'LOCAL3',
-  $syslog_log_level = 'WARNING',
+  $syslog_log_level       = 'WARNING',
+  $debug                  = false,
+  $verbose                = true,
   # Rabbit details necessary for cinder
   $rabbit_nodes           = false,
   $rabbit_password        = 'rabbit_pw',
@@ -61,6 +63,9 @@ class openstack::swift::storage_node (
   class { 'swift::storage::all':
     storage_local_net_ip => $swift_local_net_ip,
     swift_zone           => $swift_zone,
+    debug                => $debug,
+    verbose              => $verbose,
+    syslog_log_level     => $syslog_log_level,
   }
 
   validate_string($master_swift_proxy_ip)
