@@ -157,6 +157,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
@@ -239,11 +241,8 @@ if $use_syslog {
         debug                  => $debug,
         use_syslog             => true,
         syslog_log_level              => $syslog_log_level,
-        syslog_log_facility_glance    => $syslog_log_facility_glance,
         syslog_log_facility_cinder    => $syslog_log_facility_cinder,
         syslog_log_facility_quantum   => $syslog_log_facility_quantum,
-        syslog_log_facility_nova      => $syslog_log_facility_nova,
-        syslog_log_facility_keystone  => $syslog_log_facility_keystone,
         state_path             => $nova_hash[state_path],
       }
 
@@ -273,6 +272,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
@@ -338,6 +339,8 @@ if $use_syslog {
     syslog_log_facility_nova     => $syslog_log_facility_nova,
     syslog_log_facility_keystone => $syslog_log_facility_keystone,
     rabbit_log_level => $syslog_log_level,
+    # debug mode for logging
+    debug                        => $debug,
   }
 }
 
