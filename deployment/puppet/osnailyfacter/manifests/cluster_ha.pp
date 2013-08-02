@@ -380,6 +380,8 @@ class virtual_ips () {
         debug                => $debug ? { 'true' => 'True', default=>'False' },
         verbose              => $verbose ? { 'false' => 'False', default=>'True' },
         use_syslog           => true,
+        syslog_log_level     => $syslog_log_level,
+        syslog_log_facility  => $syslog_log_facility_cinder,
       }
 #      class { "::rsyslog::client":
 #        log_local => true,

@@ -295,6 +295,8 @@ $quantum_gre_bind_addr = $::internal_address
         debug                => $debug ? { 'true' => 'True', default=>'False' },
         verbose              => $verbose ? { 'false' => 'False', default=>'True' },
         use_syslog           => true,
+        syslog_log_level     => $syslog_log_level,
+        syslog_log_facility  => $syslog_log_facility_cinder,
       }
    }
   }
