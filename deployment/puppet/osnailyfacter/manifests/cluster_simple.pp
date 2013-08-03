@@ -33,6 +33,8 @@ $swift_hash           = parsejson($::swift)
 $cinder_hash          = parsejson($::cinder)
 $access_hash          = parsejson($::access)
 $nodes_hash           = parsejson($::nodes)
+$extra_rsyslog_hash   = parsejson($::syslog)
+$floating_ips_range   = parsejson($::floating_network_range)
 $vlan_start           = $novanetwork_params['vlan_start']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 $network_size         = $novanetwork_params['network_size']
@@ -44,8 +46,6 @@ if !$rabbit_hash[user]
   $rabbit_hash[user] = 'nova'
 }
 $rabbit_user          = $rabbit_hash['user']
-
-
 
 if $auto_assign_floating_ip == 'true' {
   $bool_auto_assign_floating_ip = true
@@ -128,7 +128,7 @@ if !$debug
         fixed_range             => $fixed_network_range,
         multi_host              => $multi_host,
         network_manager         => $network_manager,
-        num_networks             => $num_networks,
+        num_networks            => $num_networks,
         network_size            => $network_size,
         network_config          => $network_config,
         verbose                 => $verbose,
@@ -247,7 +247,15 @@ if !$debug
         stage                     => 'glance-image',
       }
       if !$quantum {
-         nova::manage::floating{ $floating_hash: }
+        nova_floating_range{ $floating_ips_range:
+          ensure          => 'present',
+          pool            => 'nova',
+          username        => $access_hash[user],
+          api_key         => $access_hash[password],
+          auth_method     => 'password',
+          auth_url        => "http://${controller_node_address}:5000/v2.0/",
+          authtenant_name => $access_hash[tenant],
+        }
       }
       Class[glance::api]        -> Class[openstack::img::cirros]
     }
