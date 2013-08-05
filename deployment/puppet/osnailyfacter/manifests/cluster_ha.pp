@@ -8,7 +8,7 @@ if $quantum == 'true'
 {
   $quantum_hash   = parsejson($::quantum_access)
   $quantum_params = parsejson($::quantum_parameters)
-  $novanetwork_params  = {} 
+  $novanetwork_params  = {}
 
 }
 else
@@ -132,16 +132,6 @@ $network_config = {
 
 
 
-if !$verbose 
-{
- $verbose = 'true'
-}
-
-if !$debug
-{
- $debug = 'true'
-}
-
 
 
 
@@ -175,7 +165,7 @@ Exec { logoutput => true }
 class compact_controller (
   $quantum_network_node = $quantum_netnode_on_cnt
 ) {
-   
+
   class {'osnailyfacter::tinyproxy': }
   class { 'openstack::controller_ha':
     controller_public_addresses   => $controller_public_addresses,
@@ -332,7 +322,7 @@ class virtual_ips () {
         Class[openstack::swift::storage_node] -> Class[openstack::img::cirros]
         Class[openstack::swift::proxy]        -> Class[openstack::img::cirros]
         Service[swift-proxy]                  -> Class[openstack::img::cirros]
- 
+
       }
         if !$quantum
         {
@@ -346,7 +336,7 @@ class virtual_ips () {
           auth_url        => "http://${management_vip}:5000/v2.0/",
           authtenant_name => $access_hash[tenant],
         }
-       }	
+       }
 
      }
 
@@ -426,11 +416,9 @@ class virtual_ips () {
         cinder_user_password => $cinder_hash[user_password],
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
-        debug                => $debug ? { 'true' => 'True', default=>'False' },
-        verbose              => $verbose ? { 'false' => 'False', default=>'True' },
+        debug                => $debug ? { 'true' => true, true => true, default=> false },
+        verbose              => $verbose ? { 'true' => true, true => true, default=> false },
         use_syslog           => true,
-        syslog_log_level     => $syslog_log_level,
-        syslog_log_facility  => $syslog_log_facility_cinder,
       }
 #      class { "::rsyslog::client":
 #        log_local => true,

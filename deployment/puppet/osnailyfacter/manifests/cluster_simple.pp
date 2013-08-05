@@ -5,7 +5,7 @@ if $quantum == 'true'
 {
   $quantum_hash   = parsejson($::quantum_access)
   $quantum_params = parsejson($::quantum_parameters)
-  $novanetwork_params  = {} 
+  $novanetwork_params  = {}
 
 }
 else
@@ -102,16 +102,6 @@ $quantum_host            = $controller_node_address
 $quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
 $quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
 $quantum_gre_bind_addr = $::internal_address
-
-if !$verbose 
-{
- $verbose = 'true'
-}
-
-if !$debug
-{
- $debug = 'true'
-}
 
   case $role {
     "controller" : {
@@ -338,8 +328,8 @@ if !$debug
         cinder_user_password => $cinder_hash[user_password],
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
-        debug                => $debug ? { 'true' => 'True', default=>'False' },
-        verbose              => $verbose ? { 'false' => 'False', default=>'True' },
+        debug                => $debug ? { 'true' => true, true => true, default=> false },
+        verbose              => $verbose ? { 'true' => true, true => true, default=> false },
         use_syslog           => true,
       }
    }
