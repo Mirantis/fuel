@@ -112,8 +112,6 @@ if !$debug
  $debug = 'true'
 }
 
-
-
   case $role {
     "controller" : {
       include osnailyfacter::test_controller
@@ -302,7 +300,7 @@ if !$debug
         manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
         db_host                => $controller_node_address,
         verbose                => $verbose,
-        debug                   => $debug,
+        debug                  => $debug,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
@@ -342,6 +340,8 @@ if !$debug
         debug                => $debug ? { 'true' => 'True', default=>'False' },
         verbose              => $verbose ? { 'false' => 'False', default=>'True' },
         use_syslog           => true,
+        syslog_log_level     => $syslog_log_level,
+        syslog_log_facility  => $syslog_log_facility_cinder,
       }
    }
   }

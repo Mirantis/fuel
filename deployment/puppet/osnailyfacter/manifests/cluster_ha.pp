@@ -294,7 +294,10 @@ class virtual_ips () {
         swift_zone            => $swift_zone,
         swift_local_net_ip    => $storage_address,
         master_swift_proxy_ip   => $master_swift_proxy_ip,
-        sync_rings            => ! $primary_proxy
+        sync_rings            => ! $primary_proxy,
+        syslog_log_level      => $syslog_log_level,
+        verbose               => $verbose,
+        debug                 => $debug,
       }
       if $primary_proxy {
         ring_devices {'all': storages => $controllers }
@@ -305,7 +308,10 @@ class virtual_ips () {
         primary_proxy           => $primary_proxy,
         controller_node_address => $management_vip,
         swift_local_net_ip      => $swift_local_net_ip,
-        master_swift_proxy_ip   => $master_swift_proxy_ip
+        master_swift_proxy_ip   => $master_swift_proxy_ip,
+        syslog_log_level        => $syslog_log_level,
+        verbose                 => $verbose,
+        debug                   => $debug,
       }
       #TODO: PUT this configuration stanza into nova class
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
@@ -422,6 +428,8 @@ class virtual_ips () {
         debug                => $debug ? { 'true' => 'True', default=>'False' },
         verbose              => $verbose ? { 'false' => 'False', default=>'True' },
         use_syslog           => true,
+        syslog_log_level     => $syslog_log_level,
+        syslog_log_facility  => $syslog_log_facility_cinder,
       }
 #      class { "::rsyslog::client":
 #        log_local => true,

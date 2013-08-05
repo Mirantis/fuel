@@ -26,6 +26,9 @@ class swift::storage::all(
   $container_pipeline = undef,
   $account_pipeline   = undef,
   $export_devices     = false,
+  $debug              = false,
+  $verbose            = true,
+  $syslog_log_level   = 'WARNING',
 ) {
 
   class { 'swift::storage':
@@ -46,6 +49,9 @@ class swift::storage::all(
     swift_zone           => $swift_zone,
     devices              => $devices,
     storage_local_net_ip => $storage_local_net_ip,
+    debug                => $debug,
+    verbose              => $verbose,
+    syslog_log_level     => $syslog_log_level,
   }
 
   swift::storage::server { $account_port:
