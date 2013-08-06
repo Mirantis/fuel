@@ -8,7 +8,7 @@ if $quantum == 'true'
 {
   $quantum_hash   = parsejson($::quantum_access)
   $quantum_params = parsejson($::quantum_parameters)
-  $novanetwork_params  = {} 
+  $novanetwork_params  = {}
 }
 else
 {
@@ -60,16 +60,6 @@ if !$rabbit_hash[user]
 }
 $rabbit_user          = $rabbit_hash['user']
 
-
-if !$verbose 
-{
- $verbose = 'true'
-}
-
-if !$debug
-{
- $debug = 'true'
-}
 
 
 
@@ -429,8 +419,8 @@ case $role {
         auth_host            => $management_vip,
         iscsi_bind_host      => $storage_address,
         cinder_user_password => $cinder_hash[user_password],
-        debug                => $debug ? { 'true' => 'True', default=>'False' },
-        verbose              => $verbose ? { 'false' => 'False', default=>'True' },
+        debug                => $debug ? { 'true' => true, true => true, default=> false },
+        verbose              => $verbose ? { 'true' => true, true => true, default=> false },
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
         use_syslog           => true,
