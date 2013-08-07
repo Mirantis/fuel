@@ -1,6 +1,16 @@
 #!/bin/bash -xe
-
+# Exit code reference:
+# 1  - Generic unknown error
+# 2  - Repotrack did not exit cleanly after several tries.
+# 3  - There are still some packages with broken md5 sum after last retry to 
+#      download them.
+# 10 - RHN Satellite registration failed.
+# 11 - ERROR: Satellite channel not found. Fix this in RHN Satellite manually 
+#      or run the following command: rhn-channel -a -c channel-name
+# 12 - Unable to download centos-release rpm
+# 13 - Unable to download GPG key from RHN Satellite server
 function revert_back_to_centos() {
+  exitcode=$1
   # Removes redhat-release-server rpm and replaces it with centos-release
   echo "Removing Red Hat temporary configuration."
   if rpm -q redhat-release-server &>/dev/null; then
@@ -16,9 +26,25 @@ function revert_back_to_centos() {
   yum-config-manager --enable 'nailgun' &> /dev/null
   echo "Unsubscribing from RHSM..."
   subscription-manager unregister || :
+  exit $exitcode
 }
 
-trap revert_back_to_centos EXIT
+function retry() {
+   if [ "$1" -eq "--tries" ];then
+     tries=$2
+     shift 2
+   else
+     tries=5
+   fi
+   for attempt in `seq 1 $tries`; do
+     yum clean expire-cache
+     $@ || (echo "Command failed $1 tries. Retrying..."; continue)
+     return 0
+   done
+   return 1
+}
+
+trap 'revert_back_to_centos $?' EXIT
 
 rhsm_plugins="product-id subscription-manager"
 rhn_plugins="rhnplugin"
@@ -50,23 +76,21 @@ mkdir -p /root/centos-release
 yumdownloader --destdir /root/centos-release --disablerepo='*rhel*' centos-release
 if ! [ -f /root/centos-release/centos-release*.rpm ]; then
   echo "Unable to download centos-release RPM. Aborting." 1>&2
-  exit 1
+  exit 12
 fi
 #Download RHN packages needed for RHN Satellite registration
 rhnpackages="m2crypto rhn-check rhn-client-tools rhnlib rhnsd rhn-setup yum-rhn-plugin redhat-release-server"
 rm -rf /root/rhnpackages
 mkdir -p /root/rhnpackages
 yum-config-manager --enable rhel-6-server-rpms &> /dev/null
+
+#Get necessary RHN setup packages
 success="false"
-for tries in 1 2 3; do
-  yumdownloader --releasever=<%= releasever %> --disablerepo='nailgun*' --disablerepo='fuel*' --setopt='*.skip_if_unavailable=1' --resolve --destdir /root/rhnpackages $rhnpackages
-  #Verify we have packages downloaded
-  if [[ "$(find /root/rhnpackages | wc -l)" > 2 ]]; then
-    success="true"
-    break
-  fi
-  yum clean expire-cache
-done
+retry yumdownloader --releasever=<%= releasever %> --disablerepo='nailgun*' --disablerepo='fuel*' --setopt='*.skip_if_unavailable=1' --resolve --destdir /root/rhnpackages $rhnpackages
+#Verify we have packages downloaded
+if [[ "$(find /root/rhnpackages | wc -l)" > 2 ]]; then
+  success="true"
+fi
 if [[ "$success" == "false" ]];then
   echo "Unable to download rhn-setup and redhat-release-server from RHSM." 1>&2
   echo "This may be due to a network error or yum configuration." 1>&2
@@ -81,8 +105,8 @@ rpm -ivh --force /root/rhnpackages/*.rpm
 mkdir -p /etc/sysconfig/rhn
 wget "<%= sat_hostname %>/pub/RHN-ORG-TRUSTED-SSL-CERT" -O /etc/sysconfig/rhn/RHNS-CA-CERT
 if [ "$(file -b /etc/sysconfig/rhn/RHNS-CA-CERT)" != "ASCII text" ]; then
-  echo "GPG Key download failed. Looking for URL <%= sat_hostname %>/pub/RHN-ORG-TRUSTED-SSL-CERT. Cannot proceed"
-  exit 1
+  echo "GPG Key download failed. Looking for URL <%= sat_hostname %>/pub/RHN-ORG-TRUSTED-SSL-CERT. Cannot proceed" 1>&2
+  exit 13
 fi
 
 #Disable subscription-manager
@@ -99,8 +123,8 @@ done
 rhnreg_ks "--serverUrl=http://<%= sat_hostname %>/XMLRPC" --profilename=fuelweb "--activationkey=<%= activation_key %>" --sslCACert=/etc/sysconfig/rhn/RHNS-CA-CERT --nopackages --nohardware --novirtinfo --norhnsd --force
 
 if [ $? -ne 0 ]; then
-  echo "Registration failed. Aborting."
-  exit 1
+  echo "RHN Satellite registration failed. Aborting." 1>&2
+  exit 10
 fi
 #Ensure channels are enabled:
 errors=0
@@ -109,14 +133,14 @@ for channel in <%= sat_base_channels %> <%= sat_openstack_channel %>; do
   if grep -q "$channel" <<< "$rhnchanneloutput"; then
     echo "Found $channel."
   else
-    echo "ERROR: $channel not found. Fix this in RHN Satellite manually or run the following command:"
-    echo "rhn-channel -a $channel"
-    ((errors++))
+    echo "ERROR: $channel not found. Fix this in RHN Satellite manually or run the following command:" 1>&2
+    echo "rhn-channel -a -c $channel" 1>&2
+    errors=$(( errors + 1 ))
   fi
 done
 if [ $errors -gt 0 ]; then
   echo "There were problems enabling channels. Please check puppet manifests and your RHN Satellite channel configuration to ensure the necessary channels are enabled." 1>&2
-  exit 1
+  exit 11
 fi
 
 <% end %>
@@ -130,10 +154,11 @@ yum-config-manager --disable 'centos' --disable 'extras' --disable 'updates' &> 
 yum-config-manager --disable 'base' &> /dev/null
 echo 6Server > /etc/yum/vars/releasever
 echo "Building initial cache. This may take several minutes."
-yum --releasever=<%= releasever %> makecache
+retry yum --releasever=<%= releasever %> makecache
 
 for tries in $(seq 1 <%= numtries %>); do
   #Retry if repotrack fails
+  yum clean expire-cache
   /usr/local/bin/repotrack -a x86_64,noarch -p "<%= pkgdir %>/Packages" $(cat /etc/nailgun/required-rpms.txt | xargs echo -en) || continue
   status=$?
   #Purge any corrupt downloaded RPMs
@@ -152,11 +177,11 @@ done
 
 if [ "$status" -ne 0 ]; then
   echo "ERROR: Repotrack did not exit cleanly after <%= numtries %> tries." 1>&2
-  exit 1
+  exit 2
 fi
 if [ $before -ne $after ]; then
   echo "ERROR: There are still some packages with broken md5 sum after last (<%= numtries %>) retry to download them." 1>&2
-  exit 1
+  exit 3
 fi
 
 
