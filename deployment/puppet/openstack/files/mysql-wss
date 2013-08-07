@@ -1,8 +1,4 @@
 #!/bin/sh
-#
-#
-# MySQL
-#
 # Description:  Manages a MySQL database as Linux-HA resource
 #
 # Authors:  Alan Robertson:               DB2 Script
