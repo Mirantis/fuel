@@ -199,6 +199,21 @@ class nailgun(
     pip_opts => "${pip_index} ${pip_find_links}",
   }
 
+  file { "/etc/httpd/conf.d/welcome.conf":
+    ensure => absent,
+    require => Package["cobbler-web"],
+  } ->
+
+  file { "/etc/httpd/conf.d/nailgun.conf":
+    content => "
+<LocationMatch '^/+$'>
+    RewriteEngine On
+    RewriteRule ^.*$ http://%{HTTP_HOST}:8000%{REQUEST_URI}
+</LocationMatch>
+    ",
+    notify  => Service['httpd'],
+  }
+
   nailgun::sshkeygen { "/root/.ssh/id_rsa":
     homedir => "/root",
     username => "root",
