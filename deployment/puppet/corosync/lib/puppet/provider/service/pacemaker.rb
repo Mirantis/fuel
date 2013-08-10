@@ -1,9 +1,7 @@
 require 'pathname'
 require Pathname.new(__FILE__).dirname.dirname.expand_path + 'corosync_service'
-require 'rexml/document'
+require 'nokogiri'
 require 'open3'
-
-include REXML
 
 Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Corosync_service do
 
@@ -18,7 +16,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   has_feature :ensurable
   def self.get_cib
     raw, _status = dump_cib
-    @@cib=REXML::Document.new(raw)
+    @@cib=Nokogiri::XML(raw)
   end
 
   # List all services of this type.
@@ -28,7 +26,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
 
   #Return list of pacemaker resources
   def self.get_resources
-    @@resources = @@cib.root.elements['configuration'].elements['resources']
+    @@resources = @@cib.xpath('configuration/resources')
   end
 
   #Get services list
@@ -36,7 +34,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     get_cib
     get_resources
     instances = []
-    XPath.match(@@resources, '//primitive').each do |element|
+    @@resources.xpath('//primitive').each do |element|
       if !element.nil?
         instances << new(:name => element.attributes['id'], :hasstatus => true, :hasrestart => false)
       end
@@ -50,28 +48,29 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     @service={}
     default_start_timeout = 30
     default_stop_timeout = 30
-    cib_resource =  XPath.match(@@resources, "//primitive[@id=\'#{@resource[:name]}\']").first
+    cib_resource = @@resources.xpath("//primitive[@id=\'#{@resource[:name]}\']").first
     @service[:msname] = ['master','clone'].include?(cib_resource.parent.name) ? cib_resource.parent.attributes['id'] : nil
     @service[:name] = @resource[:name]
     @service[:class] = cib_resource.attributes['class']
     @service[:provider] = cib_resource.attributes['provider']
     @service[:type] = cib_resource.attributes['type']
     @service[:metadata] = {}
-    if !cib_resource.elements['meta_attributes'].nil?
-      cib_resource.elements['meta_attributes'].each_element do |m|
+    meta_attributes = cib_resource.xpath('meta_attributes')
+    if !meta_attributes.empty?
+      meta_attributes.each_element do |m|
         @service[:metadata][m.attributes['name'].to_sym] = m.attributes['value']
       end
     end
     if @service[:class] == 'ocf'
       stdin, stdout, stderr =  Open3.popen3("/bin/bash -c 'OCF_ROOT=/usr/lib/ocf /usr/lib/ocf/resource.d/#{@service[:provider]}/#{@service[:type]} meta-data'")
-      metadata = REXML::Document.new(stdout)
-      default_start_timeout = XPath.match(metadata, "//actions/action[@name=\'start\']").first.attributes['timeout'].to_i
-      default_stop_timeout = XPath.match(metadata, "//actions/action[@name=\'stop\']").first.attributes['timeout'].to_i
+      metadata = Nokogiri::XML(stdout)
+      default_start_timeout = metadata.xpath("//actions/action[@name=\'start\']").first.attributes['timeout'].to_i
+      default_stop_timeout = metadata.xpath("//actions/action[@name=\'stop\']").first.attributes['timeout'].to_i
     end
-    op_start=XPath.match(REXML::Document.new(cib_resource.to_s),"//operations/op[@name='start']").first
-    op_stop=XPath.match(REXML::Document.new(cib_resource.to_s),"//operations/op[@name='stop']").first
-    @service[:start_timeout] =  default_start_timeout
-    @service[:stop_timeout] =  default_stop_timeout
+    op_start=cib_resource.xpath("//operations/op[@name='start']").first
+    op_stop=cib_resource.xpath("//operations/op[@name='stop']").first
+    @service[:start_timeout] = default_start_timeout
+    @service[:stop_timeout] = default_stop_timeout
     if !op_start.nil?
       @service[:start_timeout] = op_start.attributes['timeout'].to_i
     end
@@ -87,7 +86,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
 
   def self.get_stonith
     get_cib
-    stonith = XPath.first(@@cib,"crm_config/nvpair[@name='stonith-enabled']")
+    stonith = @@cib.xpath("crm_config/nvpair[@name='stonith-enabled']").first.content
     @@stonith = stonith == "true"
   end
 
@@ -145,11 +144,11 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   def self.get_nodes
     @@nodes = []
     get_cib
-    nodes = XPath.match(@@cib,'cib/configuration/nodes/node')
+    nodes = @@cib.xpath('cib/configuration/nodes/node')
     nodes.each do |node|
       state = :unclean
       uname = node.attributes['uname']
-      node_state = XPath.first(@@cib,"cib/status/node_state[@uname='#{uname}']")
+      node_state = @@cib.xpath("cib/status/node_state[@uname='#{uname}']").first
       if node_state
         ha_state = node_state.attributes['ha'] == 'dead' ? 'dead' : 'active'
         in_ccm  = node_state.attributes['in_ccm']
@@ -159,7 +158,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
         shutdown = node_state.attributes['shutdown'].nil? ? 0 : node_state.attributes['shutdown']
         state = get_node_state(ha_state,in_ccm,crmd,join,expected,shutdown)
         if state == :online
-          standby = node.elements["instance_attributes/nvpair[@name='standby']"]
+          standby = node.xpath("instance_attributes/nvpair[@name='standby']")
           if standby && ['true', 'yes', '1', 'on'].include?(standby.attributes['value'])
             state = :standby
           end
@@ -176,7 +175,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     @@nodes.each do |node|
       next unless node[:state] == :online
       debug("getting last ops on #{node[:uname]} for #{@resource[:name]}")
-      all_operations =  XPath.match(@@cib,"cib/status/node_state[@uname='#{node[:uname]}']/lrm/lrm_resources/lrm_resource/lrm_rsc_op[starts-with(@id,'#{@resource[:name]}')]")
+      all_operations =  @@cib.xpath("cib/status/node_state[@uname='#{node[:uname]}']/lrm/lrm_resources/lrm_resource/lrm_rsc_op[starts-with(@id,'#{@resource[:name]}')]")
       debug("ALL OPERATIONS:\n\n #{all_operations.inspect}")
       next if all_operations.nil?
       completed_ops = all_operations.select{|op| op.attributes['op-status'].to_i != -1 }
