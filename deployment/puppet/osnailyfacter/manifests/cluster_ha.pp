@@ -8,7 +8,7 @@ if $quantum == 'true'
 {
   $quantum_hash   = parsejson($::quantum_access)
   $quantum_params = parsejson($::quantum_parameters)
-  $novanetwork_params  = {} 
+  $novanetwork_params  = {}
 
 }
 else
@@ -140,7 +140,7 @@ $network_config = {
 
 
 
-if !$verbose 
+if !$verbose
 {
  $verbose = 'true'
 }
@@ -173,7 +173,7 @@ $multi_host              = true
 $manage_volumes          = false
 $glance_backend          = 'swift'
 $quantum_netnode_on_cnt  = true
-$swift_loopback = false 
+$swift_loopback = false
 $mirror_type = 'external'
 Exec { logoutput => true }
 
@@ -183,7 +183,7 @@ Exec { logoutput => true }
 class compact_controller (
   $quantum_network_node = $quantum_netnode_on_cnt
 ) {
-   
+
   class {'osnailyfacter::tinyproxy': }
   class { 'openstack::controller_ha':
     controller_public_addresses   => $controller_public_addresses,
@@ -218,6 +218,7 @@ class compact_controller (
     keystone_admin_tenant         => $access_hash[tenant],
     glance_db_password            => $glance_hash[db_password],
     glance_user_password          => $glance_hash[user_password],
+    glance_image_cache_max_size   => $glance_hash[image_cache_max_size],
     nova_db_password              => $nova_hash[db_password],
     nova_user_password            => $nova_hash[user_password],
     rabbit_password               => $rabbit_hash[password],
@@ -337,7 +338,7 @@ class virtual_ips () {
         Class[openstack::swift::storage_node] -> Class[openstack::img::cirros]
         Class[openstack::swift::proxy]        -> Class[openstack::img::cirros]
         Service[swift-proxy]                  -> Class[openstack::img::cirros]
- 
+
       }
         if !$quantum
         {
@@ -351,7 +352,7 @@ class virtual_ips () {
           auth_url        => "http://${management_vip}:5000/v2.0/",
           authtenant_name => $access_hash[tenant],
         }
-       }	
+       }
 
      }
 
