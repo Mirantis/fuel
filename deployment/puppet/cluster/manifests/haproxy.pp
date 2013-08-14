@@ -16,11 +16,11 @@ class cluster::haproxy (
   $cib_name = "p_haproxy"
 
   cs_shadow { $cib_name: cib => $cib_name }
-  cs_commit { $cib_name: cib => $cib_name }
+  cs_commit { $cib_name: cib => $cib_name } ~> ::Corosync::Cleanup["$cib_name"]
   ::corosync::cleanup { $cib_name: }
 
-  Cs_commit[$cib_name] -> ::Corosync::Cleanup[$cib_name]
-  Cs_commit[$cib_name] ~> ::Corosync::Cleanup[$cib_name]
+  #Cs_commit[$cib_name] -> ::Corosync::Cleanup[$cib_name]
+  #Cs_commit[$cib_name] ~> ::Corosync::Cleanup[$cib_name]
 
 
   file {'haproxy-ocf':
