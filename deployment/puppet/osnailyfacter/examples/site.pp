@@ -21,16 +21,10 @@ stage {'glance-image':
   require => Stage['main'],
 }
 
+include osnailyfacter::common_vars
 
 
 if $nodes != undef {
-  $nodes_hash = parsejson($nodes)
-
-  $node = filter_nodes($nodes_hash,'name',$::hostname)
-  if empty($node) {
-    fail("Node $::hostname is not defined in the hash structure")
-  }
-
   $default_gateway = $node[0]['default_gateway']
   $internal_address = $node[0]['internal_address']
   $internal_netmask = $node[0]['internal_netmask']
@@ -40,8 +34,6 @@ if $nodes != undef {
   $storage_netmask = $node[0]['storage_netmask']
   $public_br = $node[0]['public_br']
   $internal_br = $node[0]['internal_br']
-  $base_syslog_hash     = parsejson($::base_syslog)
-  $syslog_hash          = parsejson($::syslog)
 
   if $quantum {
     $public_int   = $public_br

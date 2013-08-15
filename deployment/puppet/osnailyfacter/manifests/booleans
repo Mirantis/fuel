@@ -1,0 +1,11 @@
+use_cow_images: true
+verbose: true
+debug: true
+auto_assign_floating_ip: true
+start_guests_on_host_boot: true
+create_networks: true
+quantum: true
+nagios: false
+use_unicast_corosync: false
+horizon_use_ssl: false
+

@@ -1,131 +1,16 @@
 class osnailyfacter::cluster_simple {
 
-
-if $quantum == 'true'
-{
-  $quantum_hash   = parsejson($::quantum_access)
-  $quantum_params = parsejson($::quantum_parameters)
-  $novanetwork_params  = {} 
-
-}
-else
-{
-  $quantum_hash = {}
-  $quantum_params = {}
-  $novanetwork_params  = parsejson($::novanetwork_parameters)
-}
-
-if $cinder_nodes {
-   $cinder_nodes_array   = parsejson($::cinder_nodes)
-}
-else {
-  $cinder_nodes_array = []
-}
-
-
-
-$nova_hash            = parsejson($::nova)
-$mysql_hash           = parsejson($::mysql)
-$rabbit_hash          = parsejson($::rabbit)
-$glance_hash          = parsejson($::glance)
-$keystone_hash        = parsejson($::keystone)
-$swift_hash           = parsejson($::swift)
-$cinder_hash          = parsejson($::cinder)
-$access_hash          = parsejson($::access)
-$nodes_hash           = parsejson($::nodes)
-$vlan_start           = $novanetwork_params['vlan_start']
-$network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
-$network_size         = $novanetwork_params['network_size']
-$num_networks         = $novanetwork_params['num_networks']
-$tenant_network_type  = $quantum_params['tenant_network_type']
-$segment_range        = $quantum_params['segment_range']
-
-if !$rabbit_hash[user]
-{
-  $rabbit_hash[user] = 'nova'
-}
-$rabbit_user          = $rabbit_hash['user']
-
-
-
-if $auto_assign_floating_ip == 'true' {
-  $bool_auto_assign_floating_ip = true
-} else {
-  $bool_auto_assign_floating_ip = false
-}
-
-if $quantum {
-   $floating_hash =  $::floating_network_range
-}
-else {
-  $floating_hash = {}
-  $floating_ips_range = parsejson($floating_network_range)
-}
-
-$controller = filter_nodes($nodes_hash,'role','controller')
-
-$controller_node_address = $controller[0]['internal_address']
-$controller_node_public = $controller[0]['public_address']
-
-
-if ($cinder) {
-  if (member($cinder_nodes_array,'all')) {
-    $is_cinder_node = true
-  } elsif (member($cinder_nodes_array,$::hostname)) {
-    $is_cinder_node = true
-  } elsif (member($cinder_nodes_array,$internal_address)) {
-    $is_cinder_node = true
-  } elsif ($node[0]['role'] =~ /controller/ ) {
-    $is_cinder_node = member($cinder_nodes_array,'controller')
-  } else {
-    $is_cinder_node = member($cinder_nodes_array,$node[0]['role'])
-  }
-} else {
-  $is_cinder_node = false
-}
-
-
-$cinder_iscsi_bind_addr = $::storage_address
-
-# do not edit the below line
-validate_re($::queue_provider,  'rabbitmq|qpid')
-
-$network_config = {
-  'vlan_start'     => $vlan_start,
-}
-$sql_connection           = "mysql://nova:${nova_hash[db_password]}@${controller_node_address}/nova"
-$mirror_type = 'external'
-$multi_host              = true
-Exec { logoutput => true }
-
-$quantum_host            = $controller_node_address
-$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
-$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
-$quantum_gre_bind_addr = $::internal_address
-
-if !$verbose 
-{
- $verbose = 'true'
-}
-
-if !$debug
-{
- $debug = 'true'
-}
-
-
-
   case $role {
     "controller" : {
       include osnailyfacter::test_controller
 
       class {'osnailyfacter::tinyproxy': }
       class { 'openstack::controller':
-        admin_address           => $controller_node_address,
-        public_address          => $controller_node_public,
+        admin_address           => $controller_internal_addresses[0],
+        public_address          => $controller_public_addresses[0],
         public_interface        => $public_int,
         private_interface       => $fixed_interface,
-        internal_address        => $controller_node_address,
+        internal_address        => $controller_internal_addresses[0],
         floating_range          => $quantum ? { 'true' =>$floating_hash, default=>false},
         fixed_range             => $fixed_network_range,
         multi_host              => $multi_host,
@@ -184,10 +69,10 @@ if !$debug
       nova_config { 'DEFAULT/compute_scheduler_driver': value => $compute_scheduler_driver }
  if $::quantum {
     class { '::openstack::quantum_router':
-      db_host               => $controller_node_address,
-      service_endpoint      => $controller_node_address,
-      auth_host             => $controller_node_address,
-      nova_api_vip          => $controller_node_address,
+      db_host               => $controller_internal_addresses[0],
+      service_endpoint      => $controller_internal_addresses[0],
+      auth_host             => $controller_internal_addresses[0],
+      nova_api_vip          => $controller_internal_addresses[0],
       internal_address      => $internal_address,
       public_interface      => $public_int,
       private_interface     => $fixed_interface,
@@ -199,11 +84,11 @@ if !$debug
       queue_provider        => $queue_provider,
       rabbit_password       => $rabbit_hash[password],
       rabbit_user           => $rabbit_hash[user],
-      rabbit_ha_virtual_ip  => $controller_node_address,
-      rabbit_nodes          => [$controller_node_address],
+      rabbit_ha_virtual_ip  => $controller_internal_addresses[0],
+      rabbit_nodes          => [$controller_internal_addresses[0]],
       qpid_password         => $rabbit_hash[password],
       qpid_user             => $rabbit_hash[user],
-      qpid_nodes            => [$controller_node_address],
+      qpid_nodes            => [$controller_internal_addresses[0]],
       quantum               => $quantum,
       quantum_user_password => $quantum_hash[user_password],
       quantum_db_password   => $quantum_hash[db_password],
@@ -226,7 +111,7 @@ if !$debug
         admin_password       => $access_hash[password],
         keystone_admin_token => $keystone_hash[admin_token],
         admin_tenant         => $access_hash[tenant],
-        controller_node      => $controller_node_address,
+        controller_node      => $controller_internal_addresses[0],
       }
 
 
@@ -256,7 +141,7 @@ if !$debug
         username        => $access_hash[user],
         api_key         => $access_hash[password],
         auth_method     => 'password',
-        auth_url        => "http://${controller_node_address}:5000/v2.0/",
+        auth_url        => "http://${controller_internal_addresses[0]}:5000/v2.0/",
         authtenant_name => $access_hash[tenant],
       }
       }
@@ -276,18 +161,18 @@ if !$debug
         network_manager        => $network_manager,
         network_config         => $network_config,
         multi_host             => $multi_host,
-        sql_connection         => $sql_connection,
+        sql_connection         => "mysql://nova:${nova_hash[db_password]}@${controller_internal_addresses[0]}/nova",
         nova_user_password     => $nova_hash[user_password],
         queue_provider         => $::queue_provider,
-        rabbit_nodes           => [$controller_node_address],
+        rabbit_nodes           => $controller_internal_addresses,
         rabbit_password        => $rabbit_hash[password],
         rabbit_user            => $rabbit_user,
         auto_assign_floating_ip => $bool_auto_assign_floating_ip,
-        qpid_nodes             => [$controller_node_address],
+        qpid_nodes             => $controller_internal_addresses,
         qpid_password          => $rabbit_hash[password],
         qpid_user              => $rabbit_user,
-        glance_api_servers     => "${controller_node_address}:9292",
-        vncproxy_host          => $controller_node_public,
+        glance_api_servers     => "${controller_internal_addresses[0]}:9292",
+        vncproxy_host          => $controller_public_addresses[0],
         vnc_enabled            => true,
         #ssh_private_key        => 'puppet:///ssh_keys/openstack',
         #ssh_public_key         => 'puppet:///ssh_keys/openstack.pub',
@@ -296,14 +181,14 @@ if !$debug
         quantum_sql_connection => $quantum_sql_connection,
         quantum_user_password  => $quantum_hash[user_password],
         tenant_network_type    => $tenant_network_type,
-        service_endpoint       => $controller_node_address,
+        service_endpoint       => $controller_internal_addresses[0],
         cinder                 => true,
         cinder_user_password   => $cinder_hash[user_password],
         cinder_db_password     => $cinder_hash[db_password],
         cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
         cinder_volume_group     => "cinder",
         manage_volumes          => $cinder ? { false => $manage_volumes, default =>$is_cinder_node },
-        db_host                => $controller_node_address,
+        db_host                => $controller_internal_addresses[0],
         verbose                => $verbose,
         debug                   => $debug,
         use_syslog             => true,
@@ -325,25 +210,25 @@ if !$debug
         ensure => present
       }
       class { 'openstack::cinder':
-        sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${controller_node_address}/cinder?charset=utf8",
-        glance_api_servers   => "${controller_node_address}:9292",
+        sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${controller_internal_addresses[0]}/cinder?charset=utf8",
+        glance_api_servers   => "${controller_internal_addresses[0]}:9292",
         queue_provider       => $::queue_provider,
         rabbit_password      => $rabbit_hash[password],
         rabbit_host          => false,
-        rabbit_nodes         => [$controller_node_address],
+        rabbit_nodes         => [$controller_internal_addresses[0]],
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_hash[user],
-        qpid_nodes           => [$controller_node_address],
+        qpid_nodes           => [$controller_internal_addresses[0]],
         volume_group         => 'cinder',
         manage_volumes       => true,
         enabled              => true,
-        auth_host            => $controller_node_address,
+        auth_host            => $controller_internal_addresses[0],
         iscsi_bind_host      => $cinder_iscsi_bind_addr,
         cinder_user_password => $cinder_hash[user_password],
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
-        debug                => $debug ? { 'true' => 'True', default=>'False' },
-        verbose              => $verbose ? { 'false' => 'False', default=>'True' },
+        debug                => $debug ? { true => 'True', default=>'False' },
+        verbose              => $verbose ? { false => 'False', default=>'True' },
         use_syslog           => true,
       }
    }
