@@ -16,11 +16,11 @@ class cluster::haproxy (
   $cib_name = "p_haproxy"
 
   cs_shadow { $cib_name: cib => $cib_name }
-  cs_commit { $cib_name: cib => $cib_name }
+  cs_commit { $cib_name: cib => $cib_name } ~> ::Corosync::Cleanup["$cib_name"]
   ::corosync::cleanup { $cib_name: }
 
-  Cs_commit[$cib_name] -> ::Corosync::Cleanup[$cib_name]
-  Cs_commit[$cib_name] ~> ::Corosync::Cleanup[$cib_name]
+  #Cs_commit[$cib_name] -> ::Corosync::Cleanup[$cib_name]
+  #Cs_commit[$cib_name] ~> ::Corosync::Cleanup[$cib_name]
 
 
   file {'haproxy-ocf':
@@ -62,11 +62,10 @@ class cluster::haproxy (
 
   if ($::osfamily == 'Debian') {
     Package['haproxy'] ->
-      Service['haproxy-init-stopped'] ->
         file { '/etc/default/haproxy': content => 'ENABLED=0' } ->
           Service['haproxy']
   }
-
+  if ($::osfamily == 'RedHat') {
   Package['pacemaker'] -> 
   package { 'haproxy':
     ensure  => true,
@@ -92,7 +91,27 @@ class cluster::haproxy (
     hasrestart => true,
     provider   => "pacemaker",
   }
-
+  } else {
+  Package['pacemaker'] ->
+  package { 'haproxy':
+    ensure  => true,
+    name    => 'haproxy',
+  } ->
+  file { $global_options['chroot']:
+    ensure => directory
+  } ->
+  sysctl::value { 'net.ipv4.ip_nonlocal_bind':
+    value => '1'
+  } ->
+  service { 'haproxy':
+    name       => "p_haproxy",
+    enable     => $enabled,
+    ensure     => $ensure,
+    hasstatus  => true,
+    hasrestart => true,
+    provider   => "pacemaker",
+  }
+  }
 }
 
 #Class['corosync'] -> Class['cluster::haproxy']
