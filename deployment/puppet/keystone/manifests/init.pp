@@ -76,7 +76,7 @@ class keystone(
   validate_re($catalog_type,   'template|sql')
   validate_re($token_format,  'UUID|PKI')
 
-  #Keystone_config<||> ~> Service['keystone']
+  Keystone_config<||> ~> Service['keystone']
   Keystone_config<||> ~> Exec<| title == 'keystone-manage db_sync'|>
   Package['keystone'] ~> Exec<| title == 'keystone-manage pki_setup'|> ~> Service['keystone']
 
