@@ -1,5 +1,7 @@
 #set $pkgsel_packages = ["openssh-server", "debconf-utils", "ntp"]
 
+#set $puppet_version = '2.7.19-1puppetlabs2'
+
 #if $str($getVar('puppet_auto_setup','')) == "1"
     #if $str($getVar('puppet_version', '')) != ""
       #silent $pkgsel_packages.append("puppet=" + $puppet_version)
