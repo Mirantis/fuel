@@ -7,11 +7,23 @@ class osnailyfacter::tinyproxy {
     action  => 'accept',
     require => Class['openstack::firewall'],
   }
-  package{'tinyproxy':} ->
-  exec{'tinyproxy-init':
+package{'tinyproxy':} ->
+case $::osfamily {
+  'RedHat': {
+    exec{'tinyproxy-init':
     command => "/bin/echo Allow $master_ip >> /etc/tinyproxy/tinyproxy.conf; 
-      /sbin/chkconfig tinyproxy on; 
-      /etc/init.d/tinyproxy restart; ",
+    /sbin/chkconfig tinyproxy on; 
+    /etc/init.d/tinyproxy restart; ",
+    }
   }
+  'Debian': {
+    exec{'tinyproxy-init':
+    command => "/bin/echo Allow $master_ip >> /etc/tinyproxy.conf; 
+    /usr/sbin/update-rc.d tinyproxy defaults; 
+    /etc/init.d/tinyproxy restart; ",
+    }    
+  }
+}
+
 }
 
