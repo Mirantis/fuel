@@ -114,7 +114,20 @@ class corosync (
     }
   }
 
-  package { ['corosync', 'pacemaker']: ensure => present }
+  package { ['corosync', 'pacemaker']: ensure => present } ->
+  case $::osfamily
+  {
+    'Debian':
+      {
+       file { "/etc/init/corosync.override":
+         replace => "no",
+         ensure  => "present",
+         content => "manual",
+         mode    => 644,
+       }
+      }
+  }
+
 
   if $::osfamily == "RedHat"
   {
@@ -195,5 +208,16 @@ class corosync (
     ensure    => running,
     enable    => true,
     subscribe => File[['/etc/corosync/corosync.conf', '/etc/corosync/service.d']],
+  } ->
+  case $::osfamily
+  {
+    'Debian':
+      {
+	exec { 'rm_override_corosync':
+          command => '/bin/rm -f /etc/init/corosync.override ; /etc/init.d/corosync restart',
+          require => Package['corosync'],
+        }
+      }
   }
+
 }

@@ -28,6 +28,12 @@
 
 : ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/resource.d/heartbeat}
 . ${OCF_FUNCTIONS_DIR}/.ocf-shellfuncs
+#Default
+PIDFILE="/var/run/haproxy.pid"
+CONF_FILE="/etc/haproxy/haproxy.cfg"
+
+
+
 
 USAGE="Usage: $0 {start|stop|status|monitor|validate-all|meta-data}";
 
@@ -103,7 +109,7 @@ get_pid_and_conf_file()
 
 	PIDFILE="`grep -v \"#\" ${CONF_FILE} | grep \"pidfile\" | sed 's/^[ \t]*pidfile[ \t]*//'`"
 	if [ "${PIDFILE}" = '' ]; then
-		PIDFILE="/var/run/${OCF_RESOURCE_INSTANCE}.pid"
+		PIDFILE="/var/run/haproxy.pid"
 	fi
 }
 

@@ -165,9 +165,9 @@ class galera (
     require    => [Package["MySQL-server", "galera"]],
     provider   => "pacemaker",
   }
-  Package['pacemaker'] -> File['mysql-wss']
-   Cs_resource["$res_name"] ->
-      Cs_commit["$res_name"] ->
+    Package['pacemaker'] -> File['mysql-wss']
+      Cs_resource["$res_name"] ->
+        Cs_commit["$res_name"] ->
           Service["$cib_name"]
 
   package { [$::galera::params::libssl_package, $::galera::params::libaio_package]:
