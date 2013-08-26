@@ -1,0 +1,11 @@
+{
+  "built_on": "srv07-srt",
+  "duration": 143.878999956,
+  "full_display_name": "fuel-syntax-check #9",
+  "id": "2013-08-26_21-01-17",
+  "number": 9,
+  "result": "FAILURE",
+  "status_message": "?",
+  "time": "2013-08-26 21:01:17 +0400",
+  "url": "job/fuel-syntax-check/9/"
+}
