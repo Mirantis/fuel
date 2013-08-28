@@ -181,7 +181,12 @@ class corosync (
       require => Package['corosync'],
       before  => Service['corosync'],
     }
+    exec { 'rm_corosync_override':
+      command => '/bin/rm -f /etc/init/corosync.override ; /etc/init.d/corosync restart',
+      path    => ['/bin', '/usr/bin'],
+    } 
   }
+
 
   if $check_standby == true {
     # Throws a puppet error if node is on standby
@@ -208,16 +213,6 @@ class corosync (
     ensure    => running,
     enable    => true,
     subscribe => File[['/etc/corosync/corosync.conf', '/etc/corosync/service.d']],
-  } ->
-  case $::osfamily
-  {
-    'Debian':
-      {
-	exec { 'rm_override_corosync':
-          command => '/bin/rm -f /etc/init/corosync.override ; /etc/init.d/corosync restart',
-          require => Package['corosync'],
-        }
-      }
   }
-
+ 
 }
