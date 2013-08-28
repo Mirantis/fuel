@@ -8,11 +8,12 @@ klass = Puppet::Provider::Keystone
 
 describe Puppet::Provider::Keystone do
 
-  describe 'when retrieving the security token' do
+  after :each do
+    klass.reset
+  end
 
-    after :each do
-      klass.instance_variable_set(:@keystone_file, nil)
-    end
+
+  describe 'when retrieving the security token' do
 
     it 'should fail if there is no keystone config file' do
       ini_file = Puppet::Util::IniConfig::File.new
@@ -70,6 +71,80 @@ describe Puppet::Provider::Keystone do
       Puppet::Util::IniConfig::File.expects(:new).returns(mock)
       mock.expects(:read).with('/etc/keystone/keystone.conf')
       klass.get_admin_endpoint.should == 'http://127.0.0.1:35357/v2.0/'
+    end
+
+    it 'should use https if ssl is enabled' do
+      mock = {'DEFAULT' => {'bind_host' => '192.168.56.210', 'admin_port' => '35357' }, 'ssl' => {'enable' => 'True'}}
+      Puppet::Util::IniConfig::File.expects(:new).returns(mock)
+      mock.expects(:read).with('/etc/keystone/keystone.conf')
+      klass.get_admin_endpoint.should == 'https://192.168.56.210:35357/v2.0/'
+    end
+
+    it 'should use http if ssl is disabled' do
+      mock = {'DEFAULT' => {'bind_host' => '192.168.56.210', 'admin_port' => '35357' }, 'ssl' => {'enable' => 'False'}}
+      Puppet::Util::IniConfig::File.expects(:new).returns(mock)
+      mock.expects(:read).with('/etc/keystone/keystone.conf')
+      klass.get_admin_endpoint.should == 'http://192.168.56.210:35357/v2.0/'
+    end
+
+    it 'should use the defined admin_endpoint if available' do
+      mock = {'DEFAULT' => {'admin_endpoint' => 'https://keystone.example.com/v2.0/' }, 'ssl' => {'enable' => 'False'}}
+      Puppet::Util::IniConfig::File.expects(:new).returns(mock)
+      mock.expects(:read).with('/etc/keystone/keystone.conf')
+      klass.get_admin_endpoint.should == 'https://keystone.example.com/v2.0/'
+    end
+
+    describe 'when testing keystone connection retries' do
+
+      ['[Errno 111] Connection refused', '(HTTP 400)', 'HTTP Unable to establish connection'].reverse.each do |valid_message|
+        it "should retry when keystone is not ready with error #{valid_message}" do
+          mock = {'DEFAULT' => {'admin_token' => 'foo'}}
+          Puppet::Util::IniConfig::File.expects(:new).returns(mock)
+          mock.expects(:read).with('/etc/keystone/keystone.conf')
+          klass.expects(:sleep).with(10).returns(nil)
+          klass.expects(:keystone).twice.with('--endpoint', 'http://127.0.0.1:35357/v2.0/', ['test_retries']).raises(Exception, valid_message).then.returns('')
+          klass.auth_keystone('test_retries')
+        end
+      end
+    end
+
+  end
+
+  describe 'when keystone cli has warnings' do
+    it "should remove errors from results" do
+      mock = {'DEFAULT' => {'admin_token' => 'foo'}}
+      Puppet::Util::IniConfig::File.expects(:new).returns(mock)
+      mock.expects(:read).with('/etc/keystone/keystone.conf')
+      klass.expects(
+        :keystone
+      ).with(
+        '--endpoint',
+        'http://127.0.0.1:35357/v2.0/',
+        ['test_retries']
+      ).returns("WARNING\n+-+-+\nWARNING")
+      klass.auth_keystone('test_retries').should == "+-+-+\nWARNING"
+    end
+  end
+
+  describe 'when parsing keystone objects' do
+    it 'should parse valid output into a hash' do
+      data = <<-EOT
++-------------+----------------------------------+
+|   Property  |              Value               |
++-------------+----------------------------------+
+| description |          default tenant          |
+|   enabled   |               True               |
+|      id     | b71040f47e144399b7f10182918b5e2f |
+|     name    |               demo               |
++-------------+----------------------------------+
+      EOT
+      expected = {
+        'description' => 'default tenant',
+        'enabled'     => 'True',
+        'id'          => 'b71040f47e144399b7f10182918b5e2f',
+        'name'        => 'demo'
+      }
+      klass.parse_keystone_object(data).should == expected
     end
   end
 

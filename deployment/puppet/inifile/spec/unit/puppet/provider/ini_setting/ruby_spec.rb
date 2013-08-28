@@ -28,6 +28,96 @@ describe provider_class do
     end
   end
 
+  context 'when calling instances' do
+
+    let :orig_content do
+      ''
+    end
+
+    it 'should fail when file path is not set' do
+      expect {
+        provider_class.instances
+      }.to raise_error(Puppet::Error, 'Ini_settings only support collecting instances when a file path is hard coded')
+    end
+
+    context 'when file path is set by a child class' do
+      it 'should return [] when file is empty' do
+        child_one = Class.new(provider_class) do
+          def self.file_path
+            emptyfile
+          end
+        end
+        child_one.stubs(:file_path).returns(emptyfile)
+        child_one.instances.should == []
+      end
+      it 'should override the provider instances file_path' do
+        child_two = Class.new(provider_class) do
+          def self.file_path
+            '/some/file/path'
+          end
+        end
+        resource = Puppet::Type::Ini_setting.new(common_params)
+        provider = child_two.new(resource)
+        provider.file_path.should == '/some/file/path'
+      end
+      context 'when file has contecnts' do
+        let(:orig_content) {
+          <<-EOS
+# This is a comment
+[section1]
+; This is also a comment
+foo=foovalue
+
+bar = barvalue
+master = true
+[section2]
+
+foo= foovalue2
+baz=bazvalue
+url = http://192.168.1.1:8080
+[section:sub]
+subby=bar
+    #another comment
+ ; yet another comment
+          EOS
+        }
+
+        it 'should be able to parse the results' do
+          child_three = Class.new(provider_class) do
+            def self.file_path
+              '/some/file/path'
+            end
+          end
+          child_three.stubs(:file_path).returns(tmpfile)
+          child_three.instances.size == 7
+          expected_array = [
+            {:name => 'section1/foo', :value => 'foovalue' },
+            {:name => 'section1/bar', :value => 'barvalue' },
+            {:name => 'section1/master', :value => 'true' },
+            {:name => 'section2/foo', :value => 'foovalue2' },
+            {:name => 'section2/baz', :value => 'bazvalue' },
+            {:name => 'section2/url', :value => 'http://192.168.1.1:8080' },
+            {:name => 'section:sub/subby', :value => 'bar' }
+          ]
+          real_array = []
+          ensure_array = []
+          child_three.instances.each do |x|
+            prop_hash    = x.instance_variable_get(:@property_hash)
+            ensure_value = prop_hash.delete(:ensure)
+            ensure_array.push(ensure_value)
+            real_array.push(prop_hash)
+          end
+          ensure_array.uniq.should == [:present]
+          ((real_array - expected_array) && (expected_array - real_array)).should == []
+
+        end
+
+      end
+
+    end
+
+  end
+
   context "when ensuring that a setting is present" do
     let(:orig_content) {
       <<-EOS
@@ -744,6 +834,7 @@ subby=bar
 # foo = foovalue
 ;bar=barvalue
 blah = blah
+#baz=
       EOS
     }
 
@@ -764,6 +855,7 @@ blah = blah
 foo = foo3
 ;bar=barvalue
 blah = blah
+#baz=
       EOS
       )
     end
@@ -784,6 +876,7 @@ blah = blah
 # foo = foovalue
 ;bar=barvalue
 blah = blah
+#baz=
       EOS
       )
     end
@@ -805,8 +898,71 @@ blah = blah
 ;bar=barvalue
 bar=bar3
 blah = blah
+#baz=
       EOS
       )
+    end
+
+    it "should add a new setting below an empty commented version of that setting" do
+      resource = Puppet::Type::Ini_setting.new(
+          common_params.merge(:section => 'section2', :setting => 'baz', :value => 'bazvalue'))
+      provider = described_class.new(resource)
+      provider.exists?.should be_false
+      provider.create
+      validate_file(<<-EOS
+     [section1]
+     # foo=foovalue
+     bar=barvalue
+     foo = foovalue2
+
+[section2]
+# foo = foovalue
+;bar=barvalue
+blah = blah
+#baz=
+baz=bazvalue
+      EOS
+      )
+    end
+
+    context 'when a section only contains comments' do
+     let(:orig_content) {
+      <<-EOS
+[section1]
+# foo=foovalue
+# bar=bar2
+EOS
+    }
+      it 'should be able to add a new setting when a section contains only comments' do
+        resource = Puppet::Type::Ini_setting.new(
+          common_params.merge(:section => 'section1', :setting => 'foo', :value => 'foovalue2')
+        )
+        provider = described_class.new(resource)
+        provider.exists?.should be_false
+        provider.create
+        validate_file(<<-EOS
+[section1]
+# foo=foovalue
+foo=foovalue2
+# bar=bar2
+        EOS
+        )
+      end
+      it 'should be able to add a new setting when it matches a commented out line other than the first one' do
+        resource = Puppet::Type::Ini_setting.new(
+          common_params.merge(:section => 'section1', :setting => 'bar', :value => 'barvalue2')
+        )
+        provider = described_class.new(resource)
+        provider.exists?.should be_false
+        provider.create
+        validate_file(<<-EOS
+[section1]
+# foo=foovalue
+# bar=bar2
+bar=barvalue2
+        EOS
+        )
+      end
     end
 
   end
