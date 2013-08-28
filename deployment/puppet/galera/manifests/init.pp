@@ -240,7 +240,7 @@ class galera (
   }
   exec { "force-restart-corosync":
     command => "/usr/bin/killall -9 corosync ; /etc/init.d/corosync restart ; /bin/sleep 10",
-    before  => Service['mysql']
+    before  => Exec[wait-initial-sync],
   }
 
   exec { "wait-for-synced-state":
