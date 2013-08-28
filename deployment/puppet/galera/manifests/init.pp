@@ -165,6 +165,7 @@ class galera (
     require    => [Package["MySQL-server", "galera"]],
     provider   => "pacemaker",
   }
+    
     Package['pacemaker'] -> File['mysql-wss']
       Cs_resource["$res_name"] ->
         Cs_commit["$res_name"] ->
@@ -236,6 +237,10 @@ class galera (
 
   exec { "rm-init-file":
     command => "/bin/rm /tmp/wsrep-init-file",
+  }
+  exec { "force-restart-corosync":
+    command => "/usr/bin/killall -9 corosync ; /etc/init.d/corosync restart ; /bin/sleep 10",
+    before  => Service['mysql']
   }
 
   exec { "wait-for-synced-state":
