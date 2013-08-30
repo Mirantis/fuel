@@ -3,9 +3,9 @@
 # installs the ruby bindings for mysql
 #
 # Parameters:
-#   [*ensure*]       - ensure state for package.
-#                        can be specified as version.
-#   [*package_name*] - name of package
+#   [*package_ensure*]   - Ensure state for package. Can be specified as version.
+#   [*package_name*]     - name of package
+#   [*package_provider*] - The provider to use to install the package
 #
 # Actions:
 #
@@ -14,14 +14,14 @@
 # Sample Usage:
 #
 class mysql::ruby (
-  $package_name     = $mysql::params::ruby_package_name,
-  $package_provider = $mysql::params::ruby_package_provider,
-  $package_ensure   = 'present'
-) inherits mysql::params {
+  $package_ensure   = 'present',
+  $package_name     = $mysql::ruby_package_name,
+  $package_provider = $mysql::ruby_package_provider
+) inherits mysql {
 
   package{ 'ruby_mysql':
-    name     => $package_name,
     ensure   => $package_ensure,
+    name     => $package_name,
     provider => $package_provider,
   }
 
