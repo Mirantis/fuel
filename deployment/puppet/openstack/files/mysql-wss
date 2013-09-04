@@ -46,6 +46,9 @@
 #   OCF_RESKEY_evict_outdated_slaves
 #   OCF_RESKEY_reader_attribute
 
+echo "script was invoked" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
 #######################################################################
 # Initialization:
 
@@ -65,6 +68,9 @@ OCF_RESKEY_group_default="_mysql"
 OCF_RESKEY_log_default="/var/log/mysqld.log"
 OCF_RESKEY_pid_default="/var/mysql/mysqld.pid"
 OCF_RESKEY_socket_default="/var/run/mysql/mysql.sock"
+echo "openbsd - ok" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
 else
 OCF_RESKEY_binary_default="/usr/bin/mysqld_safe"
 OCF_RESKEY_config_default="/etc/my.cnf"
@@ -74,6 +80,7 @@ OCF_RESKEY_group_default="mysql"
 OCF_RESKEY_log_default="/var/log/mysqld.log"
 OCF_RESKEY_pid_default="/var/run/mysql/mysqld.pid"
 OCF_RESKEY_socket_default="/var/lib/mysql/mysql.sock"
+
 fi
 OCF_RESKEY_client_binary_default="mysql"
 OCF_RESKEY_test_user_default="root"
@@ -149,10 +156,16 @@ The 'promote' operation makes this mysql server run as master
 The 'demote' operation makes this mysql server run as slave
 The 'validate-all' operation reports whether the parameters are valid
 
+echo "ne peredal parametry" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
 UEND
 }
 
 meta_data() {
+echo "metu sozdal" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
    cat <<END
 <?xml version="1.0"?>
 <!DOCTYPE resource-agent SYSTEM "ra-api-1.dtd">
@@ -381,6 +394,9 @@ END
 # Convenience functions
 
 set_read_only() {
+echo "set read only" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Sets or unsets read-only mode. Accepts one boolean as its
     # optional argument. If invoked without any arguments, defaults to
     # enabling read only mode. Should only be set in master/slave
@@ -398,6 +414,9 @@ set_read_only() {
 }
 
 get_read_only() {
+echo "get read only" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Check if read-only is set
     local read_only_state
 
@@ -412,6 +431,10 @@ get_read_only() {
 }
 
 is_slave() {
+
+echo "slave" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Determine whether the machine is currently running as a MySQL
     # slave, as determined per SHOW SLAVE STATUS. Returns 1 if SHOW
     # SLAVE STATUS creates an empty result set, 0 otherwise.
@@ -444,11 +467,17 @@ is_slave() {
 }
 
 parse_slave_info() {
+echo "parse slave info" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Extracts field $1 from result of "SHOW SLAVE STATUS\G" from file $2
     sed -ne "s/^.* $1: \(.*\)$/\1/p" < $2
 }
 
 get_slave_info() {
+echo "get slave info" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Warning: this sets $tmpfile and LEAVE this file! You must delete it after use!
     local mysql_options
             
@@ -484,6 +513,10 @@ get_slave_info() {
 }
 
 check_slave() {
+
+echo "check slave" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Checks slave status
     local rc new_master
 
@@ -594,6 +627,9 @@ check_slave() {
 }
 
 set_master() {
+echo "set master" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     local new_master master_log_file master_log_pos
     local master_params
 
@@ -632,6 +668,9 @@ set_master() {
 }
 
 unset_master(){
+echo "unset master" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     # Instructs the MySQL server to stop replicating from a master
     # host.
 
@@ -715,6 +754,8 @@ unset_master(){
 
 # Start replication as slave
 start_slave() {
+echo "start slave" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
 
     ocf_run $MYSQL $MYSQL_OPTIONS_REPL \
         -e "START SLAVE"
@@ -722,6 +763,9 @@ start_slave() {
 
 # Set the attribute controlling the readers VIP
 set_reader_attr() {
+echo "set reader attr" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     local curr_attr_value
 
     curr_attr_value=$(get_reader_attr)
@@ -734,6 +778,9 @@ set_reader_attr() {
 
 # get the attribute controlling the readers VIP
 get_reader_attr() {
+echo "get reader attr" >> /tmp/mysql.txt.out
+echo $@ >> /tmp/mysql.txt.out
+
     local attr_value
     local rc
 
@@ -748,12 +795,21 @@ get_reader_attr() {
 }
 
 rebuild_cluster() {
+  echo "start rebuild procedure" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
   if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] && [ ! -f /tmp/wsrep-init-file ]; then
         mysql_status info
         if [ $? = $OCF_SUCCESS ] ; then
+          echo "ocf success" >> /tmp/mysql.txt.out
+	  echo $@ >> /tmp/mysql.txt.out
+
             WSREP_EPOCH=$(echo 'show status;' | mysql -u root | grep wsrep_protocol_version | awk '{print $2}')
             WSREP_STATE=$(echo 'show status;' | mysql -u root | grep wsrep_cluster_status | awk '{print $2}')
             if [ "$WSREP_STATE" = 'non-Primary' ]; then
+              echo "non primary" >> /tmp/mysql.txt.out
+	      echo $@ >> /tmp/mysql.txt.out
+
                 WINNER_NODE=$(hostname)
                 MAX_EPOCH=$WSREP_EPOCH
                 crm_attribute -t crm_config --node $(hostname) --name mysqlepoch --update $WSREP_EPOCH
@@ -769,6 +825,9 @@ rebuild_cluster() {
                 # ... and if nobody did:
                 CRM_ONLINE_NODES=( $(crm node list | grep -v \(offline\) | sed 's/\://g') )
                 for node in "${CRM_ONLINE_NODES[@]}" ; do
+                  echo "for crm online nodes" >> /tmp/mysql.txt.out
+		  echo $@ >> /tmp/mysql.txt.out
+
                     CUR_EPOCH=$(crm_attribute -t crm_config --node $node --name mysqlepoch --query 2> /dev/null | awk -F\= '{print $4}')
                     if [ -z "$CUR_EPOCH" ] ; then
                       echo "Skipping comparison with node $node"
@@ -779,8 +838,14 @@ rebuild_cluster() {
                         fi
                     fi
                 done
-                if [ "$RAISED_MASTER" != '1' ]; then 
+                if [ "$RAISED_MASTER" != '1' ]; then
+                  echo "if raised master win" >> /tmp/mysql.txt.out
+		  echo $@ >> /tmp/mysql.txt.out
+ 
                    if [ "$WINNER_NODE" = "$(hostname)" ] ; then
+			  echo "if win node" >> /tmp/mysql.txt.out
+			  echo $@ >> /tmp/mysql.txt.out
+
                        crm_attribute -t crm_config --name mysqlmaster --update 1
                        ocf_log info "Assuming current node as a new master..."
                        mysql_stop
@@ -799,10 +864,15 @@ rebuild_cluster() {
             fi
         fi
     fi
+  echo "end of rebuilding" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
 }
 
 # Stores data for MASTER STATUS from MySQL
 update_data_master_status() {
+  echo "update data master status" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
 
    master_status_file="${HA_RSCTMP}/master_status.${OCF_RESOURCE_INSTANCE}"
 
@@ -815,6 +885,9 @@ update_data_master_status() {
 # Arguments:
 #  $1 The value to get.
 get_master_status() {
+  echo "get master status" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
    awk -v var="$1" '$1 == var ":" {print substr($0, index($0, ":") + 2)}' "$master_status_file"
 }
 
@@ -826,6 +899,9 @@ get_master_status() {
 # The ${INSTANCE_ATTR_NAME}_MYSQL_MASTER_IP is the IP address that will be used for the 
 # change master to command.
 get_local_ip() {
+  echo "get local ip" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
    local IP
    IP=`$CRM_ATTR -l forever -n ${INSTANCE_ATTR_NAME}_mysql_master_IP -q -G`
    if [ ! $? -eq 0 ]; then
@@ -840,6 +916,9 @@ get_local_ip() {
 # Functions invoked by resource manager actions
 
 mysql_validate() {
+  echo "mysql validate" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
     check_binary $OCF_RESKEY_binary
     check_binary  $OCF_RESKEY_client_binary
 
@@ -869,6 +948,9 @@ mysql_validate() {
 }
 
 mysql_status() {
+  echo "mysql status" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
     if [ ! -e $OCF_RESKEY_pid ]; then
         ocf_log $1 "MySQL is not running"
         return $OCF_NOT_RUNNING;
@@ -891,6 +973,9 @@ mysql_status() {
 }
 
 mysql_monitor() {
+  echo "mysql monitor" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
     local rc
     local status_loglevel="err"
 
@@ -914,6 +999,9 @@ mysql_monitor() {
     if [ $OCF_CHECK_LEVEL -gt 0 -a -n "$OCF_RESKEY_test_table" ]; then
         # Check if this instance is configured as a slave, and if so
         # check slave status
+  echo "if ocf check level" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
         if is_slave; then
             check_slave
         fi
@@ -930,15 +1018,24 @@ mysql_monitor() {
     fi
 
     if ocf_is_ms && ! get_read_only; then
+  echo "running master" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
         ocf_log debug "MySQL monitor succeeded (master)";
         return $OCF_RUNNING_MASTER
     else
+  echo "ocf success" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
         ocf_log debug "MySQL monitor succeeded";
         return $OCF_SUCCESS
     fi
 }
 
 mysql_start() {
+  echo "start mysql" >> /tmp/mysql.txt.out
+  echo $@ >> /tmp/mysql.txt.out
+
     if ocf_is_ms; then
         # Initialize the ReaderVIP attribute, monitor will enable it
         set_reader_attr 0
@@ -946,6 +1043,9 @@ mysql_start() {
 
     mysql_status info
     if [ $? = $OCF_SUCCESS ]; then
+      echo "if mysql status and already running" >> /tmp/mysql.txt.out
+      echo $@ >> /tmp/mysql.txt.out
+
         ocf_log info "MySQL already running"
         return $OCF_SUCCESS
     fi
@@ -960,6 +1060,9 @@ mysql_start() {
         $MYSQL_BINDIR/mysql_install_db --datadir=$OCF_RESKEY_datadir
         rc=$?
         if [ $rc -ne 0 ] ; then
+    	    echo "init failed" >> /tmp/mysql.txt.out
+    	    echo $@ >> /tmp/mysql.txt.out
+
             ocf_log err "Initialization failed: $rc";
             exit $OCF_ERR_GENERIC
         fi
@@ -969,6 +1072,9 @@ mysql_start() {
     pid_dir=`dirname $OCF_RESKEY_pid`
     if [ ! -d $pid_dir ] ; then
         ocf_log info "Creating PID dir: $pid_dir"
+	echo "creating pid dir" >> /tmp/mysql.txt.out
+    	echo $@ >> /tmp/mysql.txt.out
+
         mkdir -p $pid_dir
         chown $OCF_RESKEY_user:$OCF_RESKEY_group $pid_dir
     fi
@@ -976,6 +1082,9 @@ mysql_start() {
     socket_dir=`dirname $OCF_RESKEY_socket`
     if [ ! -d $socket_dir ] ; then
         ocf_log info "Creating socket dir: $socket_dir"
+	echo "creating socket dir" >> /tmp/mysql.txt.out
+        echo $@ >> /tmp/mysql.txt.out
+
         mkdir -p $socket_dir
         chown $OCF_RESKEY_user:$OCF_RESKEY_group $socket_dir
     fi
@@ -986,6 +1095,9 @@ mysql_start() {
     for dir in $pid_dir $socket_dir; do
         if ! su -s /bin/sh - $OCF_RESKEY_user -c "test -w $dir"; then
             ocf_log err "Directory $dir is not writable by $OCF_RESKEY_user"
+    	    echo "directory is not  writbale" >> /tmp/mysql.txt.out
+    	    echo $@ >> /tmp/mysql.txt.out
+
             exit $OCF_ERR_PERM;
         fi
     done
@@ -1006,17 +1118,25 @@ mysql_start() {
       killall -s KILL mysqld mysqld_safe
       sleep 2
       if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] ; then
+      echo "mysql primary init" >> /tmp/mysql.txt.out
+      echo $@ >> /tmp/mysql.txt.out
+
         ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
         --datadir=$OCF_RESKEY_datadir \
         --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
         --init-file=/tmp/wsrep-init-file $mysql_extra_params >/dev/null 2>&1 &
+      echo "start initial master procedure" >> /tmp/mysql.txt.out
       else
+      echo "else mysql primary init" >> /tmp/mysql.txt.out
+      echo $@ >> /tmp/mysql.txt.out
+
         ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
         --datadir=$OCF_RESKEY_datadir \
         --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
         --init-file=/tmp/wsrep-init-file --wsrep-cluster-address=gcomm:// $mysql_extra_params >/dev/null 2>&1 &
+      echo "start emptycluster procedure" >> /tmp/mysql.txt.out
       fi
     else
       ${OCF_RESKEY_binary} \
@@ -1024,6 +1144,7 @@ mysql_start() {
       --datadir=$OCF_RESKEY_datadir \
       --user=$OCF_RESKEY_user $OCF_RESKEY_additional_parameters \
       $mysql_extra_params >/dev/null 2>&1 &
+      echo "start defaultcluster procedure" >> /tmp/mysql.txt.out
     fi
     rc=$?
 
@@ -1036,6 +1157,9 @@ mysql_start() {
     # Let the CRM/LRM time us out if required.
     start_wait=1
     while [ $start_wait = 1 ]; do
+    echo "spin w8ing for server up" >> /tmp/mysql.txt.out
+    echo $@ >> /tmp/mysql.txt.out
+
         mysql_status info
         rc=$?
         if [ $rc = $OCF_SUCCESS ]; then
@@ -1053,6 +1177,9 @@ mysql_start() {
         # slave by default. At this point we don't know if the CRM has
         # already promoted a master. So, we simply start in read only
         # mode.
+    echo "ocf is ms" >> /tmp/mysql.txt.out
+    echo $@ >> /tmp/mysql.txt.out
+
         set_read_only on
 
         # Now, let's see whether there is a master. We might be a new
@@ -1093,11 +1220,18 @@ mysql_start() {
 
     ocf_log info "MySQL started"
     sleep 10
+    echo "mysql started" >> /tmp/mysql.txt.out
+    echo $@ >> /tmp/mysql.txt.out
+    
     rebuild_cluster
     return $OCF_SUCCESS
 }
 
 mysql_stop() {
+
+    echo "stop mysql" >> /tmp/mysql.txt.out
+    echo $@ >> /tmp/mysql.txt.out
+
 
     if ocf_is_ms; then
         # clear preference for becoming master
