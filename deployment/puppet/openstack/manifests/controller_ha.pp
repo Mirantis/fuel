@@ -282,7 +282,7 @@ class openstack::controller_ha (
       glance_db_password      => $glance_db_password,
       glance_user_password    => $glance_user_password,
       glance_api_servers      => $glance_api_servers,
-      glance_image_cache_max_size = > $glance_image_cache_max_size,
+      glance_image_cache_max_size => $glance_image_cache_max_size,
       nova_db_password        => $nova_db_password,
       nova_user_password      => $nova_user_password,
       queue_provider          => $queue_provider,
