@@ -229,19 +229,6 @@ if !$debug
         controller_node      => $controller_node_address,
       }
 
-
-      # glance_image is currently broken in fuel
-
-      # glance_image {'testvm':
-      #   ensure           => present,
-      #   name             => "Cirros testvm",
-      #   is_public        => 'yes',
-      #   container_format => 'ovf',
-      #   disk_format      => 'raw',
-      #   source           => '/opt/vm/cirros-0.3.0-x86_64-disk.img',
-      #   require          => Class[glance::api],
-      # }
-
       class { 'openstack::img::cirros':
         os_username               => shellescape($access_hash[user]),
         os_password               => shellescape($access_hash[password]),

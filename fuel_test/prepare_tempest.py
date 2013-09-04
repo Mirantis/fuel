@@ -5,9 +5,9 @@ from quantumclient.v2_0 import client as q_client
 import glanceclient
 import subprocess
 
-CIRROS_IMAGE = 'cirros-0.3.0-x86_64-disk.img'
-CIRROS_IMAGE_URL = 'http://srv08-srt.srt.mirantis.net/' + 'cirros-0.3.0-x86_64-disk.img'
-IMAGE_NAME = 'cirros_0.3.0'
+CIRROS_IMAGE = 'cirros-0.3.1-x86_64-disk.img'
+CIRROS_IMAGE_URL = 'http://srv08-srt.srt.mirantis.net/' + 'cirros-0.3.1-x86_64-disk.img'
+IMAGE_NAME = 'cirros_0.3.1'
 
 here = lambda *x: os.path.join(os.path.abspath(os.path.dirname(__file__)), *x)
 REPOSITORY_ROOT = here('..')
