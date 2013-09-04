@@ -3,7 +3,7 @@ MySQL-client-wsrep-5.5.28_wsrep_23.7-12.x86_64.rpm
 MySQL-python-1.2.3-0.3.c1.2.el6.x86_64.rpm
 MySQL-server-wsrep-5.5.28_wsrep_23.7-12.x86_64.rpm
 MySQL-shared-wsrep-5.5.28_wsrep_23.7-12.x86_64.rpm
-cirros-testvm-0.3.0-3.x86_64.rpm
+cirros-testvm-0.3.1-2.x86_64.rpm
 crmsh-1.2.5-55.2.x86_64.rpm
 c-ares19-1.9.1-4.el6.3.x86_64.rpm
 erlang-R14B-04.8.el6.x86_64.rpm
