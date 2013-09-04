@@ -14,10 +14,10 @@
 #
 # Parameters:
 #
-#   $servers = [ '0.debian.pool.ntp.org iburst',
-#                '1.debian.pool.ntp.org iburst',
-#                '2.debian.pool.ntp.org iburst',
-#                '3.debian.pool.ntp.org iburst', ]
+#   $servers = [ '0.debian.pool.ntp.org',
+#                '1.debian.pool.ntp.org',
+#                '2.debian.pool.ntp.org',
+#                '3.debian.pool.ntp.org', ]
 #
 #   $restrict = true
 #     Whether to restrict ntp daemons from allowing others to use as a server.
@@ -45,7 +45,7 @@
 #   }
 #
 # [Remember: No empty lines between comments and class definition]
-class ntp($servers=undef,
+class ntp($servers='UNSET',
           $ensure='running',
           $enable=true,
           $restrict=true,
@@ -72,11 +72,11 @@ class ntp($servers=undef,
       $svc_name   = 'ntp'
       $config     = '/etc/ntp.conf'
       $config_tpl = 'ntp.conf.debian.erb'
-      if (!$servers) {
-        $servers_real = [ '0.debian.pool.ntp.org iburst',
-                          '1.debian.pool.ntp.org iburst',
-                          '2.debian.pool.ntp.org iburst',
-                          '3.debian.pool.ntp.org iburst', ]
+      if ($servers == 'UNSET') {
+        $servers_real = [ '0.debian.pool.ntp.org',
+                          '1.debian.pool.ntp.org',
+                          '2.debian.pool.ntp.org',
+                          '3.debian.pool.ntp.org', ]
       } else {
         $servers_real = $servers
       }
@@ -87,7 +87,7 @@ class ntp($servers=undef,
       $svc_name   = 'ntpd'
       $config     = '/etc/ntp.conf'
       $config_tpl = 'ntp.conf.el.erb'
-      if (!$servers) {
+      if ($servers == 'UNSET') {
         $servers_real = [ '0.centos.pool.ntp.org',
                           '1.centos.pool.ntp.org',
                           '2.centos.pool.ntp.org', ]
@@ -101,7 +101,7 @@ class ntp($servers=undef,
       $svc_name   = 'ntp'
       $config     = '/etc/ntp.conf'
       $config_tpl = 'ntp.conf.suse.erb'
-      if (!$servers) {
+      if ($servers == 'UNSET') {
         $servers_real = [ '0.opensuse.pool.ntp.org',
                           '1.opensuse.pool.ntp.org',
                           '2.opensuse.pool.ntp.org',
@@ -116,11 +116,11 @@ class ntp($servers=undef,
       $svc_name   = 'ntpd'
       $config     = '/etc/ntp.conf'
       $config_tpl = 'ntp.conf.freebsd.erb'
-      if (!$servers) {
-        $servers_real = [ '0.freebsd.pool.ntp.org iburst maxpoll 9',
-                          '1.freebsd.pool.ntp.org iburst maxpoll 9',
-                          '2.freebsd.pool.ntp.org iburst maxpoll 9',
-                          '3.freebsd.pool.ntp.org iburst maxpoll 9', ]
+      if ($servers == 'UNSET') {
+        $servers_real = [ '0.freebsd.pool.ntp.org',
+                          '1.freebsd.pool.ntp.org',
+                          '2.freebsd.pool.ntp.org',
+                          '3.freebsd.pool.ntp.org', ]
       } else {
         $servers_real = $servers
       }
@@ -134,7 +134,7 @@ class ntp($servers=undef,
         $config = '/etc/ntp.conf'
         $config_tpl = 'ntp.conf.archlinux.erb'
 
-        if (!$servers) {
+        if ($servers == 'UNSET') {
           $servers_real = [ '0.pool.ntp.org',
                             '1.pool.ntp.org',
                             '2.pool.ntp.org' ]
