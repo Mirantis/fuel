@@ -26,14 +26,13 @@
 ##########################################################################
 # Initialization:
 
+OCF_RESKEY_conffile_default="/etc/haproxy/haproxy.cfg"
+OCF_RESKEY_pidfile_default="/var/run/haproxy.pid"
+
+: ${OCF_RESKEY_conffile=${OCF_RESKEY_conffile_default}}
+: ${OCF_RESKEY_pidfile=${OCF_RESKEY_pidfile_default}}
 : ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/resource.d/heartbeat}
 . ${OCF_FUNCTIONS_DIR}/.ocf-shellfuncs
-#Default
-PIDFILE="/var/run/haproxy.pid"
-CONF_FILE="/etc/haproxy/haproxy.cfg"
-
-
-
 
 USAGE="Usage: $0 {start|stop|status|monitor|validate-all|meta-data}";
 
@@ -104,18 +103,19 @@ get_pid_and_conf_file()
 	if [ -n "$OCF_RESKEY_conffile" ]; then
 		CONF_FILE=$OCF_RESKEY_conffile
 	else
-		CONF_FILE="/etc/haproxy/haproxy.cfg"
+		CONF_FILE=${OCF_RESKEY_conffile_default}
 	fi
 
-	PIDFILE="`grep -v \"#\" ${CONF_FILE} | grep \"pidfile\" | sed 's/^[ \t]*pidfile[ \t]*//'`"
-	if [ "${PIDFILE}" = '' ]; then
-		PIDFILE="/var/run/haproxy.pid"
+	if [ -n "${OCF_RESKEY_pidfile}" ]; then
+		PIDFILE="`grep -v \"#\" ${CONF_FILE} | grep \"pidfile\" | sed 's/^[ \t]*pidfile[ \t]*//'`"
+	else
+		PIDFILE=${OCF_RESKEY_pidfile_default}
 	fi
 }
 
 haproxy_status()
 {
-	if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
+	if [ -n "$OCF_RESKEY_pidfile" -a -f "$PIDFILE" ]; then
 		# haproxy is probably running
 		PID=`cat $PIDFILE`
 		if [ -n "$PID" ]; then
@@ -254,3 +254,4 @@ case $1 in
 		exit $OCF_ERR_UNIMPLEMENTED
 		;;
 esac
+2
