@@ -18,22 +18,20 @@
 #
 # OCF parameters:
 # OCF_RESKEY_binpath
-# OCF_RESKEY_conffile
 # OCF_RESKEY_extraconf
 #
 # Note:This RA requires that the haproxy config files has a "pidfile"
 # entry so that it is able to act on the correct process
 ##########################################################################
 # Initialization:
+#defualt
+OCF_RESKEY_conffile_default="/etc/haproxy/haproxy.cfg"
+OCF_RESKEY_pidfile_default="/var/run/haproxy.pid"
 
+: ${CONF_FILE=${OCF_RESKEY_conffile_default}}
+: ${PID_FILE=${OCF_RESKEY_pidfile_default}}
 : ${OCF_FUNCTIONS_DIR=${OCF_ROOT}/resource.d/heartbeat}
 . ${OCF_FUNCTIONS_DIR}/.ocf-shellfuncs
-#Default
-PIDFILE="/var/run/haproxy.pid"
-CONF_FILE="/etc/haproxy/haproxy.cfg"
-
-
-
 
 USAGE="Usage: $0 {start|stop|status|monitor|validate-all|meta-data}";
 
