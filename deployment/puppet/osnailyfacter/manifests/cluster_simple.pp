@@ -33,6 +33,7 @@ $swift_hash           = parsejson($::swift)
 $cinder_hash          = parsejson($::cinder)
 $access_hash          = parsejson($::access)
 $nodes_hash           = parsejson($::nodes)
+$role_list            = parsejson($roles)
 $vlan_start           = $novanetwork_params['vlan_start']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 $network_size         = $novanetwork_params['network_size']
@@ -62,7 +63,7 @@ else {
   $floating_ips_range = parsejson($floating_network_range)
 }
 
-$controller = filter_nodes($nodes_hash,'role','controller')
+$controller = filter_nodes($nodes_hash,'roles','controller', true)
 
 $controller_node_address = $controller[0]['internal_address']
 $controller_node_public = $controller[0]['public_address']
@@ -75,10 +76,10 @@ if ($cinder) {
     $is_cinder_node = true
   } elsif (member($cinder_nodes_array,$internal_address)) {
     $is_cinder_node = true
-  } elsif ($node[0]['role'] =~ /controller/ ) {
+  } elsif ($node[0]['roles'] =~ /controller/ ) {
     $is_cinder_node = member($cinder_nodes_array,'controller')
   } else {
-    $is_cinder_node = member($cinder_nodes_array,$node[0]['role'])
+    $is_cinder_node = member($cinder_nodes_array,$node[0]['roles'])
   }
 } else {
   $is_cinder_node = false
@@ -113,8 +114,7 @@ if !$debug
  $debug = 'false'
 }
 
-  case $role {
-    "controller" : {
+if has_role($role_list, "controller") {
       include osnailyfacter::test_controller
 
       class { 'openstack::controller':
@@ -217,7 +217,6 @@ if !$debug
     }
   }
 
-
       class { 'openstack::auth_file':
         admin_user           => $access_hash[user],
         admin_password       => $access_hash[password],
@@ -259,9 +258,9 @@ if !$debug
       }
 
       Class[glance::api]        -> Class[openstack::img::cirros]
-    }
-
-    "compute" : {
+}
+    
+if has_role($role_list, "compute") {
       include osnailyfacter::test_compute
 
       class { 'openstack::compute':
@@ -317,7 +316,7 @@ if !$debug
       nova_config { 'DEFAULT/compute_scheduler_driver': value => $compute_scheduler_driver }
     }
 
-    "cinder" : {
+if has_role($role_list, "cinder") {
       include keystone::python
       package { 'python-amqp':
         ensure => present
@@ -345,5 +344,5 @@ if !$debug
         use_syslog           => true,
       }
    }
-  }
+
 }
