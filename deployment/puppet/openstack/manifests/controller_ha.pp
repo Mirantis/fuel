@@ -137,7 +137,7 @@ class openstack::controller_ha (
    $ha_provider             = "pacemaker",
    $create_networks         = true,
    $quantum_metadata_proxy_shared_secret = 'shared_secret',
-   $use_unicast_corosync    = true,
+   $use_unicast_corosync    = false,
    $ha_mode                 = true,
  ) {
 
