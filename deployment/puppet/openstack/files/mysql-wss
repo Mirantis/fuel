@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 #
 #
 # MySQL
@@ -65,7 +65,6 @@ OCF_RESKEY_group_default="_mysql"
 OCF_RESKEY_log_default="/var/log/mysqld.log"
 OCF_RESKEY_pid_default="/var/mysql/mysqld.pid"
 OCF_RESKEY_socket_default="/var/run/mysql/mysql.sock"
-
 else
 OCF_RESKEY_binary_default="/usr/bin/mysqld_safe"
 OCF_RESKEY_config_default="/etc/my.cnf"
@@ -75,7 +74,6 @@ OCF_RESKEY_group_default="mysql"
 OCF_RESKEY_log_default="/var/log/mysqld.log"
 OCF_RESKEY_pid_default="/var/run/mysql/mysqld.pid"
 OCF_RESKEY_socket_default="/var/lib/mysql/mysql.sock"
-
 fi
 OCF_RESKEY_client_binary_default="mysql"
 OCF_RESKEY_test_user_default="root"
@@ -383,7 +381,6 @@ END
 # Convenience functions
 
 set_read_only() {
-
     # Sets or unsets read-only mode. Accepts one boolean as its
     # optional argument. If invoked without any arguments, defaults to
     # enabling read only mode. Should only be set in master/slave
@@ -401,7 +398,6 @@ set_read_only() {
 }
 
 get_read_only() {
-
     # Check if read-only is set
     local read_only_state
 
@@ -416,8 +412,6 @@ get_read_only() {
 }
 
 is_slave() {
-
-
     # Determine whether the machine is currently running as a MySQL
     # slave, as determined per SHOW SLAVE STATUS. Returns 1 if SHOW
     # SLAVE STATUS creates an empty result set, 0 otherwise.
@@ -450,13 +444,11 @@ is_slave() {
 }
 
 parse_slave_info() {
-
     # Extracts field $1 from result of "SHOW SLAVE STATUS\G" from file $2
     sed -ne "s/^.* $1: \(.*\)$/\1/p" < $2
 }
 
 get_slave_info() {
-
     # Warning: this sets $tmpfile and LEAVE this file! You must delete it after use!
     local mysql_options
             
@@ -492,7 +484,6 @@ get_slave_info() {
 }
 
 check_slave() {
-
     # Checks slave status
     local rc new_master
 
@@ -603,7 +594,6 @@ check_slave() {
 }
 
 set_master() {
-
     local new_master master_log_file master_log_pos
     local master_params
 
@@ -642,7 +632,6 @@ set_master() {
 }
 
 unset_master(){
-
     # Instructs the MySQL server to stop replicating from a master
     # host.
 
@@ -733,7 +722,6 @@ start_slave() {
 
 # Set the attribute controlling the readers VIP
 set_reader_attr() {
-
     local curr_attr_value
 
     curr_attr_value=$(get_reader_attr)
@@ -746,7 +734,6 @@ set_reader_attr() {
 
 # get the attribute controlling the readers VIP
 get_reader_attr() {
-
     local attr_value
     local rc
 
@@ -761,15 +748,12 @@ get_reader_attr() {
 }
 
 rebuild_cluster() {
-
   if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] && [ ! -f /tmp/wsrep-init-file ]; then
         mysql_status info
         if [ $? = $OCF_SUCCESS ] ; then
-
             WSREP_EPOCH=$(echo 'show status;' | mysql -u root | grep wsrep_protocol_version | awk '{print $2}')
             WSREP_STATE=$(echo 'show status;' | mysql -u root | grep wsrep_cluster_status | awk '{print $2}')
             if [ "$WSREP_STATE" = 'non-Primary' ]; then
-
                 WINNER_NODE=$(hostname)
                 MAX_EPOCH=$WSREP_EPOCH
                 crm_attribute -t crm_config --node $(hostname) --name mysqlepoch --update $WSREP_EPOCH
@@ -785,7 +769,6 @@ rebuild_cluster() {
                 # ... and if nobody did:
                 CRM_ONLINE_NODES=( $(crm node list | grep -v \(offline\) | sed 's/\://g') )
                 for node in "${CRM_ONLINE_NODES[@]}" ; do
-
                     CUR_EPOCH=$(crm_attribute -t crm_config --node $node --name mysqlepoch --query 2> /dev/null | awk -F\= '{print $4}')
                     if [ -z "$CUR_EPOCH" ] ; then
                       echo "Skipping comparison with node $node"
@@ -796,10 +779,8 @@ rebuild_cluster() {
                         fi
                     fi
                 done
-                if [ "$RAISED_MASTER" != '1' ]; then
- 
+                if [ "$RAISED_MASTER" != '1' ]; then 
                    if [ "$WINNER_NODE" = "$(hostname)" ] ; then
-
                        crm_attribute -t crm_config --name mysqlmaster --update 1
                        ocf_log info "Assuming current node as a new master..."
                        mysql_stop
@@ -818,7 +799,6 @@ rebuild_cluster() {
             fi
         fi
     fi
-
 }
 
 # Stores data for MASTER STATUS from MySQL
@@ -835,7 +815,6 @@ update_data_master_status() {
 # Arguments:
 #  $1 The value to get.
 get_master_status() {
-
    awk -v var="$1" '$1 == var ":" {print substr($0, index($0, ":") + 2)}' "$master_status_file"
 }
 
@@ -847,7 +826,6 @@ get_master_status() {
 # The ${INSTANCE_ATTR_NAME}_MYSQL_MASTER_IP is the IP address that will be used for the 
 # change master to command.
 get_local_ip() {
-
    local IP
    IP=`$CRM_ATTR -l forever -n ${INSTANCE_ATTR_NAME}_mysql_master_IP -q -G`
    if [ ! $? -eq 0 ]; then
@@ -862,7 +840,6 @@ get_local_ip() {
 # Functions invoked by resource manager actions
 
 mysql_validate() {
-
     check_binary $OCF_RESKEY_binary
     check_binary  $OCF_RESKEY_client_binary
 
@@ -892,7 +869,6 @@ mysql_validate() {
 }
 
 mysql_status() {
-
     if [ ! -e $OCF_RESKEY_pid ]; then
         ocf_log $1 "MySQL is not running"
         return $OCF_NOT_RUNNING;
@@ -915,7 +891,6 @@ mysql_status() {
 }
 
 mysql_monitor() {
-
     local rc
     local status_loglevel="err"
 
@@ -939,7 +914,6 @@ mysql_monitor() {
     if [ $OCF_CHECK_LEVEL -gt 0 -a -n "$OCF_RESKEY_test_table" ]; then
         # Check if this instance is configured as a slave, and if so
         # check slave status
-
         if is_slave; then
             check_slave
         fi
@@ -956,18 +930,15 @@ mysql_monitor() {
     fi
 
     if ocf_is_ms && ! get_read_only; then
-
         ocf_log debug "MySQL monitor succeeded (master)";
         return $OCF_RUNNING_MASTER
     else
-
         ocf_log debug "MySQL monitor succeeded";
         return $OCF_SUCCESS
     fi
 }
 
 mysql_start() {
-
     if ocf_is_ms; then
         # Initialize the ReaderVIP attribute, monitor will enable it
         set_reader_attr 0
@@ -975,7 +946,6 @@ mysql_start() {
 
     mysql_status info
     if [ $? = $OCF_SUCCESS ]; then
-
         ocf_log info "MySQL already running"
         return $OCF_SUCCESS
     fi
@@ -990,7 +960,6 @@ mysql_start() {
         $MYSQL_BINDIR/mysql_install_db --datadir=$OCF_RESKEY_datadir
         rc=$?
         if [ $rc -ne 0 ] ; then
-
             ocf_log err "Initialization failed: $rc";
             exit $OCF_ERR_GENERIC
         fi
@@ -1000,7 +969,6 @@ mysql_start() {
     pid_dir=`dirname $OCF_RESKEY_pid`
     if [ ! -d $pid_dir ] ; then
         ocf_log info "Creating PID dir: $pid_dir"
-
         mkdir -p $pid_dir
         chown $OCF_RESKEY_user:$OCF_RESKEY_group $pid_dir
     fi
@@ -1008,7 +976,6 @@ mysql_start() {
     socket_dir=`dirname $OCF_RESKEY_socket`
     if [ ! -d $socket_dir ] ; then
         ocf_log info "Creating socket dir: $socket_dir"
-
         mkdir -p $socket_dir
         chown $OCF_RESKEY_user:$OCF_RESKEY_group $socket_dir
     fi
@@ -1019,7 +986,6 @@ mysql_start() {
     for dir in $pid_dir $socket_dir; do
         if ! su -s /bin/sh - $OCF_RESKEY_user -c "test -w $dir"; then
             ocf_log err "Directory $dir is not writable by $OCF_RESKEY_user"
-
             exit $OCF_ERR_PERM;
         fi
     done
@@ -1040,7 +1006,6 @@ mysql_start() {
       killall -s KILL mysqld mysqld_safe
       sleep 2
       if [ "$(crm_attribute -t crm_config --name mysqlprimaryinit --query 2> /dev/null | awk -F\= '{print $4}')" = 'done' ] ; then
-
         ${OCF_RESKEY_binary} \
         --pid-file=$OCF_RESKEY_pid \
         --datadir=$OCF_RESKEY_datadir \
@@ -1071,7 +1036,6 @@ mysql_start() {
     # Let the CRM/LRM time us out if required.
     start_wait=1
     while [ $start_wait = 1 ]; do
-
         mysql_status info
         rc=$?
         if [ $rc = $OCF_SUCCESS ]; then
@@ -1089,7 +1053,6 @@ mysql_start() {
         # slave by default. At this point we don't know if the CRM has
         # already promoted a master. So, we simply start in read only
         # mode.
-
         set_read_only on
 
         # Now, let's see whether there is a master. We might be a new
@@ -1130,7 +1093,6 @@ mysql_start() {
 
     ocf_log info "MySQL started"
     sleep 10
-    
     rebuild_cluster
     return $OCF_SUCCESS
 }
