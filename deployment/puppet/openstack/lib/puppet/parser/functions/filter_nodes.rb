@@ -3,7 +3,11 @@ module Puppet::Parser::Functions
     name = args[1]
     value  = args[2]
     args[0].select do |it|
-      it[name] == value
+      if args[3]
+        it[name].include?(value)
+      else
+        it[name] == value
+      end
     end
   end
 end
