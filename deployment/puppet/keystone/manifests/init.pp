@@ -85,7 +85,7 @@ class keystone(
     group   => 'keystone',
     require => File['/etc/keystone'],
     mode    => '0640',
-    require => Package['keystone'],
+    notify  => Service['keystone'],
   }
 
   if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
