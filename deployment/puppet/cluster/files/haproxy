@@ -25,7 +25,7 @@
 # entry so that it is able to act on the correct process
 ##########################################################################
 # Initialization:
-#defualt
+
 OCF_RESKEY_conffile_default="/etc/haproxy/haproxy.cfg"
 OCF_RESKEY_pidfile_default="/var/run/haproxy.pid"
 
@@ -106,15 +106,16 @@ get_pid_and_conf_file()
 		CONF_FILE=${OCF_RESKEY_conffile_default}
 	fi
 
-	PIDFILE="`grep -v \"#\" ${CONF_FILE} | grep \"pidfile\" | sed 's/^[ \t]*pidfile[ \t]*//'`"
-	if [ "${PIDFILE}" = '' ]; then
+	if [ -n "${OCF_RESKEY_pidfile}" ]; then
+		PIDFILE="`grep -v \"#\" ${CONF_FILE} | grep \"pidfile\" | sed 's/^[ \t]*pidfile[ \t]*//'`"
+	else
 		PIDFILE=${OCF_RESKEY_pidfile_default}
 	fi
 }
 
 haproxy_status()
 {
-	if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
+	if [ -n "$OCF_RESKEY_pidfile" -a -f "$PIDFILE" ]; then
 		# haproxy is probably running
 		PID=`cat $PIDFILE`
 		if [ -n "$PID" ]; then
