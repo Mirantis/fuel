@@ -79,13 +79,6 @@ class keystone(
   Keystone_config<||> ~> Exec<| title == 'keystone-manage db_sync'|>
   Package['keystone'] ~> Exec<| title == 'keystone-manage pki_setup'|> ~> Service['keystone']
 
-#  File {
-#    ensure  => present,
-#    owner   => 'keystone',
-#    group   => 'keystone',
-#    mode    => '0644',
-#    require => Package['keystone'],
-#  }
   File {
     ensure  => present,
     owner   => 'keystone',
@@ -162,6 +155,7 @@ class keystone(
         ensure  => present,
         owner   => 'keystone',
         group   => 'keystone',
+        require => File['/etc/keystone'],
         notify  => Service['keystone'],
       }
       User['keystone'] -> File['/etc/keystone']
