@@ -29,16 +29,12 @@ class quantum::agents::ovs (
 
   anchor {'quantum-ovs-agent': }
 
-  case $::osfamily
-  {
-    'Debian':
-      {
+  if $::operatingsystem == 'Ubuntu' {
        file { "/etc/init/quantum-plugin-openvswitch-agent.override":
          replace => "no",
          ensure  => "present",
          content => "manual",
          mode    => 644,
-       }
       }
   }
 
