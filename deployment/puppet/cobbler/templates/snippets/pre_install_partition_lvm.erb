@@ -1,4 +1,4 @@
 #import pmanager
-#set $pm = $pmanager.PManager($getVar("ks_spaces","[]"))
-$pm.eval()
+#set $pm = $pmanager.KickstartPManager($getVar("ks_spaces","[]"))
+#silent $pm.eval()
 $pm.expose()
