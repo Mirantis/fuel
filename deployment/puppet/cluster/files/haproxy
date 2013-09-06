@@ -115,7 +115,7 @@ get_pid_and_conf_file()
 
 haproxy_status()
 {
-	if [ -n "$OCF_RESKEY_pidfile" -a -f "$PIDFILE" ]; then
+	if [ -n "$PIDFILE" -a -f "$PIDFILE" ]; then
 		# haproxy is probably running
 		PID=`cat $PIDFILE`
 		if [ -n "$PID" ]; then
@@ -254,4 +254,3 @@ case $1 in
 		exit $OCF_ERR_UNIMPLEMENTED
 		;;
 esac
-2

@@ -73,7 +73,7 @@ class haproxy (
       false => absent,
     },
     name    => 'haproxy',
-  } 
+  }
 
   if $enable {
     concat { '/etc/haproxy/haproxy.cfg':
