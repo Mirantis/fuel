@@ -16,11 +16,21 @@ class cluster::haproxy (
   $cib_name = "p_haproxy"
 
   cs_shadow { $cib_name: cib => $cib_name }
+
+  if $primary_controller {
   cs_commit { $cib_name: cib => $cib_name } ~> ::Corosync::Cleanup["$cib_name"]
   ::corosync::cleanup { $cib_name: }
-
   Cs_commit[$cib_name] -> ::Corosync::Cleanup[$cib_name]
   Cs_commit[$cib_name] ~> ::Corosync::Cleanup[$cib_name]
+
+  } else {
+  cs_commit { $cib_name: cib => $cib_name } ~> ::Corosync::Clonecleanup["$cib_name"]
+  ::corosync::clonecleanup { $cib_name: }
+  Cs_commit[$cib_name] -> ::Corosync::Clonecleanup[$cib_name]
+  Cs_commit[$cib_name] ~> ::Corosync::Clonecleanup[$cib_name]
+
+  }
+
 
 
   file {'haproxy-ocf':
@@ -73,7 +83,19 @@ class cluster::haproxy (
   } ->
   file { $global_options['chroot']: 
     ensure => directory 
-  } ->
+  } -> 
+  case $::osfamily
+    {
+    'Debian':
+      {
+      file { "/etc/init/haproxy.override":
+      replace => "no",
+      ensure  => "present",
+      content => "manual",
+      mode    => 644,
+      }
+    }
+  }
   service { 'haproxy-init-stopped':
     enable     => false,
     ensure     => stopped,
