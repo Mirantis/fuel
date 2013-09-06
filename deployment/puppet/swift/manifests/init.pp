@@ -47,6 +47,13 @@ class swift(
     ensure  => directory,
     mode    => '0700',
   }
+  file { '/var/lib/glance':
+    ensure => directory,
+    owner  => 'glance',
+    group  => 'glance',
+    mode   => '0775',
+
+  }
 
   file { '/etc/swift':
     ensure => directory,
