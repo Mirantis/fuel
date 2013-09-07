@@ -3,7 +3,19 @@
 #
 
 # todo: process_array
-#def process_array(aa)
+def process_array(aa)
+  rv = []
+  aa.each do |v|
+    if v.is_a? Hash
+      rv.insert(-1, process_hash(v))
+    elsif v.is_a? Array
+      rv.insert(-1, process_array(v))
+    else
+      rv.insert(-1, v)
+    end
+  end
+  return rv
+end
 
 def process_hash(hh)
   rv = {}
@@ -17,9 +29,8 @@ def process_hash(hh)
       end
     elsif v.is_a? Hash
       rv[k] = process_hash(v)
-    #todo:
-    # elsif v.is_a? Array
-    #   rv[k] = process_array(v)
+    elsif v.is_a? Array
+      rv[k] = process_array(v)
     else
       rv[k] = v
     end
