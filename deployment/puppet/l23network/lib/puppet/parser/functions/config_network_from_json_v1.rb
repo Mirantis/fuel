@@ -66,7 +66,8 @@ def sanitize_transformation(trans)
       :skip_existing => true
     }
     when "add-patch" then {
-      :peers => [],
+      :name => "unnamed", # calculated later
+      :peers => [nil, nil],
       :bridges => [],
       :tags => [0, 0],
       :trunks => [],
@@ -74,6 +75,7 @@ def sanitize_transformation(trans)
     else
       raise(Puppet::ParseError, "Unknown transformation: '#{action}'.")
   end
+  # replace defaults to real parameters
   rv[:action] = action
   rv.each do |k,v|
     if trans[k]
@@ -81,7 +83,7 @@ def sanitize_transformation(trans)
     end
   end
   # Check for incorrect parameters
-  if not rv[:name].is_a? String and action != "add-patch"
+  if not rv[:name].is_a? String
     raise(Puppet::ParseError, "Unnamed transformation: '#{action}'.")
   end
   name = rv[:name]
@@ -89,12 +91,14 @@ def sanitize_transformation(trans)
     raise(Puppet::ParseError, "Undefined bridge for transformation '#{action}' with name '#{name}'.")
   end
   if action == "add-patch"
-    if not rv[:bridges].is_a? Array  or  rv[:bridges].size() != 2
-      raise(Puppet::ParseError, "Transformation patch '#{name}' have wrong 'bridges' parameter.")
+    if not rv[:bridges].is_a? Array  and  rv[:bridges].size() != 2
+      raise(Puppet::ParseError, "Transformation patch have wrong 'bridges' parameter.")
     end
-    if not rv[:peers].is_a? Array  or  rv[:peers].size() != 2
+    name = "patch__#{rv[:bridges][0]}__#{rv[:bridges][1]}"
+    if not rv[:peers].is_a? Array  and  rv[:peers].size() != 2
       raise(Puppet::ParseError, "Transformation patch '#{name}' have wrong 'peers' parameter.")
     end
+    rv[:name] = name
   end
   if action == "add-bond"
     if not rv[:interfaces].is_a? Array or rv[:interfaces].size() != 2
@@ -127,7 +131,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       :br      => { :name_of_resource => 'l23network::l2::bridge' },
       :port    => { :name_of_resource => 'l23network::l2::port' },
       :bond    => { :name_of_resource => 'l23network::l2::bond' },
-      #:patch   => { :name_of_resource => 'l23network::l2::path' },
+      :patch   => { :name_of_resource => 'l23network::l2::patch' },
       :ifconfig=> { :name_of_resource => 'l23network::l3::ifconfig' }
     }
     res_factory.each do |k, v|
@@ -152,7 +156,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       end
 
       trans = sanitize_transformation(t)
-
+      #info("t=== #{trans[:name]}")
       resource = res_factory[action][:resource]
       p_resource = Puppet::Parser::Resource.new(
           res_factory[action][:name_of_resource],
