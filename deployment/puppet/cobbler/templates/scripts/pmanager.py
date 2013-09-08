@@ -2,7 +2,6 @@
 
 import json
 import re
-import late_command
 
 class PManager(object):
     def __init__(self, data):
@@ -88,6 +87,12 @@ class PManager(object):
             return 16777216
         return vol["size"]
 
+    def erase_lvm_metadata(self):
+        self.pre("for v in $(vgs | awk '{print $1}'); do "
+                 "vgreduce -ff --removemissing $v; vgremove -ff $v; done")
+        self.pre("for p in $(pvs | grep '\/dev' | awk '{print $1}'); do "
+                 "pvremove -ff -y $p ; done")
+
     def clean(self, disk):
         self.pre("hdparm -z /dev/{0}".format(disk["id"]))
         self.pre("test -e /dev/{0} && dd if=/dev/zero "
@@ -165,19 +170,28 @@ class PManager(object):
                 size = self._getsize(part)
                 tabmount = part["mount"] if part["mount"] != "swap" else "none"
                 tabfstype = self._gettabfstype(part)
-                if size > 0 and size <= 16777216:
+                if size > 0 and size <= 16777216 and part["mount"] != "none":
                     self.kick("partition {0} "
                               "--onpart=$(readlink -f /dev/{2})"
                               "{3}".format(part["mount"], size,
                                            disk["id"], pcount))
                 else:
                     if part["mount"] != "swap":
-                        self.post("mkfs.{0} $(basename `readlink -f /dev/{1}`)"
-                                  "{2}".format(tabfstype, disk["id"], pcount))
-                        self.post("mkdir -p /mnt/sysimage{0}".format(
-                            part["mount"]))
+                        disk_label = ""
+                        if part.get("disk_label"):
+                            # XFS will refuse to format a partition if the
+                            # disk label is > 12 characters.
+                            disk_label = "-L {0}".format(
+                                part["disk_label"][:12])
+                        self.post("mkfs.{0} $(readlink -f /dev/{1})"
+                                  "{2} {3}".format(tabfstype, disk["id"],
+                                                   pcount, disk_label))
+                        if part["mount"] != "none":
+                            self.post("mkdir -p /mnt/sysimage{0}".format(
+                                part["mount"]))
+
                     self.post("echo 'UUID=$(blkid -s UUID -o value "
-                              "$(basename `readlink -f /dev/{0}`){1}) "
+                              "$(readlink -f /dev/{0}){1}) "
                               "{2} {3} defaults 0 0'"
                               " >> /mnt/sysimage/etc/fstab".format(
                                   disk["id"], pcount, tabmount, tabfstype))
@@ -335,7 +349,7 @@ class PManager(object):
         self.pre("sleep 10")
         for disk in [d for d in self.data if d["type"] == "disk"]:
             self.pre("hdparm -z /dev/{0}".format(disk["id"]))
-
+        self.erase_lvm_metadata()
 
 
 class PreseedPManager(object):
@@ -366,7 +380,7 @@ class PreseedPManager(object):
         return self._late
 
     def pcount(self, disk_id, increment=0):
-        if ((self._pcount.get(disk_id, 0) == 0 and increment == 1) or 
+        if ((self._pcount.get(disk_id, 0) == 0 and increment == 1) or
             (self._pcount.get(disk_id, 0) >= 5)):
             self._pcount[disk_id] = self._pcount.get(disk_id, 0) + increment
         elif self._pcount.get(disk_id, 0) == 1:
@@ -405,11 +419,11 @@ class PreseedPManager(object):
         """
         We need this line because debian-installer takes total disk space
         for the last partition. So to be able to allocate custom partitions
-        during the late stage we need to create fake swap partition that 
+        during the late stage we need to create fake swap partition that
         we then destroy.
         """
         self.recipe("1 1 -1 linux-swap method{ swap } format{ } .")
-        self.late("sed /$(blkid -s UUID -o value {0}7)/d /target/etc/fstab".format(self.disks[0]))
+        self.late("sed -i /$(blkid -s UUID -o value {0}7)/d /target/etc/fstab".format(self.disks[0]))
         self.late("swapoff {0}7".format(self.disks[0]))
         self.late("parted {0} rm 7".format(self.disks[0]))
 
@@ -439,7 +453,7 @@ class PreseedPManager(object):
                 if pcount == 1:
                     self.late("parted -a none -s /dev/{0} unit {1} "
                               "mkpart extended {2} {3}".format(
-                                disk["name"], 
+                                disk["name"],
                                 self.unit,
                                 end_size,
                                 disk["size"]))
@@ -475,15 +489,15 @@ class PreseedPManager(object):
                     self.late("parted -s /dev/{0} mklabel msdos".format(disk["name"]))
                 self.late("parted -a none -s /dev/{0} "
                           "unit {4} mkpart {1} {2} {3}".format(
-                             disk["name"], 
+                             disk["name"],
                              self._parttype(pcount),
-                             begin_size, 
-                             end_size, 
+                             begin_size,
+                             end_size,
                              self.unit))
                 if pcount == 1:
                     self.late("parted -a none -s /dev/{0} unit {1} "
                               "mkpart extended {2} {3}".format(
-                                disk["name"], 
+                                disk["name"],
                                 self.unit,
                                 end_size,
                                 disk["size"]))
@@ -505,7 +519,7 @@ class PreseedPManager(object):
                     lv["size"], lv["name"], vg["id"]))
 
                 tabmount = lv["mount"] if lv["mount"] != "swap" else "none"
-                if ((not lv.get("file_system", "xfs") in ("swap", None, "none")) and 
+                if ((not lv.get("file_system", "xfs") in ("swap", None, "none")) and
                     (not lv["mount"] in ("swap", "/"))):
                     self.late("mkfs.{0} /dev/mapper/{1}-{2}".format(
                         lv.get("file_system", "xfs"),
@@ -516,8 +530,8 @@ class PreseedPManager(object):
                     self.late("echo '/dev/mapper/{0}-{1} "
                               "{2} {3} {4} 0 0' >> /target/etc/fstab"
                               "".format(
-                                  vg["id"].replace("-", "--"), 
-                                  lv["name"].replace("-", "--"), 
+                                  vg["id"].replace("-", "--"),
+                                  lv["name"].replace("-", "--"),
                                   tabmount,
                                   lv.get("file_system", "xfs"),
                                   ("defaults" if lv["mount"] != "swap"
@@ -535,11 +549,7 @@ class PreseedPManager(object):
     def expose_late(self, gzip=False):
         result = ""
         for line, in_target in self.late():
-            # result += "echo '{0}{1}';\\\n".format(("in-target " if in_target else ""), line)
             result += "{0}{1};\\\n".format(("in-target " if in_target else ""), line)
-            # b64_command = "{0}{1}".format(("in-target " if in_target else ""),
-            #     late_command.late_command(line, source_method="content", gzip=gzip))
-            # result += "{0};\\\n".format(b64_command)
         return result.rstrip()
 
     def expose_disks(self):
