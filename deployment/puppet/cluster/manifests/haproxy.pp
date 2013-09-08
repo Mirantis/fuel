@@ -83,7 +83,7 @@ class cluster::haproxy (
   } ->
   file { $global_options['chroot']: 
     ensure => directory 
-  } -> 
+  } 
   if $::operatingsystem == 'Ubuntu' {
       file { "/etc/init/haproxy.override":
       replace => "no",
