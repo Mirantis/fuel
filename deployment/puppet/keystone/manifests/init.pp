@@ -151,6 +151,9 @@ class keystone(
   if $::operatingsystem == 'Ubuntu' {
       file { '/etc/init/keystone.override':
         ensure  => present,
+        content => "manual",
+        mode    => 644,
+        replace => "no",
         owner   => 'root',
         group   => 'root',
       }
