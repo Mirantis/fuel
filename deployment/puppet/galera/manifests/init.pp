@@ -289,13 +289,6 @@ class galera (
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
     }
-  } else {
-      exec { "join-galera-cluster":
-      path   => "/usr/bin:/usr/sbin:/bin:/sbin",
-      logoutput => true,
-      command   => 'echo Controller joined',
-      require    => Service["$cib_name"],
-      before     => Exec ["wait-for-synced-state"],
-    }
+  } 
   }
 }

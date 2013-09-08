@@ -177,7 +177,7 @@ class corosync (
     }
     if $::operatingsystem == 'Ubuntu' {
       exec { 'rm_corosync_override':
-        command => '/bin/rm -f /etc/init/corosync.override ; /etc/init.d/corosync restart',
+        command => '/bin/rm -f /etc/init/corosync.override',
         path    => ['/bin', '/usr/bin'],
       }
     } 
