@@ -289,6 +289,5 @@ class galera (
       before     => Exec ["wait-for-synced-state"],
       notify     => Exec ["raise-first-setup-flag"],
     }
-  } 
   }
 }
