@@ -17,6 +17,13 @@
 #   the port with default behavior.
 #   (see http://openvswitch.org/cgi-bin/ovsman.cgi?page=utilities%2Fovs-vsctl.8)
 #
+# [*tag*]
+#   Specify 802.1q tag for result bond. If need.
+#
+# [*trunks*]
+#   Specify array of 802.1q tags if need configure bond in trunk mode.
+#   Define trunks => [0] if you need pass only untagged traffic.
+#
 # [*skip_existing*]
 #   If this port already exists it will be ignored without any errors.
 #   Must be true or false.

@@ -57,7 +57,6 @@ def sanitize_transformation(trans)
     when "add-bond" then {
       :name => nil,
       :bridge => nil,
-      :type => "internal",
       :interfaces => [],
       :tag => 0,
       :trunks => [],
