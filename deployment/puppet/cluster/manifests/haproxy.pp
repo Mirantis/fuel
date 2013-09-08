@@ -81,16 +81,19 @@ class cluster::haproxy (
     ensure  => true,
     name    => 'haproxy',
   } ->
-  if $::operatingsystem == 'Ubuntu' {
-    file { $global_options['chroot']: 
-      ensure => directory 
-    } -> 
+  file { $global_options['chroot']: 
+    ensure => directory 
+  } -> 
+  case $::osfamily
+    {
+    'Debian':
+      {
       file { "/etc/init/haproxy.override":
-        replace => "no",
-        ensure  => "present",
-        content => "manual",
-        mode    => 644,
-        }
+      replace => "no",
+      ensure  => "present",
+      content => "manual",
+      mode    => 644,
+      }
     }
   }
   service { 'haproxy-init-stopped':
