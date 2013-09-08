@@ -10,7 +10,7 @@
 # [*bridge*]
 #   Bridge that will contain this bond.
 #
-# [*interfacess*]
+# [*interfaces*]
 #   List of interfaces in this bond.
 #
 # [*tag*]
