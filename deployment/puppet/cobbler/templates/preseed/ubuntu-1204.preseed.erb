@@ -184,4 +184,5 @@ echo -e "net.nf_conntrack_max=1048576" >> /target/etc/sysctl.conf && \
 in-target wget http://apt.puppetlabs.com/pubkey.gpg && \
 in-target apt-key add /pubkey.gpg && \
 rm /target/pubkey.gpg && \
+in-target apt-get update && \
 true
