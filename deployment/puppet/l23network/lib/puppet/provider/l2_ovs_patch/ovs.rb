@@ -5,6 +5,9 @@ Puppet::Type.type(:l2_ovs_patch).provide(:ovs) do
   )
 
   def get_names()
+    # result always contains array of two elements
+    # get_names()[i-1] always returns neighbor's name
+    #
     rv = []
     i = 0
     for peer in @resource[:peers]
@@ -15,6 +18,7 @@ Puppet::Type.type(:l2_ovs_patch).provide(:ovs) do
       end
       i += 1
     end
+    #todo: chect tags, trunks and bridge names
     return rv
   end
 
@@ -49,6 +53,7 @@ Puppet::Type.type(:l2_ovs_patch).provide(:ovs) do
       if not @resource[:trunks].empty?
         port_properties.insert(-1, "trunks=[#{@resource[:trunks].join(',')}]")
       end
+      #todo: kill before create if need
       cmd = ['add-port', @resource[:bridges][i], name]
       cmd.concat(port_properties)
       cmd.concat(['--', 'set', 'interface', name, 'type=patch'])
