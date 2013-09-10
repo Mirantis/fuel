@@ -141,6 +141,12 @@ $SNIPPET('ubuntu_puppet_config') && \
 $SNIPPET('ubuntu_mcollective_config') && \
 echo -e "nf_conntrack_ipv4\nnf_conntrack_ipv6" >> /target/etc/modules && \
 echo -e "net.nf_conntrack_max=1048576" >> /target/etc/sysctl.conf && \
+mkdir -p /target/etc/nailgun-agent && \
+cat > /target/etc/nailgun-agent/config.yaml << EOA
+---
+url: '<%= scope.lookupvar('nailgun::nailgun_api_url') %>'
+EOA && \
+echo target > /target/etc/nailgun_systemtype && \
 in-target wget http://apt.puppetlabs.com/pubkey.gpg && \
 in-target apt-key add /pubkey.gpg && \
 rm /target/pubkey.gpg && \
