@@ -98,8 +98,8 @@ class nailgun::cobbler(
     kernel => "${repo_root}/ubuntu/fuelweb/x86_64/images/linux",
     initrd => "${repo_root}/ubuntu/fuelweb/x86_64/images/initrd.gz",
     arch => "x86_64",
-    breed => "redhat",
-    osversion => "rhel6",
+    breed => "ubuntu",
+    osversion => "precise",
     ksmeta => "tree=http://@@server@@:8080/ubuntu/fuelweb/x86_64/",
     require => Class["::cobbler::server"],
   }
