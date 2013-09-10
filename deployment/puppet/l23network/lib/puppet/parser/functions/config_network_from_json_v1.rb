@@ -1,3 +1,4 @@
+require 'ipaddr'
 require 'forwardable'
 require 'puppet/parser'
 require 'puppet/parser/templatewrapper'
@@ -111,14 +112,23 @@ def sanitize_transformation(trans)
   return rv
 end
 
-
-
 Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :rvalue, :doc => <<-EOS
     This function get Hash of network interfaces and endpoints configuration
     and realized it.
 
     EOS
   ) do |argv|
+
+    def default_netmask()
+      "/24"
+    end
+
+    def create_endpoint()
+      {
+        :properties => {},
+        :IP => []
+      }
+    end
 
     if argv.size != 1
       raise(Puppet::ParseError, "config_network_from_json_v1(hash): Wrong number of arguments.")
@@ -146,7 +156,45 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       end
     end
 
+    # collect interfaces and endpoints
+    endpoints = {}
+    borned_ports = []
+    config_hash[:interfaces].each do |int_name, int_properties|
+      int_name = int_name.to_sym()
+      endpoints[int_name] = create_endpoint()
+      borned_ports.insert(-1, int_name)
+    end
+    config_hash[:endpoints].each do |e_name, e_properties|
+      e_name = e_name.to_sym()
+      if not endpoints[e_name]
+        endpoints[e_name] = create_endpoint()
+      end
+      e_properties.each do |k,v|
+        if k.to_sym() == :IP
+          if not (v.is_a?(Array) or ['none','dhcp'].index(v))
+            raise(Puppet::ParseError, "IP field for endpoint '#{e_name}' must be array of IP addresses, 'dhcp' or 'none'.")
+          elsif ['none','dhcp'].index(v)
+            endpoints[e_name][:IP].insert(-1, v)
+          else
+            v.each do |ip|
+              begin
+                iip = IPAddr.new(ip)
+                endpoints[e_name][:IP].insert(-1, ip)
+              rescue
+                raise(Puppet::ParseError, "IP address '#{ip}' for endpoint '#{e_name}' wrong!.")
+              end
+            end
+          end
+        else
+          endpoints[e_name][:properties][k.to_sym()] = v
+        end
+      end
+    end
+
+    # execute transformations
+    # todo: if pribider="lnx" execute transformations for LNX bridges
     transformation_success = []
+    previous = nil
     config_hash[:transformations].each do |t|
       action = t[:action].strip()
       if action.start_with?('add-')
@@ -156,7 +204,6 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       end
 
       trans = sanitize_transformation(t)
-      #info("t=== #{trans[:name]}")
       resource = res_factory[action][:resource]
       p_resource = Puppet::Parser::Resource.new(
           res_factory[action][:name_of_resource],
@@ -164,13 +211,60 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
           :scope => self,
           :source => resource
       )
-      # {:name => title}.merge(params).each do |k,v|
       trans.select{|k,v| k != :action}.each do |k,v|
         p_resource.set_parameter(k,v)
       end
+      p_resource.set_parameter(:require, [previous]) if previous
       resource.instantiate_resource(self, p_resource)
       compiler.add_resource(self, p_resource)
       transformation_success.insert(-1, "#{t[:action].strip()}(#{trans[:name]})")
+      borned_ports.insert(-1, trans[:name].to_sym()) if action != :patch
+      previous = p_resource.to_s
+    end
+
+    # check for all in endpoints are in interfaces or borned by transformation
+    config_hash[:endpoints].each do |e_name, e_properties|
+      if not borned_ports.index(e_name.to_sym())
+        raise(Puppet::ParseError, "Endpoint '#{e_name}' not found in interfaces or transformations result.")
+      end
+    end
+    # execute interfaces and endpoints
+    # may be in future we will move interfaces before transformations
+    endpoints.each do |endpoint_name, endpoint_body|
+      # create resource
+      resource = res_factory[:ifconfig][:resource]
+      p_resource = Puppet::Parser::Resource.new(
+          res_factory[:ifconfig][:name_of_resource],
+          endpoint_name,
+          :scope => self,
+          :source => resource
+      )
+      p_resource.set_parameter(:interface, endpoint_name)
+      # set ipaddresses
+      if endpoint_body[:IP].empty?
+        p_resource.set_parameter(:ipaddr, 'none')
+      elsif ['none','dhcp'].index(endpoint_body[:IP][0])
+        p_resource.set_parameter(:ipaddr, endpoint_body[:IP][0])
+      else
+        ipaddrs = []
+        endpoint_body[:IP].each do |i|
+          if i =~ /\/\d+$/
+            ipaddrs.insert(-1, i)
+          else
+            ipaddrs.insert(-1, "#{i}#{default_netmask()}")
+          end
+        end
+        p_resource.set_parameter(:ipaddr, ipaddrs)
+      end
+      #set another (see L23network::l3::ifconfig DOC) parametres
+      endpoint_body[:properties].each do |k,v|
+        p_resource.set_parameter(k,v)
+      end
+      p_resource.set_parameter(:require, [previous]) if previous
+      resource.instantiate_resource(self, p_resource)
+      compiler.add_resource(self, p_resource)
+      transformation_success.insert(-1, "endpoint(#{endpoint_name})")
+      previous = p_resource.to_s
     end
 
     return transformation_success.join(" -> ")
