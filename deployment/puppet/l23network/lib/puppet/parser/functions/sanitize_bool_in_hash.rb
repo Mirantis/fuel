@@ -1,8 +1,3 @@
-#
-# sanitize_bool_in_hash.rb
-#
-
-# todo: process_array
 def process_array(aa)
   rv = []
   aa.each do |v|
