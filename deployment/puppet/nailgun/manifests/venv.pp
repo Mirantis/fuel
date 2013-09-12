@@ -74,12 +74,20 @@ class nailgun::venv(
   $admin_network_last = ipcalc_network_nth_address($ipaddress, $netmask, "last")
   $admin_network_netmask = $netmask
 
+  $fuel_key = $::generate_fuel_key
+
   file { "/etc/nailgun/settings.yaml":
     content => template("nailgun/settings.yaml.erb"),
     owner => 'root',
     group => 'root',
     mode => 0644,
     require => File["/etc/nailgun"],
+  }
+
+  file { "/usr/local/bin/fuel":
+    ensure  => link,
+    target  => "/opt/nailgun/bin/fuel",
+    require => Nailgun::Venv::Pip["$venv_$package"],
   }
 
   exec {"nailgun_syncdb":
