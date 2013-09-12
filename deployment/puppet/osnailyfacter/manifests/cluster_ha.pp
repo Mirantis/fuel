@@ -57,7 +57,7 @@ else {
 
 if !$swift_partition
 {
-  $swift_partition = '/var/lib/glance/node'
+  $swift_partition = '/srv/node'
 }
 
 
