@@ -38,16 +38,9 @@ class quantum::server (
     $server_package = 'quantum'
   }
 
-  case $::osfamily {
-    'Debian': {
-       Package[$server_package] -> Quantum_config<||>
-       Package[$server_package] -> Quantum_api_config<||>
-    }
-    'RedHat': {
-        Package[$server_package] -> Quantum_config<||>
-        Package[$server_package] -> Quantum_api_config<||>
-    }
-  }
+  Package[$server_package] -> Quantum_config<||>
+  Package[$server_package] -> Quantum_api_config<||>
+
   if defined(Anchor['quantum-plugin-ovs']) {
     Package["$server_package"] -> Anchor['quantum-plugin-ovs']
   }
