@@ -35,6 +35,7 @@ class heat::api-cfn (
   Heat_api_cfn_config<||> ~> Service['heat-api-cfn']
 
   Package['heat-api-cfn'] -> Heat_api_cfn_config<||>
+  Package['heat-api-cfn'] -> Heat_api_cfn_paste_ini<||>
   Package['heat-api-cfn'] -> Service['heat-api-cfn']
   package { 'heat-api-cfn':
     ensure => installed,
@@ -101,6 +102,31 @@ class heat::api-cfn (
     'keystone_authtoken/admin_password'    : value => $keystone_password;
     'keystone_authtoken/auth_uri'          : value => "${keystone_protocol}${keystone_host}:5000/v2";
   }
+
+
+  case $::heat::params::heat_version {
+    '2013.1-0.3.2.ic1.0.el6' : {
+      notify {"Hack for  ${heat::params::heat_version} :  we need to edit heat-api-cfn-paste.ini":}
+      heat_api_cfn_paste_ini {
+        'filter:authtoken/paste.filter_factory' : value => "heat.common.auth_token:filter_factory";
+        'filter:authtoken/service_protocol'     : value => $keystone_protocol;
+        'filter:authtoken/service_host'         : value => $keystone_host;
+        'filter:authtoken/service_port'         : value => $keystone_service_port;
+        'filter:authtoken/auth_host'            : value => $keystone_host;
+        'filter:authtoken/auth_port'            : value => $keystone_port;
+        'filter:authtoken/auth_protocol'        : value => $keystone_protocol;
+        'filter:authtoken/auth_uri'             : value => "${keystone_protocol}://${keystone_host}:${keystone_port}/v2.0";
+        'filter:authtoken/admin_tenant_name'    : value => $keystone_tenant;
+        'filter:authtoken/admin_user'           : value => $keystone_user;
+        'filter:authtoken/admin_password'       : value => $keystone_password;
+      }
+    }
+    default: {
+    }
+  }
+
+
+
 }
 
 
