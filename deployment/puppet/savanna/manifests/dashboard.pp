@@ -23,23 +23,6 @@ class savanna::dashboard (
 
 
 
-  define line($file, $line, $ensure = 'present') {
-    case $ensure {
-      default : { err ( "unknown ensure value ${ensure}" ) }
-      present: {
-        exec { "/bin/echo \"${line}\" >> \"${file}\"":
-          unless => "/bin/grep -qFx \"${line}\" \"${file}\""
-        }
-      }
-      absent: {
-#        exec { "/usr/bin/perl -ni -e \"print unless /^\\Q${line}\\E\$/' '${file}\"":
-         exec { "/bin/sed -i \"/${line}/d\" \"${file}\"":
-            onlyif =>"/bin/grep -qFx \"${line}\" \"${file}\""
-        }
-      }
-    }
-  }
-
   file { "$settings_py":
      alias => "horizon_settings",
      ensure => present,
@@ -47,29 +30,9 @@ class savanna::dashboard (
 
   }
 
-  line { "savanna":
-    file => $settings_py,
-#   line => 'HORIZON_CONFIG[\'dashboards\'].append(\'savanna\')',
-    line => "HORIZON_CONFIG['dashboards'].append('savanna')",
-
-    ensure => $line_in_settings_py_ensure,
-    notify => Service['httpd'],
-  }
-
-  line { "savannadashboard":
-    file   => $settings_py,
-    line   => "INSTALLED_APPS.append('savannadashboard')",
-    ensure => $line_in_settings_py_ensure,
-    notify => Service['httpd'],
-  }
-
-
-  line { "savanna_url":
-    file   => $local_settings,
-    line   => "${savanna_url_string}",
-    ensure => $line_in_settings_py_ensure,
-    notify => Service['httpd'],
-  }
+  file_line{'savanna'          : path => $settings_py,    line => "HORIZON_CONFIG['dashboards'].append('savanna')", ensure => $line_in_settings_py_ensure, }
+  file_line{'savannadashboard' : path => $settings_py,    line => "INSTALLED_APPS.append('savannadashboard')",      ensure => $line_in_settings_py_ensure, }
+  file_line{'savannaurl'       : path => $local_settings, line => "${savanna_url_string}",                          ensure => $line_in_settings_py_ensure, notify => Service['httpd'], }
 
   package { 'savanna_dashboard':
     ensure => $package_ensure,
