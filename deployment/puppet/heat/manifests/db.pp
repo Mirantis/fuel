@@ -2,7 +2,7 @@ class heat::db (
   $sql_connection = 'mysql://heat:heat@localhost/heat'
 ) {
 
-  notify {"Heat DB init":}
+  notify {"Heat DB init ${heat_version_rh} ":}
 
   include heat::params
 
@@ -42,8 +42,19 @@ class heat::db (
       user        => 'heat',
       refreshonly => true,
       logoutput   => on_failure,
+      onlyif      => "test -f $::heat::params::db_sync_command",
       subscribe   => [Package['heat-engine'], Package['heat-api'],],
+    }
 
+# Lagacy part - support old rpms  before 2013.2.xx withour heat-manage tool
+  exec { 'python -m heat.db.sync':
+      command     => $::heat::params::legacy_db_sync_command,
+      path        => '/usr/bin',
+      user        => 'heat',
+      refreshonly => true,
+      logoutput   => on_failure,
+      unless      => "test -f $::heat::params::db_sync_command",
+      subscribe   => [Package['heat-engine'], Package['heat-api'],],
     }
 
 }

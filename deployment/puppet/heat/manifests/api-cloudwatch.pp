@@ -35,6 +35,7 @@ class heat::api-cloudwatch (
   Heat_api_cloudwatch_config<||> ~> Service['heat-api-cloudwatch']
 
   Package['heat-api-cloudwatch'] -> Heat_api_cloudwatch_config<||>
+  Package['heat-api-cloudwatch'] -> Heat_api_cloudwatch_paste_ini<||>
   Package['heat-api-cloudwatch'] -> Service['heat-api-cloudwatch']
   package { 'heat-api-cloudwatch':
     ensure => installed,
@@ -100,4 +101,27 @@ class heat::api-cloudwatch (
     'keystone_authtoken/admin_user'        : value => $keystone_user;
     'keystone_authtoken/admin_password'    : value => $keystone_password;
   }
+
+  case $::heat::params::heat_version {
+    '2013.1-0.3.2.ic1.0.el6' : {
+      notify {"Hack for  ${heat::params::heat_version} :  we need to edit heat-api-cloudwatch-paste.ini":}
+      heat_api_cloudwatch_paste_ini {
+        'filter:authtoken/paste.filter_factory' : value => "heat.common.auth_token:filter_factory";
+        'filter:authtoken/service_protocol'     : value => $keystone_protocol;
+        'filter:authtoken/service_host'         : value => $keystone_host;
+        'filter:authtoken/service_port'         : value => $keystone_service_port;
+        'filter:authtoken/auth_host'            : value => $keystone_host;
+        'filter:authtoken/auth_port'            : value => $keystone_port;
+        'filter:authtoken/auth_protocol'        : value => $keystone_protocol;
+        'filter:authtoken/auth_uri'             : value => "${keystone_protocol}://${keystone_host}:${keystone_port}/v2.0";
+        'filter:authtoken/admin_tenant_name'    : value => $keystone_tenant;
+        'filter:authtoken/admin_user'           : value => $keystone_user;
+        'filter:authtoken/admin_password'       : value => $keystone_password;
+      }
+    }
+    default: {
+    }
+  }
+
+
 }
