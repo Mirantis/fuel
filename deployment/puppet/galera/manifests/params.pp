@@ -27,7 +27,7 @@ class galera::params {
       $libaio_package       = 'libaio'
       $mysql_version        = '5.5.28_wsrep_23.7-12'
       $mysql_server_name    = 'MySQL-server-wsrep'
-      $galera_version       = '23.2.2-1.rhel5'
+      $galera_version       = '23.2.2-mira.5'
       $libgalera_prefix     = '/usr/lib64'
     }
     'Debian': {
