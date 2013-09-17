@@ -48,7 +48,7 @@ class nailgun::ostf(
     package => 'd2to1==0.2.10',
   }->
   nailgun::venv::pip { 'pbr':
-    package => 'pbr==0.5.17',
+    package => 'pbr==0.5.21',
   }->
   nailgun::venv::pip { 'ostf-req':
     package => "-r $venv/pip-requires.txt",
