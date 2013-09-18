@@ -58,6 +58,8 @@ class swift(
   file { '/etc/swift':
     ensure => directory,
     mode   => '2770',
+    owner  => 'root',
+    group  => 'swift',
   }
 
   user {'swift': ensure => present}
