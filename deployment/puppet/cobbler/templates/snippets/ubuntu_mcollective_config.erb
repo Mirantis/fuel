@@ -125,13 +125,6 @@ action "status", :description => "Get puppet agent's status" do
 end
 """
 , "/usr/share/mcollective/plugins/mcollective/agent/puppetd.ddl", source_method='content', mode="0600");\
-in-target $late_command.late_file("""
-[program:mcollective]
-command=/usr/sbin/mcollectived --config=/etc/mcollective/server.cfg
-autostart=true
-"""
-, "/etc/supervisor/conf.d/mcollective.conf", source_method='content', mode="0644");\
-
 
 in-target $late_command.late_file("""
 module MCollective
