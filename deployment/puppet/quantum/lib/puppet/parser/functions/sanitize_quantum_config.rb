@@ -179,9 +179,6 @@ class Mrnt_Quantum
 
   def generate_config()
     def generate_config__process_hash(cfg_dflt, cfg_user, path)
-      # we awaiting already sanitized hashes
-      # keys must be :sym,
-      # boolean values mustn't be strings
       rv = {}
       cfg_dflt.each() do |k, v|
         # if v == nil && cfg_user[k] == nil
@@ -203,83 +200,6 @@ class Mrnt_Quantum
     end
     rv = generate_config__process_hash(generate_default_quantum_config(), @given_config, [])
   end
-
-  # def sanitize_quantum_config(cfg)
-  #   action = trans[:action].downcase()
-  #   # Setup defaults
-  #   rv = case action
-  #     when "add-br" then {
-  #       :name => nil,
-  #       #:stp_enable => true,
-  #       :skip_existing => true
-  #     }
-  #     when "add-port" then {
-  #       :name => nil,
-  #       :bridge => nil,
-  #       :type => "internal",
-  #       :tag => 0,
-  #       :trunks => [],
-  #       :port_properties => [],
-  #       :interface_properties => [],
-  #       :skip_existing => true
-  #     }
-  #     when "add-bond" then {
-  #       :name => nil,
-  #       :bridge => nil,
-  #       :interfaces => [],
-  #       :tag => 0,
-  #       :trunks => [],
-  #       :properties => [],
-  #       #:port_properties => [],
-  #       #:interface_properties => [],
-  #       :skip_existing => true
-  #     }
-  #     when "add-patch" then {
-  #       :name => "unnamed", # calculated later
-  #       :peers => [nil, nil],
-  #       :bridges => [],
-  #       :tags => [0, 0],
-  #       :trunks => [],
-  #     }
-  #     else
-  #       raise(Puppet::ParseError, "Unknown transformation: '#{action}'.")
-  #   end
-  #   # replace defaults to real parameters
-  #   rv[:action] = action
-  #   rv.each do |k,v|
-  #     if trans[k]
-  #       rv[k] = trans[k]
-  #     end
-  #   end
-  #   # Check for incorrect parameters
-  #   if not rv[:name].is_a? String
-  #     raise(Puppet::ParseError, "Unnamed transformation: '#{action}'.")
-  #   end
-  #   name = rv[:name]
-  #   if not rv[:bridge].is_a? String and not ["add-patch", "add-br"].index(action)
-  #     raise(Puppet::ParseError, "Undefined bridge for transformation '#{action}' with name '#{name}'.")
-  #   end
-  #   if action == "add-patch"
-  #     if not rv[:bridges].is_a? Array  and  rv[:bridges].size() != 2
-  #       raise(Puppet::ParseError, "Transformation patch have wrong 'bridges' parameter.")
-  #     end
-  #     name = "patch__#{rv[:bridges][0]}__#{rv[:bridges][1]}"
-  #     if not rv[:peers].is_a? Array  and  rv[:peers].size() != 2
-  #       raise(Puppet::ParseError, "Transformation patch '#{name}' have wrong 'peers' parameter.")
-  #     end
-  #     rv[:name] = name
-  #   end
-  #   if action == "add-bond"
-  #     if not rv[:interfaces].is_a? Array or rv[:interfaces].size() != 2
-  #       raise(Puppet::ParseError, "Transformation bond '#{name}' have wrong 'interfaces' parameter.")
-  #     end
-  #     # rv[:interfaces].each do |i|
-  #     #   if
-  #     # end
-  #   end
-  #   return rv
-  # end
-
 end
 
 Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalue, :doc => <<-EOS

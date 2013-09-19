@@ -8,7 +8,7 @@ if $::use_quantum {
   $quantum_hash   = parsejson($::quantum_access)
   $quantum_params = parsejson($::quantum_parameters)
   $novanetwork_params  = {}
-
+  $quantum_config = sanitize_quantum_config(parse_json($::quantum_parameters))
 } else {
   $quantum_hash = {}
   $quantum_params = {}
@@ -484,6 +484,6 @@ class virtual_ips () {
       notify {"ceph_osd: ${::ceph::osd_devices}": }
       notify {"osd_devices:  ${::osd_devices_list}": }
     }
-    
+
   }
 }

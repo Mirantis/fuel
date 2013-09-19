@@ -91,47 +91,9 @@ $cinder_rate_limits = {
 
 
 ###
-class node_netconfig (
-  $mgmt_ipaddr,
-  $mgmt_netmask  = '255.255.255.0',
-  $public_ipaddr = undef,
-  $public_netmask= '255.255.255.0',
-  $save_default_gateway=false,
-  $quantum = $use_quantum,
-  $default_gateway
-) {
-  class {"l23network::hosts_file": stage => 'netconfig', hosts => $nodes_hash }
-  if $use_quantum {
-    l23network::l3::create_br_iface {'mgmt':
-      interface => $management_interface, # !!! NO $internal_int /sv !!!
-      bridge    => $internal_br,
-      ipaddr    => $mgmt_ipaddr,
-      netmask   => $mgmt_netmask,
-      dns_nameservers  => $dns_nameservers,
-      gateway => $default_gateway,
-    } ->
-    l23network::l3::create_br_iface {'ex':
-      interface => $public_interface, # !! NO $public_int /sv !!!
-      bridge    => $public_br,
-      ipaddr    => $public_ipaddr,
-      netmask   => $public_netmask,
-      gateway   => $default_gateway,
-    }
-  } else {
-    # nova-network mode
-    l23network::l3::ifconfig {$public_int:
-      ipaddr  => $public_ipaddr,
-      netmask => $public_netmask,
-      gateway => $default_gateway,
-    }
-    l23network::l3::ifconfig {$internal_int:
-      ipaddr  => $mgmt_ipaddr,
-      netmask => $mgmt_netmask,
-      dns_nameservers      => $dns_nameservers,
-      gateway => $default_gateway
-    }
-  }
-  l23network::l3::ifconfig {$fixed_interface: ipaddr=>'none' }
+class quantum_netconfig {
+    $sdn = config_network_from_json_v1(sanitize_bool_in_hash(parsejson($::network_sxema)))
+    notify {"SDN: ${sdn}": }
 }
 
 case $::operatingsystem {
@@ -148,14 +110,11 @@ case $::operatingsystem {
 class os_common {
   class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
   if $deployment_source == 'cli' {
-    class {'::node_netconfig':
-      mgmt_ipaddr    => $internal_address,
-      mgmt_netmask   => $internal_netmask,
-      public_ipaddr  => $public_address,
-      public_netmask => $public_netmask,
-      stage          => 'netconfig',
-      default_gateway => $default_gateway
+    class {'::quantum_netconfig':
+      stage => 'netconfig',
     }
+    # moved to cluster_ha.pp
+    #$quantum_config = sanitize_quantum_config(parse_json($::quantum_parameters))
   } else {
     class {'osnailyfacter::network_setup': stage => 'netconfig'}
   }
