@@ -18,7 +18,6 @@ class quantum::plugins::ovs (
   # todo: Remove plugin section, add plugin to server class
 
   include 'quantum::params'
-  include 'l23network::params'
   validate_re($sql_connection, '(sqlite|mysql|posgres):\/\/(\S+:\S+@\S+\/\S+)?')
   $br_map_str = join($bridge_mappings, ',')
   
@@ -99,13 +98,6 @@ class quantum::plugins::ovs (
       quantum_plugin_ovs {
         'OVS/network_vlan_ranges':  value => $network_vlan_ranges;
         'OVS/bridge_mappings':      value => $br_map_str;
-      }
-
-      if ! (defined(Package["$::quantum::params::vlan_package"]) or defined(Package["$::l23network::params::lnx_vlan_tools"])) {
-        package {"$::l23network::params::lnx_vlan_tools":
-          name    => "$::l23network::params::lnx_vlan_tools",
-          ensure  => latest,
-        } -> Package['quantum-plugin-ovs']
       }
     } 
   }
