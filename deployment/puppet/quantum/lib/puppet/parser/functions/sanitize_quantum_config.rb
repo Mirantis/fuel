@@ -49,6 +49,16 @@ class MrntQuantum
     @scope.lookupvar('quantum_vip') || @scope.lookupvar('management_vip')
   end
 
+  def get_bridge_name(bb)
+    #todo: Import bridge names from network-roles
+    case bb
+      when 'public'  then 'br-ex'
+      when 'private' then 'br-prv'
+      when 'tunnel'  then 'br-tun'
+      when 'integration' then 'br-int'
+    end
+  end
+
   def get_default_routers()
     {
       :router04 => {
@@ -127,10 +137,10 @@ class MrntQuantum
         :base_mac => "fa:16:3e:00:00:00",
         :segmentation_type => "gre",
         :tunnel_id_ranges => "3000:65535",
-        :bridge_mappings => ["physnet1:br-ex", "physnet2:br-prv"],
+        :bridge_mappings => ["physnet1:#{get_bridge_name('public')}", "physnet2:#{get_bridge_name('private')}"],
         :network_vlan_ranges => ["physnet1", "physnet2:3000:4094"],
-        :integration_bridge => "br-int",
-        :tunnel_bridge => "br-tun",
+        :integration_bridge => get_bridge_name('integration'),
+        :tunnel_bridge => get_bridge_name('tunnel'),
         :int_peer_patch_port => "patch-tun",
         :tun_peer_patch_port => "patch-int",
         :local_ip => nil,
@@ -140,7 +150,7 @@ class MrntQuantum
         :gateway_external_network_id => nil,
         :use_namespaces => true,
         :allow_overlapping_ips => false,
-        :public_bridge => "br-ex",
+        :public_bridge => get_bridge_name('public'),
         #:public_network => "net04_ext",
         :send_arp_for_ha => 8,
         :resync_interval => 40,
