@@ -118,58 +118,51 @@ end
 describe 'sanitize_quantum_config' , :type => :puppet_function do
   let(:scope) { PuppetlabsSpec::PuppetInternals.scope }
 
+  before :each do
+    # node      = Puppet::Node.new("floppy", :environment => 'production')
+    # @compiler = Puppet::Parser::Compiler.new(node)
+    # @scope    = Puppet::Parser::Scope.new(@compiler)
+    # @topscope = @scope.compiler.topscope
+    # @scope.parent = @topscope
+    # Puppet::Parser::Functions.function(:create_resources)
+    @q_config = QuantumConfig.new({
+      :management_vip => '192.168.0.254'
+    })
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_vip').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(@q_config.get_def(:management_vip))
+  end
+
   it 'should exist' do
     Puppet::Parser::Functions.function('sanitize_quantum_config').should == 'function_sanitize_quantum_config'
   end
 
   it 'should return default config if incoming hash is empty' do
-    q_config = QuantumConfig.new({
-      :management_vip => '192.168.0.254'
-    })
-    res_cfg = q_config.get_def_config()
-
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(q_config.get_def(:management_vip))
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(q_config.get_def(:management_vip))
+    res_cfg = @q_config.get_def_config()
     should run.with_params({}).and_return(res_cfg)
   end
 
   it 'should return default config if default config given as incoming' do
-    q_config = QuantumConfig.new({
-      :management_vip => '192.168.0.254'
-    })
-    cfg = q_config.get_def_config()
+    cfg = @q_config.get_def_config()
     res_cfg = cfg.clone()
-
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(q_config.get_def(:management_vip))
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(q_config.get_def(:management_vip))
     should run.with_params(cfg).and_return(res_cfg)
   end
 
   it 'should substitute default values if missing required field in config' do
-    q_config = QuantumConfig.new({
-      :management_vip => '192.168.0.254'
-    })
-    cfg = q_config.get_def_config()
-    res_cfg = q_config.get_def_config()
+    cfg = @q_config.get_def_config()
+    res_cfg = @q_config.get_def_config()
     cfg[:L3].delete(:dhcp_agent)
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(q_config.get_def(:management_vip))
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(q_config.get_def(:management_vip))
     should run.with_params(cfg).and_return(res_cfg)
   end
 
   it 'should can substitute values in deep level' do
-    q_config = QuantumConfig.new({
-      :management_vip => '192.168.0.254'
-    })
-    cfg = q_config.get_def_config()
+    cfg = @q_config.get_def_config()
     cfg[:amqp][:provider] = "XXXXXXXXXXxxxx"
     cfg[:L2][:base_mac] = "aa:aa:aa:00:00:00"
     cfg[:L2][:integration_bridge] = "xx-xxx"
     cfg[:L2][:local_ip] = "9.9.9.9"
     cfg[:predefined_networks][:net04_ext][:nameservers] = ["127.0.0.1"]
     res_cfg = Marshal.load(Marshal.dump(cfg))
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(q_config.get_def(:management_vip))
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(q_config.get_def(:management_vip))
     should run.with_params(cfg).and_return(res_cfg)
   end
 

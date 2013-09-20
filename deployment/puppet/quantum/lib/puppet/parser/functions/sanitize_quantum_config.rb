@@ -50,6 +50,10 @@ class Mrnt_Quantum
     @scope.lookupvar('management_vip')
   end
 
+  def get_quantum_vip()
+    @scope.lookupvar('quantum_vip') || @scope.lookupvar('management_vip')
+  end
+
   def get_default_routers()
     {
       :router04 => {
@@ -117,7 +121,7 @@ class Mrnt_Quantum
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {
-        :bind_host => get_management_vip(),
+        :bind_host => get_quantum_vip(),
         :bind_port => 9696,
       },
       :metadata => {
@@ -178,28 +182,32 @@ class Mrnt_Quantum
   end
 
   def generate_config()
-    def generate_config__process_hash(cfg_dflt, cfg_user, path)
-      rv = {}
-      cfg_dflt.each() do |k, v|
-        # if v == nil && cfg_user[k] == nil
-        #   raise(Puppet::ParseError, "Missing required field '#{path}.#{k}'.")
-        # end
-        if v != nil && cfg_user[k] != nil && v.class() != cfg_user[k].class()
-          raise(Puppet::ParseError, "Invalid format of config hash.")
-        end
-        #print ">>>>>>>>>>>>>>>>>>>>>#{v.class} -#{k}-\n"
-        rv[k] = case v.class.to_s
-          when "Hash"     then cfg_user[k] ? generate_config__process_hash(v,cfg_user[k], path.clone.insert(-1, k)) : v
-          when "Array"    then cfg_user[k].empty?() ? v : cfg_user[k]
-          when "String"   then cfg_user[k] ? cfg_user[k] : v
-          when "NilClass" then cfg_user[k] ? cfg_user[k] : v
-          else v
-        end
-      end
-      return rv
-    end
-    rv = generate_config__process_hash(generate_default_quantum_config(), @given_config, [])
+    rv = _generate_config(generate_default_quantum_config(), @given_config, [])
   end
+
+  private
+
+  def _generate_config(cfg_dflt, cfg_user, path)
+    rv = {}
+    cfg_dflt.each() do |k, v|
+      # if v == nil && cfg_user[k] == nil
+      #   raise(Puppet::ParseError, "Missing required field '#{path}.#{k}'.")
+      # end
+      if v != nil && cfg_user[k] != nil && v.class() != cfg_user[k].class()
+        raise(Puppet::ParseError, "Invalid format of config hash.")
+      end
+      #print ">>>>>>>>>>>>>>>>>>>>>#{v.class} -#{k}-\n"
+      rv[k] = case v.class.to_s
+        when "Hash"     then cfg_user[k] ? _generate_config(v,cfg_user[k], path.clone.insert(-1, k)) : v
+        when "Array"    then cfg_user[k].empty?() ? v : cfg_user[k]
+        when "String"   then cfg_user[k] ? cfg_user[k] : v
+        when "NilClass" then cfg_user[k] ? cfg_user[k] : v
+        else v
+      end
+    end
+    return rv
+  end
+
 end
 
 Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalue, :doc => <<-EOS
