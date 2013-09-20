@@ -86,6 +86,9 @@ class openstack::controller (
   # Required Nova
   $nova_db_password        = 'nova_pass',
   $nova_user_password      = 'nova_pass',
+  # Required Ceilometer
+  $ceilometer_db_password  = 'ceilometer_pass',
+  $ceilometer_user_password = 'ceilometer_pass',
   # Required Horizon
   $secret_key              = 'dummy_secret_key',
   # not sure if this works correctly
@@ -137,6 +140,9 @@ class openstack::controller (
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',
   $purge_nova_config       = false,
+  # Ceilometer
+  $ceilometer_db_user      = 'ceilometer',
+  $ceilometer_db_dbname    = 'ceilometer',
   # Horizon
   $cache_server_ip         = ['127.0.0.1'],
   $cache_server_port       = '11211',
@@ -193,6 +199,7 @@ class openstack::controller (
 
   # Ensure things are run in order
   Class['openstack::db::mysql'] -> Class['openstack::keystone']
+  Class['openstack::db::mysql'] -> Class['openstack::ceilometer']
   Class['openstack::db::mysql'] -> Class['openstack::glance']
   Class['openstack::db::mysql'] -> Class['openstack::nova::controller']
   if defined(Class['openstack::cinder']) {
@@ -225,6 +232,9 @@ class openstack::controller (
       nova_db_user           => $nova_db_user,
       nova_db_password       => $nova_db_password,
       nova_db_dbname         => $nova_db_dbname,
+      ceilometer_db_user     => $ceilometer_db_user,
+      ceilometer_db_password => $ceilometer_db_password,
+      ceilometer_db_dbname   => $ceilometer_db_dbname,
       cinder                 => $cinder,
       cinder_db_user         => $cinder_db_user,
       cinder_db_password     => $cinder_db_password,
@@ -247,33 +257,35 @@ class openstack::controller (
   }
   ####### KEYSTONE ###########
   class { 'openstack::keystone':
-    verbose               => $verbose,
-    debug                 => $debug,
-    db_type               => $db_type,
-    db_host               => $db_host,
-    db_password           => $keystone_db_password,
-    db_name               => $keystone_db_dbname,
-    db_user               => $keystone_db_user,
-    admin_token           => $keystone_admin_token,
-    admin_tenant          => $keystone_admin_tenant,
-    admin_email           => $admin_email,
-    admin_user            => $admin_user,
-    admin_password        => $admin_password,
-    public_address        => $public_address,
-    internal_address      => $internal_address,
-    admin_address         => $admin_address,
-    glance_user_password  => $glance_user_password,
-    nova_user_password    => $nova_user_password,
-    cinder                => $cinder,
-    cinder_user_password  => $cinder_user_password,
-    quantum               => $quantum,
-    bind_host             => $api_bind_address,
-    quantum_user_password => $quantum_user_password,
-    enabled               => $enabled,
-    package_ensure        => $::openstack_keystone_version,
-    use_syslog            => $use_syslog,
-    syslog_log_facility   => $syslog_log_facility_keystone,
-    syslog_log_level      => $syslog_log_level,
+    verbose                   => $verbose,
+    debug                     => $debug,
+    db_type                   => $db_type,
+    db_host                   => $db_host,
+    db_password               => $keystone_db_password,
+    db_name                   => $keystone_db_dbname,
+    db_user                   => $keystone_db_user,
+    admin_token               => $keystone_admin_token,
+    admin_tenant              => $keystone_admin_tenant,
+    admin_email               => $admin_email,
+    admin_user                => $admin_user,
+    admin_password            => $admin_password,
+    public_address            => $public_address,
+    internal_address          => $internal_address,
+    admin_address             => $admin_address,
+    glance_user_password      => $glance_user_password,
+    nova_user_password        => $nova_user_password,
+    cinder                    => $cinder,
+    cinder_user_password      => $cinder_user_password,
+    quantum                   => $quantum,
+    bind_host                 => $api_bind_address,
+    quantum_user_password     => $quantum_user_password,
+    ceilometer                => $ceilometer,
+    ceilometer_user_password  => $ceilometer_user_password,
+    enabled                   => $enabled,
+    package_ensure            => $::openstack_keystone_version,
+    use_syslog                => $use_syslog,
+    syslog_log_facility       => $syslog_log_facility_keystone,
+    syslog_log_level          => $syslog_log_level,
   }
 
 
@@ -431,6 +443,30 @@ class openstack::controller (
     class { 'memcached':
       #listen_ip => $api_bind_address,
     }
+  }
+
+  ######## Ceilometer ########
+
+  class { 'openstack::ceilometer':
+    verbose              => $verbose,
+    debug                => $debug,
+    db_type              => $db_type,
+    db_host              => $db_host,
+    db_user              => $ceilometer_db_user,
+    db_password          => $ceilometer_db_password,
+    db_dbname            => $ceilometer_db_dbname,
+    rabbit_password      => $rabbit_password,
+    rabbit_userid        => $rabbit_user,
+    rabbit_port          => $rabbit_port,
+    rabbit_host          => $rabbit_nodes[0],
+    rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+    queue_provider       => $queue_provider,
+    qpid_password        => $qpid_password,
+    qpid_userid          => $qpid_user,
+    qpid_nodes           => $qpid_nodes,
+    keystone_host        => $internal_address,
+    keystone_password    => $ceilometer_user_password,
+    on_controller        => true,
   }
 
   ######## Horizon ########

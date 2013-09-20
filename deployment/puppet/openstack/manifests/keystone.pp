@@ -53,37 +53,42 @@ class openstack::keystone (
   $nova_user_password,
   $cinder_user_password,
   $quantum_user_password,
+  $ceilometer_user_password,
   $public_address,
-  $db_type                  = 'mysql',
-  $db_user                  = 'keystone',
-  $db_name                  = 'keystone',
-  $admin_tenant             = 'admin',
-  $verbose                  = 'False',
-  $debug                    = 'False',
-  $bind_host                = '0.0.0.0',
-  $internal_address         = false,
-  $admin_address            = false,
-  $glance_public_address    = false,
-  $glance_internal_address  = false,
-  $glance_admin_address     = false,
-  $nova_public_address      = false,
-  $nova_internal_address    = false,
-  $nova_admin_address       = false,
-  $cinder_public_address    = false,
-  $cinder_internal_address  = false,
-  $cinder_admin_address     = false,
-  $quantum_public_address   = false,
-  $quantum_internal_address = false,
-  $quantum_admin_address    = false,
-  $glance                   = true,
-  $nova                     = true,
-  $cinder                   = true,
-  $quantum                  = true,
-  $enabled                  = true,
-  $package_ensure           = present,
-  $use_syslog               = false,
-  $syslog_log_facility      = 'LOCAL7',
-  $syslog_log_level = 'WARNING',
+  $db_type                     = 'mysql',
+  $db_user                     = 'keystone',
+  $db_name                     = 'keystone',
+  $admin_tenant                = 'admin',
+  $verbose                     = 'False',
+  $debug                       = 'False',
+  $bind_host                   = '0.0.0.0',
+  $internal_address            = false,
+  $admin_address               = false,
+  $glance_public_address       = false,
+  $glance_internal_address     = false,
+  $glance_admin_address        = false,
+  $nova_public_address         = false,
+  $nova_internal_address       = false,
+  $nova_admin_address          = false,
+  $cinder_public_address       = false,
+  $cinder_internal_address     = false,
+  $cinder_admin_address        = false,
+  $quantum_public_address      = false,
+  $quantum_internal_address    = false,
+  $quantum_admin_address       = false,
+  $ceilometer_public_address   = false,
+  $ceilometer_internal_address = false,
+  $ceilometer_admin_address    = false,
+  $glance                      = true,
+  $nova                        = true,
+  $cinder                      = true,
+  $quantum                     = true,
+  $ceilometer                  = true,
+  $enabled                     = true,
+  $package_ensure              = present,
+  $use_syslog                  = false,
+  $syslog_log_facility         = 'LOCAL7',
+  $syslog_log_level            = 'WARNING',
 ) {
 
   # Install and configure Keystone
@@ -165,6 +170,21 @@ class openstack::keystone (
   } else {
     $quantum_admin_real = $admin_real
   }
+  if($ceilometer_public_address) {
+    $ceilometer_public_real = $ceilometer_public_address
+  } else {
+    $ceilometer_public_real = $public_address
+  }
+  if($ceilometer_internal_address) {
+    $ceilometer_internal_real = $ceilometer_internal_address
+  } else {
+    $ceilometer_internal_real = $internal_real
+  }
+  if($ceilometer_admin_address) {
+    $ceilometer_admin_real = $ceilometer_admin_address
+  } else {
+    $ceilometer_admin_real = $admin_real
+  }
 
   class { '::keystone':
     verbose    => $verbose,
@@ -232,6 +252,14 @@ class openstack::keystone (
         public_address   => $quantum_public_real,
         admin_address    => $quantum_admin_real,
         internal_address => $quantum_internal_real,
+      }
+    }
+    if $ceilometer {
+      class { 'ceilometer::keystone::auth':
+        password         => $ceilometer_user_password,
+        public_address   => $ceilometer_public_real,
+        admin_address    => $ceilometer_admin_real,
+        internal_address => $ceilometer_internal_real,
       }
     }
   }
