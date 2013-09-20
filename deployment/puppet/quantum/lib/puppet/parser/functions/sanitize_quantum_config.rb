@@ -41,6 +41,17 @@ class MrntQuantum
     @scope.lookupvar('management_vip')
   end
 
+  def get_amqp_vip(port)
+    #todo myst give string like  "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ','
+    #calculated from $controller_nodes
+    vip = @scope.lookupvar('amqp_vip') || @scope.lookupvar('management_vip')
+    if port
+      "#{@scope.lookupvar('management_vip')}:#{port}"
+    else
+      @scope.lookupvar('management_vip')
+    end
+  end
+
   def get_database_vip()
     @scope.lookupvar('management_vip')
   end
@@ -52,6 +63,7 @@ class MrntQuantum
   def get_bridge_name(bb)
     #todo: Import bridge names from network-roles
     case bb
+      when 'management'  then 'br-mgmt'
       when 'public'  then 'br-ex'
       when 'private' then 'br-prv'
       when 'tunnel'  then 'br-tun'
@@ -99,7 +111,7 @@ class MrntQuantum
         :username => "nova",
         :passwd => "nova",
         #:hosts => "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ',' # calculate from $controller_nodes
-        :hosts => "#{self.get_management_vip()}:5672",
+        :hosts => get_amqp_vip(5672),
         :control_exchange => "quantum",
         :heartbeat => 60,
         :protocol => "tcp",
