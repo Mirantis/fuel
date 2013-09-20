@@ -2,31 +2,28 @@ require 'ipaddr'
 
 
 class MrntQuantum
-
+  #class method
   def self.sanitize_array(aa)
     rv = []
     aa.each do |v|
-      if v.is_a? Hash
-        rv.insert(-1, sanitize_hash(v))
-      elsif v.is_a? Array
-        rv.insert(-1, sanitize_array(v))
-      else
-        rv.insert(-1, v)
-      end
+      rv.insert(-1,  case v.class.to_s
+          when "Hash"  then sanitize_hash(v)
+          when "Array" then sanitize_array(v)
+          else v
+        end
+      )
     end
     return rv
   end
 
+  #class method
   def self.sanitize_hash(hh)
     rv = {}
     hh.each do |k, v|
-      #info("xx>>#{k}--#{k.to_sym}<<")
-      if v.is_a? Hash
-        rv[k.to_sym] = sanitize_hash(v)
-      elsif v.is_a? Array
-        rv[k.to_sym] = sanitize_array(v)
-      else
-        rv[k.to_sym] = v
+      rv[k.to_sym] = case v.class.to_s
+        when "Hash"  then sanitize_hash(v)
+        when "Array" then sanitize_array(v)
+        else v
       end
     end
     return rv
@@ -207,6 +204,8 @@ class MrntQuantum
   end
 
 end
+
+
 
 Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalue, :doc => <<-EOS
     This function get Hash of Quantum configuration
