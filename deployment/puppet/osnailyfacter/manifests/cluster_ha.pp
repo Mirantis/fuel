@@ -5,10 +5,10 @@ class osnailyfacter::cluster_ha {
 
 
 if $::use_quantum {
-  $quantum_hash   = parsejson($::quantum_access)
-  $quantum_params = parsejson($::quantum_parameters)
+  #$quantum_hash   = parsejson($::quantum_access)
+  #$quantum_params = parsejson($::quantum_parameters)
   $novanetwork_params  = {}
-  $quantum_config = sanitize_quantum_config(parse_json($::quantum_parameters))
+  $quantum_config = sanitize_quantum_config(parse_json($::quantum_settings))
 } else {
   $quantum_hash = {}
   $quantum_params = {}
@@ -23,7 +23,7 @@ else {
 }
 
 
-$nova_hash	      = parsejson($::nova)
+$nova_hash        = parsejson($::nova)
 $mysql_hash           = parsejson($::mysql)
 $rabbit_hash          = parsejson($::rabbit)
 $glance_hash          = parsejson($::glance)
@@ -36,8 +36,8 @@ $mp_hash              = parsejson($::mp)
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 $network_size         = $novanetwork_params['network_size']
 $num_networks         = $novanetwork_params['num_networks']
-$tenant_network_type  = $quantum_params['tenant_network_type']
-$segment_range        = $quantum_params['segment_range']
+##$tenant_network_type  = $quantum_params['tenant_network_type']
+##$segment_range        = $quantum_params['segment_range']
 $vlan_start           = $novanetwork_params['vlan_start']
 
 if !$rabbit_hash[user]
@@ -118,7 +118,7 @@ $controller_node_public  = $public_vip
 $controller_node_address = $management_vip
 $mountpoints = filter_hash($mp_hash,'point')
 $swift_proxies = $controller_storage_addresses
-$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
+##$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
 
 $quantum_gre_bind_addr = $::internal_address
 
@@ -242,14 +242,9 @@ class compact_controller (
     glance_backend                => $glance_backend,
     swift_proxies                 => $swift_proxies,
     quantum                       => $::use_quantum,
-    quantum_user_password         => $quantum_hash[user_password],
-    quantum_db_password           => $quantum_hash[db_password],
+    quantum_config                => $::quantum_config,
     quantum_network_node          => $quantum_network_node,
     quantum_netnode_on_cnt        => $quantum_netnode_on_cnt,
-    quantum_gre_bind_addr         => $quantum_gre_bind_addr,
-    quantum_external_ipinfo       => $external_ipinfo,
-    tenant_network_type           => $tenant_network_type,
-    segment_range                 => $segment_range,
     cinder                        => true,
     cinder_user_password          => $cinder_hash[user_password],
     cinder_iscsi_bind_addr        => $cinder_iscsi_bind_addr,
@@ -417,14 +412,10 @@ class virtual_ips () {
         cinder_db_password     => $cinder_hash[db_password],
         db_host                => $management_vip,
         quantum                => $::use_quantum,
-        quantum_host           => $quantum_host,
-        quantum_sql_connection => $quantum_sql_connection,
-        quantum_user_password  => $quantum_hash[user_password],
-        tenant_network_type    => $tenant_network_type,
-        segment_range          => $segment_range,
+        quantum_config         => $::quantum_config,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
-	syslog_log_facility    => $syslog_log_facility_nova,
+        syslog_log_facility    => $syslog_log_facility_nova,
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
         syslog_log_facility_cinder => $syslog_log_facility_cinder,
         nova_rate_limits       => $nova_rate_limits,

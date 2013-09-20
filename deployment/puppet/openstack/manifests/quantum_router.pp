@@ -1,22 +1,15 @@
 #This class installs quantum WITHOUT quantum api server which is installed on controller nodes
 # [use_syslog] Rather or not service should log to syslog. Optional.
-# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option 
+# [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
 #       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
 
 class openstack::quantum_router (
-  $db_host,
   $rabbit_password,
   $internal_address         = $::ipaddress_br_mgmt,
   $public_interface         = "br-ex",
   $private_interface        = "br-mgmt",
-  $fixed_range              = '10.0.0.0/24',
-  $floating_range           = false,
-  $external_ipinfo          = {},
   $create_networks          = true,
-  $segment_range            = '1:4094',
-  $service_endpoint         = '127.0.0.1',
-  $nova_api_vip             = '127.0.0.1',
   $queue_provider           = 'rabbitmq',
   $rabbit_user              = 'nova',
   $rabbit_nodes             = ['127.0.0.1'],
@@ -24,72 +17,42 @@ class openstack::quantum_router (
   $qpid_password            = 'qpid_pw',
   $qpid_user                = 'nova',
   $qpid_nodes               = ['127.0.0.1'],
-  $db_type                  = 'mysql',
-  $auth_host                = '127.0.0.1',
   $verbose                  = 'False',
   $debug                    = 'False',
   $enabled                  = true,
   $ensure_package           = present,
-  $api_bind_address         = '0.0.0.0',
   $quantum                  = false,
-  $quantum_db_dbname        = 'quantum',
-  $quantum_db_user          = 'quantum',
-  $quantum_db_password      = 'quantum_pass',
-  $quantum_user_password    = 'quantum_pass',
-  $exported_resources       = true,
-  $quantum_gre_bind_addr    = $internal_address,
+  $quantum_config           = {},
   $quantum_network_node     = false,
-  $quantum_netnode_on_cnt   = false,  
-  $tenant_network_type      = 'gre',
+  $quantum_netnode_on_cnt   = false,
   $use_syslog               = false,
   $syslog_log_facility      = 'LOCAL4',
-  $syslog_log_level = 'WARNING',
+  $syslog_log_level         = 'WARNING',
   $ha_mode                  = false,
   $service_provider         = 'generic',
-  $quantum_metadata_proxy_shared_secret = 'shared_secret'
 ) {
-    # Set up Quantum
-    $quantum_sql_connection = "$db_type://${quantum_db_user}:${quantum_db_password}@${db_host}/${quantum_db_dbname}?charset=utf8"
-    $enable_tunneling       = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
-    $admin_auth_url = "http://${auth_host}:35357/v2.0"
-
-    $use_namespaces = True
+    #$admin_auth_url = "http://${auth_host}:35357/v2.0"
 
     class { '::quantum':
-      bind_host            => $api_bind_address,
+      quantum_config       => $quantum_config,
       queue_provider       => $queue_provider,
-      rabbit_user          => $rabbit_user,
-      rabbit_password      => $rabbit_password,
-      rabbit_host          => $rabbit_nodes,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-      qpid_user            => $qpid_user,
-      qpid_password        => $qpid_password,
-      qpid_host            => $qpid_nodes,
       verbose              => $verbose,
       debug                => $debug,
       use_syslog           => $use_syslog,
       syslog_log_facility  => $syslog_log_facility,
       syslog_log_level     => $syslog_log_level,
       server_ha_mode       => $ha_mode,
-      auth_host            => $auth_host,
-      auth_tenant          => 'services',
-      auth_user            => 'quantum',
-      auth_password        => $quantum_user_password,
-    } 
+    }
     #todo: add quantum::server here (into IF)
     class { 'quantum::plugins::ovs':
-      bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
-      network_vlan_ranges => "physnet1,physnet2:${segment_range}",
-      tunnel_id_ranges    => "${segment_range}",
-      sql_connection      => $quantum_sql_connection,
-      tenant_network_type => $tenant_network_type,
-      enable_tunneling    => $enable_tunneling,
+      quantum_config      => $quantum_config,
+      #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
     }
 
 
     if $quantum_network_node {
       class { 'quantum::agents::ovs':
-        bridge_uplinks   => ["br-prv:${private_interface}"],
+        #bridge_uplinks   => ["br-prv:${private_interface}"],
         bridge_mappings  => ['physnet2:br-prv'],
         enable_tunneling => $enable_tunneling,
         local_ip         => $internal_address,

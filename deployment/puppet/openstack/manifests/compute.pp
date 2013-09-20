@@ -96,11 +96,7 @@ class openstack::compute (
   $fixed_range                   = undef,
   # Quantum
   $quantum                       = false,
-  $quantum_sql_connection        = false,
-  $quantum_host                  = false,
-  $quantum_user_password         = false,
-  $tenant_network_type           = 'gre',
-  $segment_range                 = '1:4094',
+  $quantum_config                = {},
   # nova compute configuration parameters
   $verbose                       = false,
   $debug               = false,
@@ -202,7 +198,7 @@ class openstack::compute (
       rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
       state_path           => $state_path,
   }
-  
+
   #Cinder setup
     $enabled_apis = 'metadata'
     package {'python-cinderclient': ensure => present}
@@ -347,17 +343,15 @@ class openstack::compute (
     }
   } else {
 
-    if ! $quantum_sql_connection {
-      fail('quantum sql connection must be specified when quantum is installed on compute instances')
-    }
-    if ! $quantum_host {
-      fail('quantum host must be specified when quantum is installed on compute instances')
-    }
-    if ! $quantum_user_password {
-      fail('quantum user password must be set when quantum is configured')
-    }
-
-    $enable_tunneling = $tenant_network_type ? { 'gre' => true, 'vlan' => false }
+    # if ! $quantum_sql_connection {
+    #   fail('quantum sql connection must be specified when quantum is installed on compute instances')
+    # }
+    # if ! $quantum_host {
+    #   fail('quantum host must be specified when quantum is installed on compute instances')
+    # }
+    # if ! $quantum_user_password {
+    #   fail('quantum user password must be set when quantum is configured')
+    # }
 
     class { '::quantum':
       queue_provider  => $queue_provider,
