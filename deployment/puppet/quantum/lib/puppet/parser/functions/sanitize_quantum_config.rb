@@ -1,37 +1,35 @@
 require 'ipaddr'
 
 
-class Mrnt_Quantum
+class MrntQuantum
 
-  def self.sanitize_hash(cfg)
-    def self.__process_array(aa)
-      rv = []
-      aa.each do |v|
-        if v.is_a? Hash
-          rv.insert(-1, __process_hash(v))
-        elsif v.is_a? Array
-          rv.insert(-1, __process_array(v))
-        else
-          rv.insert(-1, v)
-        end
+  def self.sanitize_array(aa)
+    rv = []
+    aa.each do |v|
+      if v.is_a? Hash
+        rv.insert(-1, sanitize_hash(v))
+      elsif v.is_a? Array
+        rv.insert(-1, sanitize_array(v))
+      else
+        rv.insert(-1, v)
       end
-      return rv
     end
-    def self.__process_hash(hh)
-      rv = {}
-      hh.each do |k, v|
-        #info("xx>>#{k}--#{k.to_sym}<<")
-        if v.is_a? Hash
-          rv[k.to_sym] = __process_hash(v)
-        elsif v.is_a? Array
-          rv[k.to_sym] = __process_array(v)
-        else
-          rv[k.to_sym] = v
-        end
+    return rv
+  end
+
+  def self.sanitize_hash(hh)
+    rv = {}
+    hh.each do |k, v|
+      #info("xx>>#{k}--#{k.to_sym}<<")
+      if v.is_a? Hash
+        rv[k.to_sym] = sanitize_hash(v)
+      elsif v.is_a? Array
+        rv[k.to_sym] = sanitize_array(v)
+      else
+        rv[k.to_sym] = v
       end
-      return rv
     end
-    __process_hash(cfg)
+    return rv
   end
 
   def default_amqp_provider()
@@ -220,8 +218,8 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
     EOS
   ) do |argv|
 
-  given_config = Mrnt_Quantum.sanitize_hash(argv[0])
-  q_conf = Mrnt_Quantum.new(self, given_config)
+  given_config = MrntQuantum.sanitize_hash(argv[0])
+  q_conf = MrntQuantum.new(self, given_config)
   return q_conf.generate_config()
 end
 
