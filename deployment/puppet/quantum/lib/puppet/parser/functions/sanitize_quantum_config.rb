@@ -56,8 +56,17 @@ class MrntQuantum
     @scope.lookupvar('management_vip')
   end
 
-  def get_quantum_vip()
+  # classmethod
+  def self.get_keystone_auth_url(kshash)
+    "#{kshash[:auth_protocol]}://#{kshash[:auth_host]}:#{kshash[:auth_port]}/#{kshash[:auth_api_version]}"
+  end
+
+  def get_quantum_srv_vip()
     @scope.lookupvar('quantum_vip') || @scope.lookupvar('management_vip')
+  end
+
+  def get_quantum_gre_vip()
+    @scope.lookupvar('management_vip')
   end
 
   def get_bridge_name(bb)
@@ -129,21 +138,24 @@ class MrntQuantum
         :reconnect_interval => 2,
       },
       :keystone => {
+        :auth_url => nil, # will be calculated later
         :auth_host => get_management_vip(),
         :auth_port => 35357,
         :auth_protocol => "http",
+        :auth_api_version => "v2.0",
         :admin_tenant_name => "services",
         :admin_user => "quantum",
         :admin_password => "quantum_pass",
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {
-        :bind_host => get_quantum_vip(),
+        :bind_host => get_quantum_srv_vip(),
         :bind_port => 9696,
       },
       :metadata => {
         :nova_metadata_ip => get_management_vip(),
         :nova_metadata_port => 8775,
+        :metadata_ip => '169.254.169.254',
         :metadata_proxy_shared_secret => "secret-word",
       },
       :L2 => {
@@ -156,7 +168,7 @@ class MrntQuantum
         :tunnel_bridge => get_bridge_name('tunnel'),
         :int_peer_patch_port => "patch-tun",
         :tun_peer_patch_port => "patch-int",
-        :local_ip => nil,
+        :local_ip => get_quantum_gre_vip(),
       },
       :L3 => {
         :router_id => nil,
@@ -190,6 +202,7 @@ class MrntQuantum
       rv[:L2][:enable_tunneling] = false
       rv[:L2][:tunnel_id_ranges] = nil
     end
+    rv[:keystone][:auth_url] = MrntQuantum.get_keystone_auth_url(rv[:keystone])
     return rv
   end
 

@@ -30,6 +30,7 @@ class QuantumConfig
         :auth_host => "#{@def_v[:management_vip]}",
         :auth_port => 35357,
         :auth_protocol => "http",
+        :auth_api_version => "v2.0",
         :admin_tenant_name => "services",
         :admin_user => "quantum",
         :admin_password => "quantum_pass",
@@ -42,6 +43,7 @@ class QuantumConfig
       :metadata => {
         :nova_metadata_ip => "#{@def_v[:management_vip]}",
         :nova_metadata_port => 8775,
+        :metadata_ip => "169.254.169.254",
         :metadata_proxy_shared_secret => "secret-word",
       },
       :L2 => {
@@ -55,7 +57,7 @@ class QuantumConfig
         :tunnel_bridge => "br-tun",
         :int_peer_patch_port => "patch-tun",
         :tun_peer_patch_port => "patch-int",
-        :local_ip => nil,
+        :local_ip => "#{@def_v[:management_vip]}",
       },
       :L3 => {
         :router_id => nil,
@@ -98,6 +100,7 @@ class QuantumConfig
       },
       :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
     }
+    @def_config[:keystone][:auth_url] = "http://#{@def_v[:management_vip]}:35357/v2.0"
   end
 
   def get_def_config()
@@ -167,6 +170,22 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     should run.with_params(cfg).and_return(res_cfg)
   end
 
+end
+
+
+require "#{File.expand_path(File.dirname(__FILE__))}/../../lib/puppet/parser/functions/sanitize_quantum_config.rb"
+
+describe MrntQuantum do
+  describe '.get_keystone_auth_url' do
+    it 'should return right auth url' do
+      MrntQuantum.get_keystone_auth_url({
+        :auth_protocol => 'http',
+        :auth_host => 'localhost',
+        :auth_port => '5000',
+        :auth_api_version => 'v2.0'
+      }).should == 'http://localhost:5000/v2.0'
+    end
+  end
 end
 
 # vim: set ts=2 sw=2 et :
