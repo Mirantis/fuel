@@ -1,32 +1,10 @@
 #
 class quantum::agents::l3 (
-  $package_ensure   = 'present',
-  $enabled          = true,
+  $quantum_config     = {},
   $verbose          = 'False',
   $debug            = 'False',
-  $fixed_range      = '10.0.1.0/24',
-  $floating_range   = '192.168.10.0/24',
-  $ext_ipinfo       = { },
-  $segment_range    = '1:4094',
-  $tenant_network_type = 'gre',
-  $create_networks  = true,
+  $create_networks  = true,               # ?????????????????
   $interface_driver = 'quantum.agent.linux.interface.OVSInterfaceDriver',
-  $external_network_bridge = 'br-ex',
-  $auth_url         = 'http://localhost:5000/v2.0',
-  $auth_port        = '5000',
-  $auth_region      = 'RegionOne',
-  $auth_tenant      = 'services',
-  $auth_user        = 'quantum',
-  $auth_password    = 'password',
-  $root_helper      = 'sudo /usr/bin/quantum-rootwrap /etc/quantum/rootwrap.conf',
-  $use_namespaces   = $::quantum_use_namespaces,
-  $router_id        = undef,
-  $gateway_external_net_id      = undef,
-  $handle_internal_only_routers = 'True',
-  $metadata_ip      = '169.254.169.254',
-  $nova_api_vip     = '127.0.0.1',
-  $metadata_port    = 8775,
-  $polling_interval = 3,
   $service_provider = 'generic'
 ) {
   include 'quantum::params'
@@ -36,12 +14,11 @@ class quantum::agents::l3 (
   Service<| title=='quantum-server' |> -> Anchor['quantum-l3']
 
   if $::quantum::params::l3_agent_package {
-    #Package['quantum'] -> Package['quantum-l3']
     $l3_agent_package = 'quantum-l3'
 
     package { 'quantum-l3':
       name   => $::quantum::params::l3_agent_package,
-      ensure => $package_ensure,
+      ensure => present,
     }
     # do not move it to outside this IF
     Package['quantum-l3'] -> Quantum_l3_agent_config <| |>
@@ -62,19 +39,20 @@ class quantum::agents::l3 (
   Quantum_l3_agent_config <| |> -> Quantum_subnet <| |>
 
   quantum_l3_agent_config {
-    'DEFAULT/use_namespaces': value => $use_namespaces;
     'DEFAULT/debug':          value => $debug;
     'DEFAULT/verbose':        value => $verbose;
-    'DEFAULT/root_helper':    value => $root_helper;
-    'DEFAULT/auth_url':       value => $auth_url;
-    'DEFAULT/auth_port':      value => $auth_port;
-    'DEFAULT/admin_user':     value => $auth_user;
-    'DEFAULT/admin_password': value => $auth_password;
-    'DEFAULT/admin_tenant_name': value => $auth_tenant;
-    'DEFAULT/external_network_bridge': value => $external_network_bridge;
-    ## todo: check for compatible with quantum-metadata-agent
-    #'DEFAULT/metadata_ip': value => $metadata_ip;
-   #'DEFAULT/gateway_external_net_id': value => $gateway_external_net_id;
+    'DEFAULT/root_helper':    value => $quantum_config['root_helper'];
+    'DEFAULT/auth_url':       value => $quantum_config['keystone']['auth_url'];
+    'DEFAULT/admin_user':     value => $quantum_config['keystone']['auth_user'];
+    'DEFAULT/admin_password': value => $quantum_config['keystone']['auth_password'];
+    'DEFAULT/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];
+    'DEFAULT/metadata_ip':   value => $quantum_config['metadata']['metadata_ip'];
+    'DEFAULT/metadata_port': value => $quantum_config['metadata']['metadata_port'];
+    'DEFAULT/use_namespaces': value => $quantum_config['L3']['use_namespaces'];
+    'DEFAULT/send_arp_for_ha': value => $quantum_config['L3']['send_arp_for_ha'];
+    'DEFAULT/periodic_interval': value => $quantum_config['L3']['resync_interval'];
+    'DEFAULT/periodic_fuzzy_delay': value => $quantum_config['L3']['resync_fuzzy_delay'];
+    'DEFAULT/external_network_bridge': value => $quantum_config['L3']['public_bridge'];
   }
 
   if $enabled {
@@ -368,19 +346,6 @@ class quantum::agents::l3 (
       provider   => "pacemaker",
     }
 
-    # # Quantum metadata agent starts only under pacemaker
-    # # and co-located with l3-agent
-    # class {'quantum::agents::metadata':
-    #   debug         => $debug,
-    #   auth_tenant   => $auth_tenant,
-    #   auth_user     => $auth_user,
-    #   auth_url      => $auth_url,
-    #   auth_region   => $auth_region,
-    #   metadata_ip   => $nova_api_vip,
-    #   metadata_port => $metadata_port,
-    #   auth_password => $auth_password,
-    #   shared_secret => $::quantum_metadata_proxy_shared_secret
-    # }
   } else {
     Quantum_config <| |> ~> Service['quantum-l3']
     Quantum_l3_agent_config <| |> ~> Service['quantum-l3']
