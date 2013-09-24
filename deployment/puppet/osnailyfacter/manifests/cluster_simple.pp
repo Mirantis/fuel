@@ -113,10 +113,25 @@ if !$debug
  $debug = 'false'
 }
 
+#TODO: awoodward fix static $use_ceph
+$use_ceph = false
+if ($use_ceph) {
+  $primary_mons   = $controller
+  $primary_mon    = $controller[0]['name']
+  $glance_backend = 'ceph'
+  class {'ceph': 
+    primary_mon  => $primary_mon,
+    cluster_node_address => $controller_node_address,
+  }
+} else {
+  $glance_backend = 'file'
+}
+
   case $role {
     "controller" : {
       include osnailyfacter::test_controller
 
+      class {'osnailyfacter::apache_api_proxy':}
       class { 'openstack::controller':
         admin_address           => $controller_node_address,
         public_address          => $controller_node_public,
@@ -142,6 +157,7 @@ if !$debug
         keystone_admin_tenant   => $access_hash[tenant],
         glance_db_password      => $glance_hash[db_password],
         glance_user_password    => $glance_hash[user_password],
+        glance_backend          => $glance_backend,
         nova_db_password        => $nova_hash[db_password],
         nova_user_password      => $nova_hash[user_password],
         nova_rate_limits        => $nova_rate_limits,
@@ -238,7 +254,7 @@ if !$debug
       #   source           => '/opt/vm/cirros-0.3.0-x86_64-disk.img',
       #   require          => Class[glance::api],
       # }
-
+#TODO: fix this so it dosn't break ceph
       class { 'openstack::img::cirros':
         os_username               => shellescape($access_hash[user]),
         os_password               => shellescape($access_hash[password]),
@@ -246,6 +262,8 @@ if !$debug
         img_name                  => "TestVM",
         stage                     => 'glance-image',
       }
+      Class[glance::api]        -> Class[openstack::img::cirros]
+
       if !$quantum {
       nova_floating_range{ $floating_ips_range:
         ensure          => 'present',
@@ -257,9 +275,13 @@ if !$debug
         authtenant_name => $access_hash[tenant],
       }
       Class[nova::api] -> Nova_floating_range <| |>
-      }
+    }
 
-      Class[glance::api]        -> Class[openstack::img::cirros]
+      if defined(Class['ceph']){
+        Class['openstack::controller'] -> Class['ceph::glance']
+        Class['glance::api']           -> Class['ceph::glance']
+        Class['openstack::controller'] -> Class['ceph::cinder']
+      }
     }
 
     "compute" : {
@@ -287,8 +309,6 @@ if !$debug
         glance_api_servers     => "${controller_node_address}:9292",
         vncproxy_host          => $controller_node_public,
         vnc_enabled            => true,
-        #ssh_private_key        => 'puppet:///ssh_keys/openstack',
-        #ssh_public_key         => 'puppet:///ssh_keys/openstack.pub',
         quantum                => $quantum,
         quantum_host           => $quantum_host,
         quantum_sql_connection => $quantum_sql_connection,
@@ -316,6 +336,10 @@ if !$debug
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $start_guests_on_host_boot }
       nova_config { 'DEFAULT/use_cow_images': value => $use_cow_images }
       nova_config { 'DEFAULT/compute_scheduler_driver': value => $compute_scheduler_driver }
+
+      if defined(Class['ceph']){
+        Class['openstack::compute'] -> Class['ceph']
+      }
     }
 
     "cinder" : {
@@ -345,6 +369,11 @@ if !$debug
         verbose              => $verbose ? { 'true' => true, true => true, default=> false },
         use_syslog           => true,
       }
+   }
+   "ceph-osd" : {
+     #Nothing needs to be done Class Ceph is already defined
+     notify {"ceph-osd: ${::ceph::osd_devices}": }
+     notify {"osd_devices:  ${::osd_devices_list}": }
    }
   }
 }
