@@ -155,9 +155,9 @@ Here are some errors that may be reported.
 ``ceph`` commands return key errors:
 
 ```
-	[root@controller-13 ~]# ceph -s
-	2013-08-22 00:06:19.513437 7f79eedea760 -1 monclient(hunting): ERROR: missing keyring, cannot use cephx for authentication
-	2013-08-22 00:06:19.513466 7f79eedea760 -1 ceph_tool_common_init failed.
+  [root@controller-13 ~]# ceph -s
+  2013-08-22 00:06:19.513437 7f79eedea760 -1 monclient(hunting): ERROR: missing keyring, cannot use cephx for authentication
+  2013-08-22 00:06:19.513466 7f79eedea760 -1 ceph_tool_common_init failed.
   
 ```
 
@@ -190,19 +190,19 @@ Common issues:
 Check the osd tree:
 
 ```
-	#ceph osd tree
-	
-	# id    weight  type name       up/down reweight
-	-1      6       root default
-	-2      2               host controller-1
-	0       1                       osd.0   up      1
-	3       1                       osd.3   up      1
-	-3      2               host controller-2
-	1       1                       osd.1   up      1
-	4       1                       osd.4   up      1
-	-4      2               host controller-3
-	2       1                       osd.2   up      1
-	5       1                       osd.5   up      1
+  #ceph osd tree
+  
+  # id    weight  type name       up/down reweight
+  -1      6       root default
+  -2      2               host controller-1
+  0       1                       osd.0   up      1
+  3       1                       osd.3   up      1
+  -3      2               host controller-2
+  1       1                       osd.1   up      1
+  4       1                       osd.4   up      1
+  -4      2               host controller-3
+  2       1                       osd.2   up      1
+  5       1                       osd.5   up      1
 ```
 
 Ceph pools
@@ -212,8 +212,8 @@ By default we create two pools ``image``, and ``volumes``, there should also be
 defaults of ``data``, ``metadata``, and ``rbd``. ``ceph osd lspools`` can show
 the current pools:
 
-	# ceph osd lspools
-	0 data,1 metadata,2 rbd,3 images,4 volumes,
+  # ceph osd lspools
+  0 data,1 metadata,2 rbd,3 images,4 volumes,
 
 Testing openstack
 -----------------

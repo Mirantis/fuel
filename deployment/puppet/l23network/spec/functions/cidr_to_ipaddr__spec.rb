@@ -16,9 +16,9 @@ describe 'cidr_to_ipaddr' do
   it 'should throw an error on invalid CIDR' do
     invalid_cidrs = ['192.168.33.66', '192.256.33.66/23', 'jhgjhgghggh']
     for cidr in invalid_cidrs
-	    lambda {
-	      scope.function_cidr_to_ipaddr([cidr])
-	    }.should(raise_error(Puppet::ParseError))
+      lambda {
+        scope.function_cidr_to_ipaddr([cidr])
+      }.should(raise_error(Puppet::ParseError))
     end
   end
 

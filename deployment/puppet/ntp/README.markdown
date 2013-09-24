@@ -22,8 +22,8 @@ Setup
 
 * package/service/configuration files for NTP
 * server settings
-	
-### Beginning with NTP	
+  
+### Beginning with NTP  
 
 To setup NTP on a server
 

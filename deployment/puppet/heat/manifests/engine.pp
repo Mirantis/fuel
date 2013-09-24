@@ -97,8 +97,8 @@ class heat::engine (
     require    => [ File['/etc/heat/heat-engine.conf'],
                     Exec['heat-encryption-key-replacement'],
                     Package['heat-common'],
-		    Package['heat-engine'],
-		    Class['heat::db']],
+        Package['heat-engine'],
+        Class['heat::db']],
   }
 
   exec {'heat-encryption-key-replacement':

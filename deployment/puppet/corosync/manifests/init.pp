@@ -118,7 +118,7 @@ class corosync (
 
   if $::osfamily == "RedHat"
   {
-  	package {'crmsh': ensure => present}
+    package {'crmsh': ensure => present}
   }
 
   # Template uses:

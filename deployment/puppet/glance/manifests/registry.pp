@@ -147,8 +147,8 @@ if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
   if $::osfamily=="Debian"
   {
  package {'glance-registry':
-	 name => $::glance::params::registry_package_name,
- 	 ensure => $package_ensure
+   name => $::glance::params::registry_package_name,
+    ensure => $package_ensure
  }
   File['/etc/glance/glance-registry.conf'] -> Glance_registry_config<||>
   Package['glance-registry']->Service['glance-registry']

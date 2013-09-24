@@ -8,17 +8,17 @@
 #
 # Usage:
 #  module_file {
-#  	"module/file":
-# 			source => "puppet://..",
+#    "module/file":
+#       source => "puppet://..",
 # }
 define module_file (
-		$source,
-		$mode = 0644, $owner = root, $group = 0
-	)
+    $source,
+    $mode = 0644, $owner = root, $group = 0
+  )
 {
-	file {
-		"${module_dir_path}/${name}":
-			source => $source,
-			mode => $mode, owner => $owner, group => $group;
-	}
+  file {
+    "${module_dir_path}/${name}":
+      source => $source,
+      mode => $mode, owner => $owner, group => $group;
+  }
 }

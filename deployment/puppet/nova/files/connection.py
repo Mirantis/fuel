@@ -532,8 +532,8 @@ class LibvirtConnection(driver.ComputeDriver):
             try:
                 # The attaching command were patched by Puppet
                 LOG.info("Attaching device with virsh because attachDevice does not work")
-		device_path = connection_info['data']['device_path']
- 		utils.execute('virsh', "attach-disk", instance_name, device_path, mount_device, run_as_root=True)
+    device_path = connection_info['data']['device_path']
+     utils.execute('virsh', "attach-disk", instance_name, device_path, mount_device, run_as_root=True)
             except Exception, ex:
                 self.volume_driver_method('disconnect_volume',
                                            connection_info,

@@ -28,17 +28,17 @@ restrict -6 ::1
 server <%= server %> burst iburst
 <% end -%>
 
-#broadcast 192.168.1.255 key 42		# broadcast server
-#broadcastclient			# broadcast client
-#broadcast 224.0.1.1 key 42		# multicast server
-#multicastclient 224.0.1.1		# multicast client
-#manycastserver 239.255.254.254		# manycast server
-#manycastclient 239.255.254.254 key 42	# manycast client
+#broadcast 192.168.1.255 key 42    # broadcast server
+#broadcastclient      # broadcast client
+#broadcast 224.0.1.1 key 42    # multicast server
+#multicastclient 224.0.1.1    # multicast client
+#manycastserver 239.255.254.254    # manycast server
+#manycastclient 239.255.254.254 key 42  # manycast client
 
 # Undisciplined Local Clock. This is a fake driver intended for backup
 # and when no outside source of synchronized time is available. 
-# server	127.127.1.0	# local clock
-# fudge	127.127.1.0 stratum 10	
+# server  127.127.1.0  # local clock
+# fudge  127.127.1.0 stratum 10  
 
 # Drift file.  Put this in a directory which the daemon can write to.
 # No symbolic links allowed, either, since the daemon updates the file

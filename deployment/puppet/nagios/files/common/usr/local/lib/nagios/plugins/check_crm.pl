@@ -31,11 +31,11 @@
 # NOTES: Requires Perl 5.8 or higher & the Perl Module Nagios::Plugin
 #        Nagios user will need sudo acces - suggest adding line below to
 #        sudoers
-#	     nagios  ALL=(ALL) NOPASSWD: /usr/sbin/crm_mon -1 -r -f
+#       nagios  ALL=(ALL) NOPASSWD: /usr/sbin/crm_mon -1 -r -f
 #
-#	     In sudoers if requiretty is on (off state is default)
-#	     you will also need to add the line below
-#	     Defaults:nagios !requiretty
+#       In sudoers if requiretty is on (off state is default)
+#       you will also need to add the line below
+#       Defaults:nagios !requiretty
 #
 
 use warnings;

@@ -243,7 +243,7 @@ Puppet::Type.newtype(:firewall) do
       Note that you specify them in the order that iptables --list-rules
       would list them to avoid having puppet think you changed the flags.
       Example: FIN,SYN,RST,ACK SYN matches packets with the SYN bit set and the
-	       ACK,RST and FIN bits cleared.  Such packets are used to request
+         ACK,RST and FIN bits cleared.  Such packets are used to request
                TCP  connection initiation.
     EOS
   end

@@ -326,7 +326,7 @@ if ($use_ceph) {
         verbose                => $verbose ? { 'true' => true, true => true, default=> false },
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
-	syslog_log_facility    => $syslog_log_facility_nova,
+  syslog_log_facility    => $syslog_log_facility_nova,
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
         syslog_log_facility_cinder => $syslog_log_facility_cinder,
         state_path             => $nova_hash[state_path],

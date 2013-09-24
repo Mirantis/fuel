@@ -1,9 +1,9 @@
 Facter.add("cinder_conf") do
 
-	setcode do
+  setcode do
 
-		File.exists? '/etc/cinder/cinder.conf'
+    File.exists? '/etc/cinder/cinder.conf'
 
-	end
+  end
 
 end

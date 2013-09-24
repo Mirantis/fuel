@@ -240,7 +240,7 @@ echo "IPV6_DEFAULTGW=$ipv6_default_gateway" >> $devfile
         #else
             ## this is a DHCP interface, much less work to do
 echo "BOOTPROTO=dhcp" >> $devfile
-	#end if
+  #end if
         ## ===================================================================
         ## VLAN configuration
         ## ===================================================================
@@ -258,7 +258,7 @@ echo "MTU=$mtu" >> $devfile
         ## Non-slave DNS configuration, when applicable
         ## ===================================================================
         ## If the interface is anything but a slave then add DNSn entry
-	#if $iface_type.lower() not in ("slave","bond_slave","bridge_slave")
+  #if $iface_type.lower() not in ("slave","bond_slave","bridge_slave")
             #set $nct = 0
             #for $nameserver in $name_servers
                 #set $nct = $nct + 1

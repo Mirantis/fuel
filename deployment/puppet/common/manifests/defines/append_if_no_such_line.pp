@@ -4,11 +4,11 @@
 # least named according to a proper resource model.
 #
 define append_if_no_such_line($file, $line) {
-	line {
-		$name:
-			ensure => present,
-			file => $file,
-			line => $line;
-	}
+  line {
+    $name:
+      ensure => present,
+      file => $file,
+      line => $line;
+  }
 }
 

@@ -4,4 +4,4 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-30 7    * * *   root	start -q anacron || :
+30 7    * * *   root  start -q anacron || :

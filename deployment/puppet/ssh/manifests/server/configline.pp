@@ -15,12 +15,12 @@ define ssh::server::configline ($ensure = present, $value = false) {
             }
         }
         add: {
-        	augeas {
-        		"sshd_config_${name}":
-        			changes => ["ins ${name} after ${name}[last()]",
-        			"set ${name}[last()] ${value}"],
-        			onlyif => "get ${name}[. = '${value}'] != ${value}",
-        	}
+          augeas {
+            "sshd_config_${name}":
+              changes => ["ins ${name} after ${name}[last()]",
+              "set ${name}[last()] ${value}"],
+              onlyif => "get ${name}[. = '${value}'] != ${value}",
+          }
         }
         absent: {
             augeas { "sshd_config_${name}":

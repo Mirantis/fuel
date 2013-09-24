@@ -170,11 +170,11 @@ class quantum (
   # server givs this parameters from command line
   # FIXME change init.d scripts for q&agents, fix daemon launch commands (CENTOS/RHEL):
   # quantum-server:
-  #	daemon --user quantum --pidfile $pidfile "$exec --config-file $config --config-file /etc/$prog/plugin.ini &>>/var/log/quantum/server.log & echo \$!
+  #  daemon --user quantum --pidfile $pidfile "$exec --config-file $config --config-file /etc/$prog/plugin.ini &>>/var/log/quantum/server.log & echo \$!
   # quantum-ovs-cleanup:
-  # 	daemon --user quantum $exec --config-file /etc/$proj/$proj.conf --config-file $config &>>/var/log/$proj/$plugin.log
+  #   daemon --user quantum $exec --config-file /etc/$proj/$proj.conf --config-file $config &>>/var/log/$proj/$plugin.log
   # quantum-ovs/metadata/l3/dhcp/-agents:
-  # 	daemon --user quantum --pidfile $pidfile "$exec --config-file /etc/$proj/$proj.conf --config-file $config &>>/var/log/$proj/$plugin.log & echo \$! > $pidfile"
+  #   daemon --user quantum --pidfile $pidfile "$exec --config-file /etc/$proj/$proj.conf --config-file $config &>>/var/log/$proj/$plugin.log & echo \$! > $pidfile"
 
   quantum_config {
       'DEFAULT/log_file':   ensure=> absent;

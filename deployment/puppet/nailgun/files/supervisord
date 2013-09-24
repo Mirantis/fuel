@@ -4,7 +4,7 @@
 #
 # Author:       Mike McGrath <mmcgrath@redhat.com> (based off yumupdatesd)
 #
-# chkconfig:	- 95 04
+# chkconfig:  - 95 04
 #
 # description:  supervisor is a process control utility.  It has a web based
 #               xmlrpc interface as well as a few other nifty features.
@@ -19,45 +19,45 @@
 RETVAL=0
 
 start() {
-	echo -n $"Starting supervisord: "
-	daemon supervisord
-	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/supervisord
+  echo -n $"Starting supervisord: "
+  daemon supervisord
+  RETVAL=$?
+  echo
+  [ $RETVAL -eq 0 ] && touch /var/lock/subsys/supervisord
 }
 
 stop() {
-	echo -n $"Stopping supervisord: "
-	killproc -d 70 supervisord
-	echo
-	[ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/supervisord
+  echo -n $"Stopping supervisord: "
+  killproc -d 70 supervisord
+  echo
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/supervisord
 }
 
 restart() {
-	stop
-	start
+  stop
+  start
 }
 
 case "$1" in
   start)
-	start
-	;;
+  start
+  ;;
   stop) 
-	stop
-	;;
+  stop
+  ;;
   restart|force-reload|reload)
-	restart
-	;;
+  restart
+  ;;
   condrestart)
-	[ -f /var/lock/subsys/supervisord ] && restart
-	;;
+  [ -f /var/lock/subsys/supervisord ] && restart
+  ;;
   status)
-	status supervisord
-	RETVAL=$?
-	;;
+  status supervisord
+  RETVAL=$?
+  ;;
   *)
-	echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
-	exit 1
+  echo $"Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+  exit 1
 esac
 
 exit $RETVAL

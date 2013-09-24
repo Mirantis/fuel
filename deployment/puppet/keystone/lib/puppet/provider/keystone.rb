@@ -92,7 +92,7 @@ class Puppet::Provider::Keystone < Puppet::Provider
         end
         row
       end
-	debug(list.inspect)
+  debug(list.inspect)
       list
     end
     def self.get_keystone_object(type, id, attr)

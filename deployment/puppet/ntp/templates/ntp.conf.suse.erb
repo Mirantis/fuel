@@ -33,8 +33,8 @@
 ## Undisciplined Local Clock. This is a fake driver intended for backup
 ## and when no outside source of synchronized time is available.
 ##
-server 127.127.1.0		# local clock (LCL)
-fudge  127.127.1.0 stratum 10	# LCL is unsynchronized
+server 127.127.1.0    # local clock (LCL)
+fudge  127.127.1.0 stratum 10  # LCL is unsynchronized
 
 # Managed by puppet class { "ntp": servers => [ ... ] }
 <% [servers_real].flatten.each do |server| -%>
@@ -53,11 +53,11 @@ tinker panic 0
 
 driftfile /var/lib/ntp/drift/ntp.drift # path for drift file
 
-logfile   /var/log/ntp		# alternate log file
+logfile   /var/log/ntp    # alternate log file
 # logconfig =syncstatus + sysevents
 # logconfig =all
 
-# statsdir /tmp/		# directory for statistics files
+# statsdir /tmp/    # directory for statistics files
 # filegen peerstats  file peerstats  type day enable
 # filegen loopstats  file loopstats  type day enable
 # filegen clockstats file clockstats type day enable
@@ -79,7 +79,7 @@ restrict -6 ::1
 #
 # Authentication stuff
 #
-keys /etc/ntp.keys		# path for keys file
-trustedkey 1			# define trusted keys
-requestkey 1			# key (7) for accessing server variables
-# controlkey 15			# key (6) for accessing server variables
+keys /etc/ntp.keys    # path for keys file
+trustedkey 1      # define trusted keys
+requestkey 1      # key (7) for accessing server variables
+# controlkey 15      # key (6) for accessing server variables

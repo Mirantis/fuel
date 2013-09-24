@@ -15,7 +15,7 @@ class openstack::repo::yum (
     $description = $repo_name
     }
   else {
-  	$description = $descr
+    $description = $descr
   }
   #if defined(Package['yum-plugin-priorities']) {}
   #else {

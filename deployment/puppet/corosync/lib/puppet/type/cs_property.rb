@@ -48,7 +48,7 @@ module Puppet
       property. Sometimes it is needed when configuring cluster bootstrap
       options, e.g. no-quorum-policy and others."
       munge do |value|
-	      Integer(value)
+        Integer(value)
       end
       defaultto(1)
     end

@@ -86,9 +86,9 @@ class openstack::db::mysql (
       # 'root_password' => $mysql_root_password,
       'bind_address'  => '0.0.0.0'
     },
-    galera_cluster_name	    => $galera_cluster_name,
+    galera_cluster_name      => $galera_cluster_name,
     primary_controller      => $primary_controller,
-    galera_node_address	    => $galera_node_address,
+    galera_node_address      => $galera_node_address,
     galera_nodes            => $galera_nodes,
     enabled                 => $enabled,
     custom_setup_class      => $custom_setup_class,

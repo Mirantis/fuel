@@ -9,13 +9,13 @@ DAEMON_OPTS=""
 
 # What server type to run 
 # Options: 
-# 	   webrick: default, cannot handle more than ~30 nodes
-#	   mongrel: scales better than webrick because you can run
-#	    	    multiple processes if you are getting
-#	    	    connection-reset or End-of-file errors, switch to
-#	    	    mongrel. Requires front-end web-proxy such as
-#	    	    apache, nginx, or pound, more information:
-#	            http://puppetlabs.com/trac/puppet/wiki/UsingMongrel
+#      webrick: default, cannot handle more than ~30 nodes
+#     mongrel: scales better than webrick because you can run
+#            multiple processes if you are getting
+#            connection-reset or End-of-file errors, switch to
+#            mongrel. Requires front-end web-proxy such as
+#            apache, nginx, or pound, more information:
+#              http://puppetlabs.com/trac/puppet/wiki/UsingMongrel
 #          passenger: no need to set this, be sure to set START=no above
 SERVERTYPE=mongrel
 
