@@ -37,9 +37,9 @@ d-i base-installer/kernel/image string linux-server
 
 d-i mirror/protocol string http
 d-i mirror/country string manual
-d-i mirror/http/hostname string $tree_host
-d-i mirror/http/directory string $tree_url
-d-i mirror/http/proxy string $proxy
+d-i mirror/http/hostname string @@server@@:8080
+d-i mirror/http/directory string /ubuntu/fuelweb/x86_64
+d-i mirror/http/proxy string
 
 d-i mirror/suite string precise
 # Suite to use for loading installer components (optional).
