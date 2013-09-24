@@ -136,7 +136,4 @@ echo -e "---\nurl: '<%= scope.lookupvar('nailgun::nailgun_api_url') %>'" > /targ
 echo target > /target/etc/nailgun_systemtype && \
 echo 'APT::Get::AllowUnauthenticated 1;' > /target/etc/apt/apt.conf.d/02mirantis-allow-unsigned && \
 in-target update-initramfs -u && \
-in-target wget http://apt.puppetlabs.com/pubkey.gpg && \
-in-target apt-key add /pubkey.gpg && \
-rm /target/pubkey.gpg && \
 true
