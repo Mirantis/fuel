@@ -3,7 +3,6 @@ class quantum::agents::dhcp (
   $quantum_config     = {},
   $verbose          = 'False',
   $debug            = 'False',
-  $resync_interval  = 10, # ??????????????????????????????????/
   $interface_driver = 'quantum.agent.linux.interface.OVSInterfaceDriver',
   $dhcp_driver      = 'quantum.agent.linux.dhcp.Dnsmasq',
   $dhcp_agent_manager='quantum.agent.dhcp_agent.DhcpAgentWithStateReport',
@@ -51,6 +50,7 @@ class quantum::agents::dhcp (
     'DEFAULT/state_path':        value => $state_path;
     'DEFAULT/interface_driver':  value => $interface_driver;
     'DEFAULT/dhcp_driver':       value => $dhcp_driver;
+    'DEFAULT/dhcp_agent_manager':value => $dhcp_agent_manager;
     'DEFAULT/auth_url':          value => $quantum_config['keystone']['auth_url'];
     'DEFAULT/admin_user':        value => $quantum_config['keystone']['auth_user'];
     'DEFAULT/admin_password':    value => $quantum_config['keystone']['auth_password'];
@@ -61,7 +61,6 @@ class quantum::agents::dhcp (
     'DEFAULT/signing_dir':       value => $quantum_config['keystone']['signing_dir'];
     'DEFAULT/enable_isolated_metadata': value => $quantum_config['l3']['dhcp_agent']['enable_isolated_metadata'];
     'DEFAULT/enable_metadata_network':  value => $quantum_config['l3']['dhcp_agent']['enable_metadata_network'];
-    'DEFAULT/dhcp_agent_manager':       value => $dhcp_agent_manager;
   }
 
   Service <| title == 'quantum-server' |> -> Service['quantum-dhcp-service']
@@ -91,10 +90,10 @@ class quantum::agents::dhcp (
       primitive_type  => 'quantum-agent-dhcp',
       #require => File['quantum-agent-dhcp'],
       parameters      => {
-        'os_auth_url' => $auth_url,
-        'tenant'      => $auth_tenant,
-        'username'    => $auth_user,
-        'password'    => $auth_password,
+        'os_auth_url' => $quantum_config['keystone']['auth_url'],
+        'tenant'      => $quantum_config['keystone']['admin_tenant_name'],
+        'username'    => $quantum_config['keystone']['auth_user'],
+        'password'    => $quantum_config['keystone']['auth_password'],
       }
       ,
       operations      => {
@@ -211,3 +210,5 @@ class quantum::agents::dhcp (
   anchor {'quantum-dhcp-agent-done': }
 
 }
+
+# vim: set ts=2 sw=2 et :

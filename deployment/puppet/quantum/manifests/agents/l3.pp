@@ -96,12 +96,12 @@ class quantum::agents::l3 (
       primitive_type  => 'quantum-agent-l3',
       #require         => File['quantum-l3-agent'],
       parameters      => {
-        'os_auth_url' => $auth_url,
-        'tenant'      => $auth_tenant,
-        'username'    => $auth_user,
-        'password'    => $auth_password,
         'debug'       => $debug,
         'syslog'      => $::use_syslog,
+        'os_auth_url' => $quantum_config['keystone']['auth_url'],
+        'tenant'      => $quantum_config['keystone']['admin_tenant_name'],
+        'username'    => $quantum_config['keystone']['auth_user'],
+        'password'    => $quantum_config['keystone']['auth_password'],
       },
       operations      => {
         'monitor'  => {
@@ -202,7 +202,7 @@ class quantum::agents::l3 (
 
     service { 'quantum-l3':
       name       => "p_${::quantum::params::l3_agent_service}",
-      enable     => $enabled,
+      enable     => true,
       ensure     => running,
       hasstatus  => true,
       hasrestart => false,
@@ -215,7 +215,7 @@ class quantum::agents::l3 (
     File<| title=='quantum-logging.conf' |> ->
     service { 'quantum-l3':
       name       => $::quantum::params::l3_agent_service,
-      enable     => $enabled,
+      enable     => true,
       ensure     => running,
       hasstatus  => true,
       hasrestart => true,
@@ -229,3 +229,5 @@ class quantum::agents::l3 (
   Anchor['quantum-l3'] -> Anchor['quantum-l3-done']
 
 }
+
+# vim: set ts=2 sw=2 et :

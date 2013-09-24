@@ -24,15 +24,12 @@ class openstack::quantum_router (
   $quantum                  = false,
   $quantum_config           = {},
   $quantum_network_node     = false,
-  $quantum_netnode_on_cnt   = false,
   $use_syslog               = false,
   $syslog_log_facility      = 'LOCAL4',
   $syslog_log_level         = 'WARNING',
   $ha_mode                  = false,
   $service_provider         = 'generic',
 ) {
-    #$admin_auth_url = "http://${auth_host}:35357/v2.0"
-
     class { '::quantum':
       quantum_config       => $quantum_config,
       queue_provider       => $queue_provider,
@@ -101,7 +98,7 @@ class openstack::quantum_router (
         metadata_ip         => $internal_address,
         nova_api_vip        => $nova_api_vip,
       }
-   }
+    }
 
     if !defined(Sysctl::Value['net.ipv4.ip_forward']) {
       sysctl::value { 'net.ipv4.ip_forward': value => '1'}
