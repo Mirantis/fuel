@@ -45,7 +45,7 @@ class swift(
 
   file { '/tmp/keystone-signing-swift':
     ensure  => directory,
-    owner  => 'root',
+    owner  => 'swift',
     group  => 'swift',
     mode    => '0700',
   }
