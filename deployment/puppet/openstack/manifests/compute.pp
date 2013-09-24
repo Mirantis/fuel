@@ -397,20 +397,6 @@ class openstack::compute (
       source => 'puppet:///modules/nova/libvirt_qemu.conf',
     }
 
-    # class { 'quantum::agents::dhcp':
-    #   debug          => True,
-    #   use_namespaces => $::quantum_use_namespaces,
-    # }
-
-    # class { 'quantum::agents::l3':
-    #   debug          => True,
-    #   auth_url       => "http://${service_endpoint}:35357/v2.0",
-    #   auth_tenant    => 'services',
-    #   auth_user      => 'quantum',
-    #   auth_password  => $quantum_user_password,
-    #   use_namespaces => $::quantum_use_namespaces,
-    # }
-
     class { 'nova::compute::quantum': }
 
     # does this have to be installed on the compute node?
@@ -431,7 +417,9 @@ class openstack::compute (
 
     nova_config {
       'linuxnet_interface_driver':       value => 'nova.network.linux_net.LinuxOVSInterfaceDriver';
-      'linuxnet_ovs_integration_bridge': value => 'br-int';
+      'linuxnet_ovs_integration_bridge': value => $quantum_config['L2']['integration_bridge'];
     }
   }
 }
+
+# vim: set ts=2 sw=2 et :
