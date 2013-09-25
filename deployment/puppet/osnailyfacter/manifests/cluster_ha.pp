@@ -100,8 +100,6 @@ if ($cinder) {
   $is_cinder_node = false
 }
 
-$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
-
 $quantum_host            = $management_vip
 
 ##REFACTORING NEEDED
