@@ -84,6 +84,7 @@ class MrntQuantum
     {
       :router04 => {
         :tenant => 'admin',
+        :virtual => false,  # Virtual router should not be create
         :external_network => "net04_ext",
         :internal_networks => ["net04"],
       }
@@ -95,18 +96,34 @@ class MrntQuantum
     net_int = "192.168.111"
     {
       :net04_ext => {
-        :subnet => "#{net_ext}.0/24",
-        :gateway => "#{net_ext}.1",
-        :nameservers => ["8.8.4.4", "8.8.8.8"],
-        :public => true,
-        :floating => "#{net_ext}.130:#{net_ext}.254",
+        :shared => false,
+        :L2 => {
+          :router_ext   => true,
+          :network_type => 'flat',
+          :physnet      => 'physnet1',
+          :segment_id   => nil,
+        },
+        :L3 => {
+          :subnet => "#{net_ext}.0/24",
+          :gateway => "#{net_ext}.1",
+          :nameservers => [],
+          :floating => "#{net_ext}.130:#{net_ext}.254",
+        },
       },
       :net04 => {
-        :subnet => "#{net_int}.0/24",
-        :gateway => "#{net_int}.1",
-        :nameservers => [], # only for public
-        :public => false,   # default
-        :floating => nil,
+        :shared => false,
+        :L2 => {
+          :router_ext   => false,
+          :network_type => 'gre', # or vlan
+          :physnet      => 'physnet2',
+          :segment_id   => nil,
+        },
+        :L3 => {
+          :subnet => "#{net_int}.0/24",
+          :gateway => "#{net_int}.1",
+          :nameservers => ["8.8.4.4", "8.8.8.8"],
+          :floating => nil,
+        },
       },
     }
   end
@@ -241,7 +258,6 @@ class MrntQuantum
 end
 
 
-
 Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalue, :doc => <<-EOS
     This function get Hash of Quantum configuration
     and sanitize it.
@@ -256,6 +272,5 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
   q_conf = MrntQuantum.new(self, given_config)
   return q_conf.generate_config()
 end
-
 
 # vim: set ts=2 sw=2 et :

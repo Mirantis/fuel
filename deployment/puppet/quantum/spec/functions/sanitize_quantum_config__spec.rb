@@ -78,24 +78,41 @@ class QuantumConfig
       :predefined_routers => {
         :router04 => {
           :tenant => 'admin',
+          :virtual => false,
           :external_network => "net04_ext",
           :internal_networks => ["net04"],
         }
       },
       :predefined_networks => {
         :net04_ext => {
-          :subnet => "10.100.100.0/24",
-          :gateway => "10.100.100.1",
-          :nameservers => ["8.8.4.4", "8.8.8.8"],
-          :public => true,
-          :floating => "10.100.100.130:10.100.100.254",
+          :shared => false,
+          :L2 => {
+            :router_ext   => true,
+            :network_type => 'flat',
+            :physnet      => 'physnet1',
+            :segment_id   => nil,
+          },
+          :L3 => {
+            :subnet => "10.100.100.0/24",
+            :gateway => "10.100.100.1",
+            :nameservers => [],
+            :floating => "10.100.100.130:10.100.100.254",
+          },
         },
         :net04 => {
-          :subnet => "192.168.111.0/24",
-          :gateway => "192.168.111.1",
-          :nameservers => [],
-          :public => false,
-          :floating => nil,
+          :shared => false,
+          :L2 => {
+            :router_ext   => false,
+            :network_type => 'gre', # or vlan
+            :physnet      => 'physnet2',
+            :segment_id   => nil,
+          },
+          :L3 => {
+            :subnet => "192.168.111.0/24",
+            :gateway => "192.168.111.1",
+            :nameservers => ["8.8.4.4", "8.8.8.8"],
+            :floating => nil,
+          },
         },
       },
       :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
@@ -165,7 +182,7 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     cfg[:L2][:base_mac] = "aa:aa:aa:00:00:00"
     cfg[:L2][:integration_bridge] = "xx-xxx"
     cfg[:L2][:local_ip] = "9.9.9.9"
-    cfg[:predefined_networks][:net04_ext][:nameservers] = ["127.0.0.1"]
+    cfg[:predefined_networks][:net04_ext][:L3][:nameservers] = ["127.0.0.1"]
     res_cfg = Marshal.load(Marshal.dump(cfg))
     should run.with_params(cfg).and_return(res_cfg)
   end
