@@ -14,7 +14,7 @@ class QuantumConfig
         :heartbeat => 60,
         :protocol => "tcp",
         :rabbit_virtual_host => "/",
-        :rabbit_ha_queues => true,
+        :ha_mode => true,
       },
       :database => {
         :provider => "mysql",

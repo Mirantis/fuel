@@ -45,11 +45,7 @@ class MrntQuantum
     #todo myst give string like  "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ','
     #calculated from $controller_nodes
     vip = @scope.lookupvar('amqp_vip') || @scope.lookupvar('management_vip')
-    if port
-      "#{@scope.lookupvar('management_vip')}:#{port}"
-    else
-      @scope.lookupvar('management_vip')
-    end
+    port ? "#{vip}:#{port}"  :  vip
   end
 
   def get_database_vip()
@@ -143,11 +139,11 @@ class MrntQuantum
         :passwd => "nova",
         #:hosts => "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ',' # calculate from $controller_nodes
         :hosts => get_amqp_vip(5672),
+        :ha_mode => true,
         :control_exchange => "quantum",
         :heartbeat => 60,
         :protocol => "tcp",
         :rabbit_virtual_host => "/",
-        :rabbit_ha_queues => true,
       },
       :database => {
         :provider => "mysql",

@@ -23,3 +23,5 @@ class nova::network::quantum (
     'DEFAULT/quantum_admin_auth_url':    value => $quantum_config['keystone']['auth_url'];
   }
 }
+
+# vim: set ts=2 sw=2 et :
