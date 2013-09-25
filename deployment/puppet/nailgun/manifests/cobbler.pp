@@ -100,7 +100,7 @@ class nailgun::cobbler(
     arch => "x86_64",
     breed => "ubuntu",
     osversion => "precise",
-    ksmeta => "tree=http://@@server@@:8080/ubuntu/fuelweb/x86_64/",
+    ksmeta => "",
     require => Class["::cobbler::server"],
   }
 
@@ -116,7 +116,7 @@ class nailgun::cobbler(
 
   cobbler_profile { "ubuntu_1204_x86_64":
     kickstart => "/var/lib/cobbler/kickstarts/ubuntu-amd64.preseed",
-    kopts => "",
+    kopts => "netcfg/choose_interface=eth0",
     distro => "ubuntu_1204_x86_64",
     ksmeta => "",
     menu => true,
