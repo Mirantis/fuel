@@ -43,6 +43,9 @@ class QuantumConfig
         :api_protocol => "http",
         :bind_host => "#{@def_v[:management_vip]}",
         :bind_port => 9696,
+        :agent_down_time => 15,
+        :allow_bulk      => true,
+        :control_exchange=> 'quantum',
       },
       :metadata => {
         :nova_metadata_ip => "#{@def_v[:management_vip]}",
@@ -53,6 +56,7 @@ class QuantumConfig
       },
       :L2 => {
         :base_mac => "fa:16:3e:00:00:00",
+        :mac_generation_retries => 32,
         :segmentation_type => "gre",
         :enable_tunneling=>true,
         :tunnel_id_ranges => "3000:65535",
@@ -69,6 +73,8 @@ class QuantumConfig
         :gateway_external_network_id => nil,
         :use_namespaces => true,
         :allow_overlapping_ips => false,
+        :network_auto_schedule => true,
+        :router_auto_schedule  => true,
         :public_bridge => "br-ex",
         #:public_network => "net04_ext",
         :send_arp_for_ha => 8,
@@ -206,6 +212,82 @@ describe MrntQuantum do
         :auth_port => '5000',
         :auth_api_version => 'v2.0'
       }).should == 'http://localhost:5000/v2.0'
+    end
+  end
+
+  describe '.get_amqp_config' do
+    it 'should return hash with amqp hosts declaration as string for HA mode' do
+      MrntQuantum.get_amqp_config({
+        :provider => 'rabbitmq',
+        :hosts => "1.2.3.4:567  ,  2.3.4.5:678, 3.4.5.6,4.5.6.7:890",
+        :port => 555,
+        :ha_mode => true,
+      }).should == {
+        :ha_mode => true,
+        :hosts => "1.2.3.4:567,2.3.4.5:678,3.4.5.6:555,4.5.6.7:890",
+        :port => 555,
+        :provider => "rabbitmq"
+      }
+    end
+  end
+  describe '.get_amqp_config' do
+    it 'should return hash with amqp hosts declaration as array of string for HA mode' do
+      MrntQuantum.get_amqp_config({
+        :provider => 'rabbitmq',
+        :hosts => ['1.2.3.4:567', '2.3.4.5:678', '3.4.5.6', '4.5.6.7:890'],
+        :port => 555,
+        :ha_mode => true,
+      }).should == {
+        :ha_mode => true,
+        :hosts => "1.2.3.4:567,2.3.4.5:678,3.4.5.6:555,4.5.6.7:890",
+        :port => 555,
+        :provider => "rabbitmq"
+      }
+    end
+  end
+  describe '.get_amqp_config' do
+    it 'should return hash with amqp hosts declaration as array of string without ports for HA mode' do
+      MrntQuantum.get_amqp_config({
+        :provider => 'rabbitmq',
+        :hosts => ['1.2.3.4', '2.3.4.5', '3.4.5.6', '4.5.6.7'],
+        :port => 555,
+        :ha_mode => true,
+      }).should == {
+        :ha_mode => true,
+        :hosts => "1.2.3.4:555,2.3.4.5:555,3.4.5.6:555,4.5.6.7:555",
+        :port => 555,
+        :provider => "rabbitmq"
+      }
+    end
+  end
+  describe '.get_amqp_config' do
+    it 'should return hash with amqp host declaration as string without port for solo mode' do
+      MrntQuantum.get_amqp_config({
+        :provider => 'rabbitmq',
+        :hosts => '1.2.3.4:567',
+        :port => 555,
+        :ha_mode => false,
+      }).should == {
+        :ha_mode => false,
+        :hosts => "1.2.3.4",
+        :port => 567,
+        :provider => "rabbitmq"
+      }
+    end
+  end
+  describe '.get_amqp_config' do
+    it 'should return hash with amqp host declaration as string without port for solo mode' do
+      MrntQuantum.get_amqp_config({
+        :provider => 'rabbitmq',
+        :hosts => '1.2.3.4',
+        :port => 555,
+        :ha_mode => false,
+      }).should == {
+        :ha_mode => false,
+        :hosts => "1.2.3.4",
+        :port => 555,
+        :provider => "rabbitmq"
+      }
     end
   end
 end

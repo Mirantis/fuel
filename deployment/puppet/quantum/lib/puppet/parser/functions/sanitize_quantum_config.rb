@@ -53,6 +53,33 @@ class MrntQuantum
   end
 
   # classmethod
+  def self.get_amqp_config(cfg)
+    rv = cfg.clone()
+    case cfg[:hosts].class.to_s()
+      when "String"
+        hosts = cfg[:hosts].split(',').map!{|x| x.split(':')}.map!{|x| [x[0], x[1] || cfg[:port].to_s]}
+      when "Array"
+        hosts = cfg[:hosts].map!{|x| x.split(':')}.map!{|x| [x[0], x[1] || cfg[:port].to_s]}
+      else
+        raise(Puppet::ParseError, "unsupported hosts field format in AMQP configure \"#{cfg['hosts']}\".")
+    end
+    case cfg[:provider]
+      when 'rabbitmq', 'qpid'
+        if cfg[:ha_mode]
+          rv[:hosts] = hosts.map{|x| x.map!{|y| y.strip}.join(':')}.join(',')
+        else
+          rv[:hosts] = hosts[0][0].strip()
+          if hosts[0][1].strip() != cfg[:port].to_s()
+            rv[:port] = hosts[0][1].to_i()
+          end
+        end
+      else
+        raise(Puppet::ParseError, "unsupported AMQP provider \"#{cfg['provider']}\".")
+    end
+    return rv
+  end
+
+  # classmethod
   def self.get_quantum_srv_api_url(srvsh)
     "#{srvsh[:api_protocol]}://#{srvsh[:bind_host]}:#{srvsh[:bind_port]}"
   end
@@ -137,7 +164,6 @@ class MrntQuantum
         :provider => default_amqp_provider(),
         :username => "nova",
         :passwd => "nova",
-        #:hosts => "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ',' # calculate from $controller_nodes
         :hosts => get_amqp_vip(5672),
         :ha_mode => true,
         :control_exchange => "quantum",
@@ -173,6 +199,8 @@ class MrntQuantum
         :api_protocol => "http",
         :bind_host => get_quantum_srv_vip(),
         :bind_port => 9696,
+        :agent_down_time => 15,
+        :allow_bulk      => true,
       },
       :metadata => {
         :nova_metadata_ip => get_management_vip(),
@@ -183,6 +211,7 @@ class MrntQuantum
       },
       :L2 => {
         :base_mac => "fa:16:3e:00:00:00",
+        :mac_generation_retries => 32,
         :segmentation_type => "gre",
         :tunnel_id_ranges => "3000:65535",
         :bridge_mappings => ["physnet1:#{get_bridge_name('public')}", "physnet2:#{get_bridge_name('private')}"],
@@ -198,6 +227,8 @@ class MrntQuantum
         :gateway_external_network_id => nil,
         :use_namespaces => true,
         :allow_overlapping_ips => false,
+        :network_auto_schedule => true,
+        :router_auto_schedule  => true,
         :public_bridge => get_bridge_name('public'),
         #:public_network => "net04_ext",
         :send_arp_for_ha => 8,
@@ -227,6 +258,7 @@ class MrntQuantum
     end
     rv[:keystone][:auth_url] = MrntQuantum.get_keystone_auth_url(rv[:keystone])
     rv[:server][:api_url] = MrntQuantum.get_quantum_srv_api_url(rv[:server])
+    rv[:amqp] = MrntQuantum.get_amqp_config(rv[:amqp])
     return rv
   end
 
