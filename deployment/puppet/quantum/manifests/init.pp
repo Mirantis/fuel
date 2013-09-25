@@ -6,7 +6,6 @@
 class quantum (
   $quantum_config = {},
   $enabled              = true,
-  $package_ensure       = 'present',
   $verbose              = 'False',
   $debug                = 'False',
   $core_plugin          = 'quantum.plugins.openvswitch.ovs_quantum_plugin.OVSQuantumPluginV2',
@@ -35,7 +34,7 @@ class quantum (
 
   package {'quantum':
     name   => $::quantum::params::package_name,
-    ensure => $package_ensure
+    ensure => present
   }
 
   file {'q-agent-cleanup.py':

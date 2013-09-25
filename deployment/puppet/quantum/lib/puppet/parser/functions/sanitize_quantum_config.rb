@@ -201,6 +201,7 @@ class MrntQuantum
         :bind_port => 9696,
         :agent_down_time => 15,
         :allow_bulk      => true,
+        :control_exchange=> 'quantum',
       },
       :metadata => {
         :nova_metadata_ip => get_management_vip(),

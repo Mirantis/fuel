@@ -5,34 +5,25 @@
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
 
 class openstack::quantum_router (
-  $rabbit_password,
-  $internal_address         = $::ipaddress_br_mgmt,
-  $public_interface         = "br-ex",
-  $private_interface        = "br-mgmt",
-  $create_networks          = true,
-  $queue_provider           = 'rabbitmq',
-  $rabbit_user              = 'nova',
-  $rabbit_nodes             = ['127.0.0.1'],
-  $rabbit_ha_virtual_ip     = false,
-  $qpid_password            = 'qpid_pw',
-  $qpid_user                = 'nova',
-  $qpid_nodes               = ['127.0.0.1'],
   $verbose                  = 'False',
   $debug                    = 'False',
   $enabled                  = true,
-  $ensure_package           = present,
-  $quantum                  = false,
+  $quantum                  = true,
   $quantum_config           = {},
   $quantum_network_node     = false,
+  $quantum_server           = true,
   $use_syslog               = false,
   $syslog_log_facility      = 'LOCAL4',
   $syslog_log_level         = 'WARNING',
   $ha_mode                  = false,
   $service_provider         = 'generic',
+  # $internal_address         = $::ipaddress_br_mgmt,
+  # $public_interface         = "br-ex",
+  # $private_interface        = "br-mgmt",
+  # $create_networks          = true,
 ) {
     class { '::quantum':
       quantum_config       => $quantum_config,
-      queue_provider       => $queue_provider,
       verbose              => $verbose,
       debug                => $debug,
       use_syslog           => $use_syslog,
@@ -45,7 +36,6 @@ class openstack::quantum_router (
       quantum_config      => $quantum_config,
       #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
     }
-
 
     if $quantum_network_node {
       class { 'quantum::agents::ovs':
@@ -61,42 +51,24 @@ class openstack::quantum_router (
         verbose          => $verbose,
         debug            => $debug,
         service_provider => $service_provider,
-        auth_tenant      => 'services',
-        auth_user        => 'quantum',
-        auth_url         => $admin_auth_url,
-        auth_region      => 'RegionOne',
-        auth_password    => $quantum_user_password,
-        shared_secret    => $quantum_metadata_proxy_shared_secret,
-        metadata_ip      => $nova_api_vip,
+        quantum_config   => $quantum_config,
+        #metadata_ip      => $nova_api_vip,
       }
       class { 'quantum::agents::dhcp':
+        quantum_config   => $quantum_config,
         verbose          => $verbose,
         debug            => $debug,
         use_namespaces   => $use_namespaces,
         service_provider => $service_provider,
-        auth_url         => $admin_auth_url,
-        auth_tenant      => 'services',
-        auth_user        => 'quantum',
-        auth_password    => $quantum_user_password,
       }
       class { 'quantum::agents::l3':
        #enabled             => $quantum_l3_enable,
+        quantum_config   => $quantum_config,
         verbose             => $verbose,
         debug               => $debug,
-        use_namespaces      => $use_namespaces,
         service_provider    => $service_provider,
-        fixed_range         => $fixed_range,
-        floating_range      => $floating_range,
-        ext_ipinfo          => $external_ipinfo,
-        tenant_network_type => $tenant_network_type,
-        create_networks     => $create_networks,
-        segment_range       => $segment_range,
-        auth_url            => $admin_auth_url,
-        auth_tenant         => 'services',
-        auth_user           => 'quantum',
-        auth_password       => $quantum_user_password,
-        metadata_ip         => $internal_address,
-        nova_api_vip        => $nova_api_vip,
+        #create_networks     => $create_networks,
+        #segment_range       => $segment_range,
       }
     }
 
