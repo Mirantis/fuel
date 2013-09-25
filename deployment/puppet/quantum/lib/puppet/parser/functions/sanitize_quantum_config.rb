@@ -173,6 +173,7 @@ class MrntQuantum
         :nova_metadata_ip => get_management_vip(),
         :nova_metadata_port => 8775,
         :metadata_ip => '169.254.169.254',
+        :metadata_port => 8775,
         :metadata_proxy_shared_secret => "secret-word",
       },
       :L2 => {
