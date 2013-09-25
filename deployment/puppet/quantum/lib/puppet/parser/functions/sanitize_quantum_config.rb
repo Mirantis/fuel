@@ -155,6 +155,7 @@ class MrntQuantum
         :reconnect_interval => 2,
       },
       :keystone => {
+        :auth_region => 'RegionOne',
         :auth_url => nil, # will be calculated later
         :auth_host => get_management_vip(),
         :auth_port => 35357,
@@ -163,6 +164,7 @@ class MrntQuantum
         :admin_tenant_name => "services",
         :admin_user => "quantum",
         :admin_password => "quantum_pass",
+        :admin_email => "quantum@localhost",
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {

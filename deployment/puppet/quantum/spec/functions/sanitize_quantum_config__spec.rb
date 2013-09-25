@@ -29,11 +29,13 @@ class QuantumConfig
       :keystone => {
         :auth_host => "#{@def_v[:management_vip]}",
         :auth_port => 35357,
+        :auth_region => 'RegionOne',
         :auth_protocol => "http",
         :auth_api_version => "v2.0",
         :admin_tenant_name => "services",
         :admin_user => "quantum",
         :admin_password => "quantum_pass",
+        :admin_email => "quantum@localhost",
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {
