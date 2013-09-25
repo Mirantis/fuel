@@ -45,7 +45,7 @@ if $::fuel_settings['nodes'] {
 
   $use_quantum = $::fuel_settings['quantum']
   
-  if $use_quantum {
+  if $::use_quantum {
     $public_int   = $::public_br
     $internal_int = $::internal_br
   } else {
@@ -140,10 +140,10 @@ $num_networks         = $novanetwork_params['num_networks']
 $tenant_network_type  = $quantum_params['tenant_network_type']
 $segment_range        = $quantum_params['segment_range']
 
-if !$rabbit_hash['user'] {
-  $rabbit_hash['user'] = 'nova'
+if !$::rabbit_hash['user'] {
+  $::rabbit_hash['user'] = 'nova'
 }
-$rabbit_user = $rabbit_hash['user']
+$rabbit_user = $::rabbit_hash['user']
 
 $auto_assign_floating_ip = $::fuel_settings['auto_assign_floating_ip']
 
@@ -189,9 +189,8 @@ $multi_host     = true
 
 Exec { logoutput => true }
 
-$quantum_host            = $controller_node_address
-$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
-$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
+$quantum_host            = $::controller_node_address
+$quantum_metadata_proxy_shared_secret = $::quantum_params['metadata_proxy_shared_secret']
 $quantum_gre_bind_addr = $::internal_address
 
 #TODO: awoodward fix static $use_ceph
@@ -213,6 +212,7 @@ if ($::use_ceph) {
 
 # NODES SECTION #
 node default {
+
   case $::fuel_settings['deployment_mode'] {
     'singlenode': {
       class { 'osnailyfacter::cluster_simple' :}
@@ -234,4 +234,5 @@ node default {
       class { 'osnailyfacter::rpmcache' :}
     }
   }
+
 }

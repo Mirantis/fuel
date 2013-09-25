@@ -4,11 +4,10 @@ class osnailyfacter::node_netconfig (
   $public_ipaddr = undef,
   $public_netmask = '255.255.255.0',
   $save_default_gateway = false,
-  $quantum = $::use_quantum,
   $default_gateway
 ) {
   
-  if $quantum {
+  if $::use_quantum {
     # quantum mode
     l23network::l3::create_br_iface { 'mgmt' :
       interface       => $::fuel_settings['management_interface'], # !!! NO $internal_int /sv !!!
