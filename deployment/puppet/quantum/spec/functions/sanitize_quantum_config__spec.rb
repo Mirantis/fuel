@@ -39,6 +39,8 @@ class QuantumConfig
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {
+        :api_url => "http://#{@def_v[:management_vip]}:9696",
+        :api_protocol => "http",
         :bind_host => "#{@def_v[:management_vip]}",
         :bind_port => 9696,
       },

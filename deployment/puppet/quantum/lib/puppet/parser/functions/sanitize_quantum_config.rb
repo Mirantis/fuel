@@ -57,6 +57,11 @@ class MrntQuantum
   end
 
   # classmethod
+  def self.get_quantum_srv_api_url(srvsh)
+    "#{srvsh[:api_protocol]}://#{srvsh[:bind_host]}:#{srvsh[:bind_port]}"
+  end
+
+  # classmethod
   def self.get_keystone_auth_url(kshash)
     "#{kshash[:auth_protocol]}://#{kshash[:auth_host]}:#{kshash[:auth_port]}/#{kshash[:auth_api_version]}"
   end
@@ -168,6 +173,8 @@ class MrntQuantum
         :signing_dir => "/var/lib/quantum/keystone-signing",
       },
       :server => {
+        :api_url => nil, # will be calculated later
+        :api_protocol => "http",
         :bind_host => get_quantum_srv_vip(),
         :bind_port => 9696,
       },
@@ -223,6 +230,7 @@ class MrntQuantum
       rv[:L2][:tunnel_id_ranges] = nil
     end
     rv[:keystone][:auth_url] = MrntQuantum.get_keystone_auth_url(rv[:keystone])
+    rv[:server][:api_url] = MrntQuantum.get_quantum_srv_api_url(rv[:server])
     return rv
   end
 
