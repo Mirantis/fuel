@@ -1,142 +1,17 @@
 class osnailyfacter::cluster_simple {
 
-if $::fuel_settings['quantum']
-{
-  $quantum_hash   = $::fuel_settings['quantum_access']
-  $quantum_params = $::fuel_settings['quantum_parameters']
-  $novanetwork_params  = {}
-
-}
-else
-{
-  $quantum_hash = {}
-  $quantum_params = {}
-  $novanetwork_params  = $::fuel_settings['novanetwork_parameters']
-}
-
-if $fuel_settings['cinder_nodes'] {
-   $cinder_nodes_array   = $::fuel_settings['cinder_nodes']
-}
-else {
-  $cinder_nodes_array = []
-}
-
-
-
-$nova_hash            = $::fuel_settings['nova']
-$mysql_hash           = $::fuel_settings['mysql']
-$rabbit_hash          = $::fuel_settings['rabbit']
-$glance_hash          = $::fuel_settings['glance']
-$keystone_hash        = $::fuel_settings['keystone']
-$swift_hash           = $::fuel_settings['swift']
-$cinder_hash          = $::fuel_settings['cinder']
-$access_hash          = $::fuel_settings['access']
-$nodes_hash           = $::fuel_settings['nodes']
-$vlan_start           = $novanetwork_params['vlan_start']
-$network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
-$network_size         = $novanetwork_params['network_size']
-$num_networks         = $novanetwork_params['num_networks']
-$tenant_network_type  = $quantum_params['tenant_network_type']
-$segment_range        = $quantum_params['segment_range']
-
-if !$rabbit_hash[user]
-{
-  $rabbit_hash[user] = 'nova'
-}
-$rabbit_user          = $rabbit_hash['user']
-
-
-if $::fuel_settings['auto_assign_floating_ip'] {
-  $bool_auto_assign_floating_ip = true
-} else {
-  $bool_auto_assign_floating_ip = false
-}
-
-if $quantum {
-   $floating_hash = $::fuel_settings['floating_network_range']
-}
-else {
-  $floating_hash = {}
-  $floating_ips_range = $::fuel_settings['floating_network_range']
-}
-
-$controller = filter_nodes($nodes_hash,'role','controller')
-
-$controller_node_address = $controller[0]['internal_address']
-$controller_node_public = $controller[0]['public_address']
-
-
-if ($::fuel_settings['cinder']) {
-  if (member($cinder_nodes_array,'all')) {
-    $is_cinder_node = true
-  } elsif (member($cinder_nodes_array,$::hostname)) {
-    $is_cinder_node = true
-  } elsif (member($cinder_nodes_array,$internal_address)) {
-    $is_cinder_node = true
-  } elsif ($node[0]['role'] =~ /controller/ ) {
-    $is_cinder_node = member($cinder_nodes_array,'controller')
-  } else {
-    $is_cinder_node = member($cinder_nodes_array,$node[0]['role'])
-  }
-} else {
-  $is_cinder_node = false
-}
-
-
-$cinder_iscsi_bind_addr = $::storage_address
-
-# do not edit the below line
-validate_re($::queue_provider,  'rabbitmq|qpid')
-
-$network_config = {
-  'vlan_start'     => $vlan_start,
-}
-$sql_connection           = "mysql://nova:${nova_hash[db_password]}@${controller_node_address}/nova"
-$mirror_type = 'external'
-$multi_host              = true
-Exec { logoutput => true }
-
-$quantum_host            = $controller_node_address
-$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
-$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
-$quantum_gre_bind_addr = $::internal_address
-
-if !$verbose
-{
- $verbose = 'false'
-}
-
-if !$debug
-{
- $debug = 'false'
-}
-
-#TODO: awoodward fix static $use_ceph
-$use_ceph = false
-if ($use_ceph) {
-  $primary_mons   = $controller
-  $primary_mon    = $controller[0]['name']
-  $glance_backend = 'ceph'
-  class {'ceph': 
-    primary_mon  => $primary_mon,
-    cluster_node_address => $controller_node_address,
-  }
-} else {
-  $glance_backend = 'file'
-}
-
   case $::fuel_settings['role'] {
     "controller" : {
-      include osnailyfacter::test_controller
+      class { 'osnailyfacter::test_controller' :}
+      class { 'osnailyfacter::apache_api_proxy' :}
 
-      class {'osnailyfacter::apache_api_proxy':}
       class { 'openstack::controller':
-        admin_address           => $controller_node_address,
+        admin_address           => $::controller_node_address,
         public_address          => $controller_node_public,
         public_interface        => $public_int,
         private_interface       => $::fuel_settings['fixed_interface'],
-        internal_address        => $controller_node_address,
-        floating_range          => $quantum ? { 'true' =>$floating_hash, default=>false},
+        internal_address        => $::controller_node_address,
+        floating_range          => $::use_quantum ? { 'true' =>$floating_hash, default=>false},
         fixed_range             => $::fuel_settings['fixed_network_range'],
         multi_host              => $multi_host,
         network_manager         => $network_manager,
@@ -145,40 +20,40 @@ if ($use_ceph) {
         network_config          => $network_config,
         debug                   => $debug ? { 'true' => true, true => true, default=> false },
         verbose                 => $verbose ? { 'true' => true, true => true, default=> false },
-        auto_assign_floating_ip => $bool_auto_assign_floating_ip,
-        mysql_root_password     => $mysql_hash[root_password],
-        admin_email             => $access_hash[email],
-        admin_user              => $access_hash[user],
-        admin_password          => $access_hash[password],
-        keystone_db_password    => $keystone_hash[db_password],
-        keystone_admin_token    => $keystone_hash[admin_token],
-        keystone_admin_tenant   => $access_hash[tenant],
-        glance_db_password      => $glance_hash[db_password],
-        glance_user_password    => $glance_hash[user_password],
+        auto_assign_floating_ip => $::auto_assign_floating_ip,
+        mysql_root_password     => $::mysql_hash[root_password],
+        admin_email             => $::access_hash[email],
+        admin_user              => $::access_hash[user],
+        admin_password          => $::access_hash[password],
+        keystone_db_password    => $::keystone_hash[db_password],
+        keystone_admin_token    => $::keystone_hash[admin_token],
+        keystone_admin_tenant   => $::access_hash[tenant],
+        glance_db_password      => $::glance_hash[db_password],
+        glance_user_password    => $::glance_hash[user_password],
         glance_backend          => $glance_backend,
-        nova_db_password        => $nova_hash[db_password],
-        nova_user_password      => $nova_hash[user_password],
-        nova_rate_limits        => $nova_rate_limits,
+        nova_db_password        => $::nova_hash[db_password],
+        nova_user_password      => $::nova_hash[user_password],
+        nova_rate_limits        => $::nova_rate_limits,
         queue_provider          => $::queue_provider,
-        rabbit_password         => $rabbit_hash[password],
-        rabbit_user             => $rabbit_hash[user],
-        qpid_password           => $rabbit_hash[password],
-        qpid_user               => $rabbit_hash[user],
+        rabbit_password         => $::rabbit_hash[password],
+        rabbit_user             => $::rabbit_hash[user],
+        qpid_password           => $::rabbit_hash[password],
+        qpid_user               => $::rabbit_hash[user],
         export_resources        => false,
-        quantum                 => $quantum,
-        quantum_user_password         => $quantum_hash[user_password],
-        quantum_db_password           => $quantum_hash[db_password],
-        quantum_network_node          => $quantum,
-        quantum_netnode_on_cnt        => true,
-        quantum_gre_bind_addr         => $quantum_gre_bind_addr,
-        quantum_external_ipinfo       => $external_ipinfo,
-        tenant_network_type           => $tenant_network_type,
-        segment_range                 => $segment_range,
+        quantum                 => $::use_quantum,
+        quantum_user_password   => $::quantum_hash[user_password],
+        quantum_db_password     => $::quantum_hash[db_password],
+        quantum_network_node    => $::use_quantum,
+        quantum_netnode_on_cnt  => true,
+        quantum_gre_bind_addr   => $quantum_gre_bind_addr,
+        quantum_external_ipinfo => $external_ipinfo,
+        tenant_network_type     => $tenant_network_type,
+        segment_range           => $segment_range,
         cinder                  => true,
-        cinder_user_password    => $cinder_hash[user_password],
-        cinder_db_password      => $cinder_hash[db_password],
+        cinder_user_password    => $::cinder_hash[user_password],
+        cinder_db_password      => $::cinder_hash[db_password],
         cinder_iscsi_bind_addr  => $cinder_iscsi_bind_addr,
-        cinder_volume_group     => "cinder",
+        cinder_volume_group     => 'cinder',
         manage_volumes          => $::fuel_settings['cinder'] ? { false => $manage_volumes, default =>$is_cinder_node },
         use_syslog              => true,
         syslog_log_level        => $syslog_log_level,
@@ -193,46 +68,46 @@ if ($use_ceph) {
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $::fuel_settings['start_guests_on_host_boot'] }
       nova_config { 'DEFAULT/use_cow_images': value => $::fuel_settings['use_cow_images'] }
       nova_config { 'DEFAULT/compute_scheduler_driver': value => $::fuel_settings['compute_scheduler_driver'] }
- if $::quantum {
-    class { '::openstack::quantum_router':
-      db_host               => $controller_node_address,
-      service_endpoint      => $controller_node_address,
-      auth_host             => $controller_node_address,
-      nova_api_vip          => $controller_node_address,
-      internal_address      => $internal_address,
-      public_interface      => $public_int,
-      private_interface     => $::fuel_settings['fixed_interface'],
-      floating_range        => $floating_hash,
-      fixed_range           => $::fuel_settings['fixed_network_range'],
-      create_networks       => $create_networks,
-      debug                 => $debug ? { 'true' => true, true => true, default=> false },
-      verbose               => $verbose ? { 'true' => true, true => true, default=> false },
-      queue_provider        => $queue_provider,
-      rabbit_password       => $rabbit_hash[password],
-      rabbit_user           => $rabbit_hash[user],
-      rabbit_ha_virtual_ip  => $controller_node_address,
-      rabbit_nodes          => [$controller_node_address],
-      qpid_password         => $rabbit_hash[password],
-      qpid_user             => $rabbit_hash[user],
-      qpid_nodes            => [$controller_node_address],
-      quantum               => $quantum,
-      quantum_user_password => $quantum_hash[user_password],
-      quantum_db_password   => $quantum_hash[db_password],
-      quantum_gre_bind_addr => $quantum_gre_bind_addr,
-      quantum_network_node  => true,
-      quantum_netnode_on_cnt=> $quantum,
-      tenant_network_type   => $tenant_network_type,
-      segment_range         => $segment_range,
-      external_ipinfo       => $external_ipinfo,
-      api_bind_address      => $internal_address,
-      use_syslog            => $use_syslog,
-      syslog_log_level      => $syslog_log_level,
-      syslog_log_facility   => $syslog_log_facility_quantum,
-    }
-  }
 
+      if $::quantum {
+        class { '::openstack::quantum_router':
+          db_host               => $::controller_node_address,
+          service_endpoint      => $::controller_node_address,
+          auth_host             => $::controller_node_address,
+          nova_api_vip          => $::controller_node_address,
+          internal_address      => $internal_address,
+          public_interface      => $public_int,
+          private_interface     => $::fuel_settings['fixed_interface'],
+          floating_range        => $::floating_hash,
+          fixed_range           => $::fuel_settings['fixed_network_range'],
+          create_networks       => $create_networks,
+          debug                 => $::debug,
+          verbose               => $::verbose,
+          queue_provider        => $queue_provider,
+          rabbit_password       => $::rabbit_hash[password],
+          rabbit_user           => $rabbit_hash[user],
+          rabbit_ha_virtual_ip  => $controller_node_address,
+          rabbit_nodes          => [$controller_node_address],
+          qpid_password         => $rabbit_hash[password],
+          qpid_user             => $rabbit_hash[user],
+          qpid_nodes            => [$controller_node_address],
+          quantum               => $quantum,
+          quantum_user_password => $quantum_hash[user_password],
+          quantum_db_password   => $quantum_hash[db_password],
+          quantum_gre_bind_addr => $quantum_gre_bind_addr,
+          quantum_network_node  => true,
+          quantum_netnode_on_cnt=> $quantum,
+          tenant_network_type   => $tenant_network_type,
+          segment_range         => $segment_range,
+          external_ipinfo       => $external_ipinfo,
+          api_bind_address      => $internal_address,
+          use_syslog            => $use_syslog,
+          syslog_log_level      => $syslog_log_level,
+          syslog_log_facility   => $syslog_log_facility_quantum,
+        }
+      }
 
-      class { 'openstack::auth_file':
+      class { 'openstack::auth_file' :
         admin_user           => $access_hash[user],
         admin_password       => $access_hash[password],
         keystone_admin_token => $keystone_hash[admin_token],
@@ -252,7 +127,9 @@ if ($use_ceph) {
       #   source           => '/opt/vm/cirros-0.3.0-x86_64-disk.img',
       #   require          => Class[glance::api],
       # }
-#TODO: fix this so it dosn't break ceph
+
+      #TODO: fix this so it dosn't break ceph
+
       class { 'openstack::img::cirros':
         os_username               => shellescape($access_hash[user]),
         os_password               => shellescape($access_hash[password]),
@@ -280,7 +157,8 @@ if ($use_ceph) {
         Class['glance::api']           -> Class['ceph::glance']
         Class['openstack::controller'] -> Class['ceph::cinder']
       }
-    }
+
+    } # end controller
 
     "compute" : {
       include osnailyfacter::test_compute
@@ -338,7 +216,8 @@ if ($use_ceph) {
       if defined(Class['ceph']){
         Class['openstack::compute'] -> Class['ceph']
       }
-    }
+
+    } # end compute
 
     "cinder" : {
       include keystone::python
@@ -367,11 +246,13 @@ if ($use_ceph) {
         verbose              => $verbose ? { 'true' => true, true => true, default=> false },
         use_syslog           => true,
       }
-   }
+   } # end cinder
+   
    "ceph-osd" : {
      #Nothing needs to be done Class Ceph is already defined
      notify {"ceph-osd: ${::ceph::osd_devices}": }
      notify {"osd_devices:  ${::osd_devices_list}": }
-   }
-  }
-}
+   } # end ceph-osd
+
+  } # end case
+} # end class
