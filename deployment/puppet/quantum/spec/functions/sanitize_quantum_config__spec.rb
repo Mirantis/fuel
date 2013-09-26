@@ -25,6 +25,8 @@ class QuantumConfig
         :passwd   => "quantum",
         :reconnects => -1,
         :reconnect_interval => 2,
+        :url  => nil,
+        :charset => nil,
       },
       :keystone => {
         :auth_host => "#{@def_v[:management_vip]}",
@@ -163,6 +165,8 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('amqp_vip').returns(@q_config.get_def(:management_vip))
+    @cfg = @q_config.get_def_config()
+    @res_cfg = Marshal.load(Marshal.dump(@cfg))
   end
 
   it 'should exist' do
@@ -170,25 +174,21 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
   end
 
   it 'should return default config if incoming hash is empty' do
-    res_cfg = @q_config.get_def_config()
-    should run.with_params({}).and_return(res_cfg)
+    should run.with_params({}).and_return(@res_cfg)
   end
 
   it 'should return default config if default config given as incoming' do
-    cfg = @q_config.get_def_config()
-    res_cfg = cfg.clone()
-    should run.with_params(cfg).and_return(res_cfg)
+    should run.with_params(@cfg).and_return(@res_cfg)
   end
 
   it 'should substitute default values if missing required field in config' do
-    cfg = @q_config.get_def_config()
-    res_cfg = @q_config.get_def_config()
+    cfg = @cfg.clone()
     cfg[:L3].delete(:dhcp_agent)
-    should run.with_params(cfg).and_return(res_cfg)
+    should run.with_params(cfg).and_return(@res_cfg)
   end
 
   it 'should can substitute values in deep level' do
-    cfg = @q_config.get_def_config()
+    cfg = @cfg.clone()
     cfg[:amqp][:provider] = "XXXXXXXXXXxxxx"
     cfg[:L2][:base_mac] = "aa:aa:aa:00:00:00"
     cfg[:L2][:integration_bridge] = "xx-xxx"
@@ -288,6 +288,48 @@ describe MrntQuantum do
         :port => 555,
         :provider => "rabbitmq"
       }
+    end
+  end
+
+  describe '.get_database_url' do
+    it 'should return database url with charset' do
+      MrntQuantum.get_database_url({
+        :provider => "mysql",
+        :host => "1.2.3.4",
+        :port => 3306,
+        :database => "q_database",
+        :username => "q_username",
+        :passwd   => "q_passwd",
+        :charset => "xxx32",
+      }).should == "mysql://q_username:q_passwd@1.2.3.4:3306/q_database?charset=xxx32"
+    end
+  end
+  describe '.get_database_url' do
+    it 'should return database url without charset' do
+      MrntQuantum.get_database_url({
+        :provider => "mysql",
+        :host => "1.2.3.4",
+        :port => 3306,
+        :database => "q_database",
+        :username => "q_username",
+        :passwd   => "q_passwd",
+      }).should == "mysql://q_username:q_passwd@1.2.3.4:3306/q_database"
+    end
+  end
+  describe '.get_database_url' do
+    it 'should return sqlite url' do
+      MrntQuantum.get_database_url({
+        :provider => "sqlite",
+        :database => "/var/lib/aaa/bbb/ddd.sql",
+      }).should == "sqlite:///var/lib/aaa/bbb/ddd.sql"
+    end
+  end
+  describe '.get_database_url' do
+    it 'should return sqlite url, with absolute path' do
+      MrntQuantum.get_database_url({
+        :provider => "sqlite",
+        :database => "var/lib/aaa/bbb/ddd.sql",
+      }).should == "sqlite:///var/lib/aaa/bbb/ddd.sql"
     end
   end
 end

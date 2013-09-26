@@ -61,7 +61,7 @@ class MrntQuantum
       when "Array"
         hosts = cfg[:hosts].map!{|x| x.split(':')}.map!{|x| [x[0], x[1] || cfg[:port].to_s]}
       else
-        raise(Puppet::ParseError, "unsupported hosts field format in AMQP configure \"#{cfg['hosts']}\".")
+        raise(Puppet::ParseError, "unsupported hosts field format in AMQP configure \"#{cfg[:hosts]}\".")
     end
     case cfg[:provider]
       when 'rabbitmq', 'qpid'
@@ -74,7 +74,25 @@ class MrntQuantum
           end
         end
       else
-        raise(Puppet::ParseError, "unsupported AMQP provider \"#{cfg['provider']}\".")
+        raise(Puppet::ParseError, "unsupported AMQP provider \"#{cfg[:provider]}\".")
+    end
+    return rv
+  end
+
+  # classmethod
+  def self.get_database_url(cfg)
+    #rv = cfg.clone()
+    case cfg[:provider].to_s().downcase
+      when "mysql"
+        charset = cfg[:charset] ? "?charset=#{cfg[:charset]}" : ''
+        rv = "mysql://#{cfg[:username]}:#{cfg[:passwd]}@#{cfg[:host]}:#{cfg[:port]}/#{cfg[:database]}#{charset}"
+      when "pgsql"
+        raise(Puppet::ParseError, "unsupported database provider \"#{cfg[:provider]}\".")
+      when "sqlite"
+        dash = cfg[:database][0]=='/'  ?  ''  :  '/'
+        rv = "sqlite://#{dash}#{cfg[:database]}"
+      else
+        raise(Puppet::ParseError, "unsupported database provider \"#{cfg[:provider]}\".")
     end
     return rv
   end
@@ -172,6 +190,7 @@ class MrntQuantum
         :rabbit_virtual_host => "/",
       },
       :database => {
+        :url => nil, # will be calculated later
         :provider => "mysql",
         :host => get_database_vip(),
         :port => 0,
@@ -180,6 +199,7 @@ class MrntQuantum
         :passwd   => "quantum",
         :reconnects => -1,
         :reconnect_interval => 2,
+        :charset  => nil,
       },
       :keystone => {
         :auth_region => 'RegionOne',
@@ -248,6 +268,7 @@ class MrntQuantum
     rv[:database][:port] = case rv[:database][:provider].upcase().to_sym()
       when :MYSQL then 3306
       when :PGSQL then 5432
+      when :SQLITE then nil
       else
         raise(Puppet::ParseError, "Unknown database provider '#{rv[:database][:provider]}'")
     end
@@ -260,6 +281,7 @@ class MrntQuantum
     rv[:keystone][:auth_url] = MrntQuantum.get_keystone_auth_url(rv[:keystone])
     rv[:server][:api_url] = MrntQuantum.get_quantum_srv_api_url(rv[:server])
     rv[:amqp] = MrntQuantum.get_amqp_config(rv[:amqp])
+    #rv[:database][:url] = MrntQuantum.get_database_url(rv[:database])
     return rv
   end
 
