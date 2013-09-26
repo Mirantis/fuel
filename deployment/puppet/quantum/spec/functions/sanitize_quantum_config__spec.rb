@@ -72,6 +72,7 @@ class QuantumConfig
             :vlan_range => "3000:4094",
           },
         },
+        :phys_bridges => ['br-ex', 'br-prv'],
         :bridge_mappings => "physnet1:br-ex,physnet2:br-prv",
         :network_vlan_ranges => "physnet1,physnet2:3000:4094",
         :integration_bridge => "br-int",
@@ -178,6 +179,7 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('amqp_vip').returns(@q_config.get_def(:management_vip))
     @cfg = @q_config.get_def_config()
     @res_cfg = Marshal.load(Marshal.dump(@cfg))
+
   end
 
   it 'should exist' do
@@ -362,7 +364,6 @@ describe MrntQuantum do
           },
         }
       }).should == "physnet1:br-ex,physnet2:br-prv,physnet3:br-xxx"
-#      }).should == "physnet1:br-ex,br-prv:3000:4094,physnet3:555:666"
     end
   end
 
@@ -384,6 +385,27 @@ describe MrntQuantum do
           },
         }
       }).should == "physnet1,physnet2:3000:4094,physnet3:555:666"
+    end
+  end
+
+  describe '.get_phys_bridges' do
+    it 'should return array of using phys_bridges' do
+      MrntQuantum.get_phys_bridges({
+        :phys_nets => {
+          :physnet1 => {
+            :bridge => "br-ex",
+            :vlan_range => nil,
+          },
+          :physnet2 => {
+            :bridge => "br-prv",
+            :vlan_range => "3000:4094",
+          },
+          :physnet3 => {
+            :bridge => "br-xxx",
+            :vlan_range => "555:666",
+          },
+        }
+      }).should == ['br-ex','br-prv','br-xxx']
     end
   end
 end

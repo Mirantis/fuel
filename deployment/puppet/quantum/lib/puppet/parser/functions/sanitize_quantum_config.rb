@@ -108,6 +108,11 @@ class MrntQuantum
   end
 
   # classmethod
+  def self.get_phys_bridges(l2)
+    l2[:phys_nets].sort().select{|x| x[1][:bridge]&&!x[1][:bridge].empty?}.map{|x| x[1][:bridge]}
+  end
+
+  # classmethod
   def self.get_bridge_mappings(l2)
     l2[:phys_nets].sort().map{|n| "#{n[0]}:#{n[1][:bridge]}"}.join(',')
   end
@@ -248,15 +253,18 @@ class MrntQuantum
         :phys_nets => {
           :physnet1 => {
             :bridge => get_bridge_name('public'),
+            #:interface => 'eth2',
             :vlan_range => nil,
           },
           :physnet2 => {
             :bridge => get_bridge_name('private'),
+            #:interface => 'eth3',
             :vlan_range => "3000:4094",
           },
         },
-        :bridge_mappings => nil, # will be calculated later
-        :network_vlan_ranges => nil, # will be calculated later
+        :phys_bridges => nil, # will be calculated later from :phys_nets
+        :bridge_mappings => nil, # will be calculated later from :phys_nets
+        :network_vlan_ranges => nil, # will be calculated later from :phys_nets
         :integration_bridge => get_bridge_name('integration'),
         :tunnel_bridge => get_bridge_name('tunnel'),
         :int_peer_patch_port => "patch-tun",
@@ -294,6 +302,7 @@ class MrntQuantum
         raise(Puppet::ParseError, "Unknown database provider '#{rv[:database][:provider]}'")
     end
     rv[:L2][:bridge_mappings] = MrntQuantum.get_bridge_mappings(rv[:L2])
+    rv[:L2][:phys_bridges] = MrntQuantum.get_phys_bridges(rv[:L2])
     rv[:L2][:network_vlan_ranges] = MrntQuantum.get_network_vlan_ranges(rv[:L2])
     if ['gre', 'vxlan', 'lisp'].include?(rv[:L2][:segmentation_type])
       rv[:L2][:enable_tunneling] = true
@@ -331,7 +340,7 @@ class MrntQuantum
       #print ">>>>>>>>>>>>>>>>>>>>>#{v.class} -#{k}-\n"
       rv[k] = case v.class.to_s
         when "Hash"     then cfg_user[k] ? _generate_config(v,cfg_user[k], path.clone.insert(-1, k)) : v
-        when "Array"    then cfg_user[k].empty?() ? v : cfg_user[k]
+        when "Array"    then cfg_user[k]&&cfg_user[k].empty?() ? v : cfg_user[k]
         when "String"   then cfg_user[k] ? cfg_user[k] : v
         when "NilClass" then cfg_user[k] ? cfg_user[k] : v
         else v

@@ -40,31 +40,27 @@ class quantum::agents::ovs (
     Package[$ovs_agent_package] -> Quantum_plugin_ovs <| |>
   }
 
-  l23network::l2::bridge { $integration_bridge:
-    external_ids  => "bridge-id=${integration_bridge}",
+  l23network::l2::bridge { "$quantum_config['L3']['integration_bridge']":
+    external_ids  => "bridge-id=${quantum_config['L3']['integration_bridge']}",
     ensure        => present,
     skip_existing => true,
   }
 
-  if $enable_tunneling {
-    L23network::L2::Bridge<| |> ->
+  if $quantum_config['L2']['enable_tunneling'] {
+      L23network::L2::Bridge<| |> ->
+          Anchor['quantum-ovs-agent-done']
+      l23network::l2::bridge { "$quantum_config['L2']['tunnel_bridge']":
+          external_ids  => "bridge-id=${quantum_config['L2']['tunnel_bridge']}",
+          ensure        => present,
+          skip_existing => true,
+      } ->
       Anchor['quantum-ovs-agent-done']
-    l23network::l2::bridge { "$quantum_config['L2']['tunnel_bridge']":
-      external_ids  => "bridge-id=$quantum_config['L2']['tunnel_bridge']",
-      ensure        => present,
-      skip_existing => true,
-    } ->
-    Anchor['quantum-ovs-agent-done']
-    quantum_plugin_ovs { 'OVS/local_ip': value => $quantum_config['L2']['local_ip']; }
-
+      quantum_plugin_ovs { 'OVS/local_ip': value => $quantum_config['L2']['local_ip']; }
   } else {
-    L23network::L2::Bridge["$quantum_config['L3']['integration_bridge']"] ->
-      Anchor['quantum-ovs-agent-done']
-    quantum::plugins::ovs::bridge { $quantum_config['L3']['bridge_mappings']:
-    } ->
-    quantum::plugins::ovs::port { $bridge_uplinks: # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    } ->
-    Anchor['quantum-ovs-agent-done']
+      L23network::L2::Bridge["$quantum_config['L3']['integration_bridge']"] ->
+        Anchor['quantum-ovs-agent-done']
+      quantum::agents::utils::bridges { $quantum_config['L3']['phys_bridges']: } ->
+        Anchor['quantum-ovs-agent-done']
   }
 
   #Quantum_config <| |> ~> Service['quantum-ovs-agent']

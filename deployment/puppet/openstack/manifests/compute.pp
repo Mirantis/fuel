@@ -364,18 +364,15 @@ class openstack::compute (
 
     #todo: Quantum plugin and database connection not need on compute.
     class { 'quantum::plugins::ovs':
-      quantum_config      => $quantum_config,
-      # bridge_mappings     => ['physnet2:br-prv'],
-      # network_vlan_ranges => "physnet1,physnet2:${segment_range}",
-      # tunnel_id_ranges    => "${segment_range}",
+      quantum_config  => $quantum_config
     }
 
     class { 'quantum::agents::ovs':
       quantum_config   => $quantum_config,
-      bridge_uplinks   => ["br-prv:${private_interface}"],
-      bridge_mappings  => ['physnet2:br-prv'],
-      enable_tunneling => $enable_tunneling,
-      local_ip         => $internal_address,
+      # bridge_uplinks   => ["br-prv:${private_interface}"],
+      # bridge_mappings  => ['physnet2:br-prv'],
+      # enable_tunneling => $enable_tunneling,
+      # local_ip         => $internal_address,
     }
 
 
