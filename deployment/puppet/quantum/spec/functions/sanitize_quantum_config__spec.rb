@@ -62,8 +62,18 @@ class QuantumConfig
         :segmentation_type => "gre",
         :enable_tunneling=>true,
         :tunnel_id_ranges => "3000:65535",
-        :bridge_mappings => ["physnet1:br-ex", "physnet2:br-prv"],
-        :network_vlan_ranges => ["physnet1", "physnet2:3000:4094"],
+        :phys_nets => {
+          :physnet1 => {
+            :bridge => "br-ex",
+            :vlan_range => nil,
+          },
+          :physnet2 => {
+            :bridge => "br-prv",
+            :vlan_range => "3000:4094",
+          },
+        },
+        :bridge_mappings => "physnet1:br-ex,physnet2:br-prv",
+        :network_vlan_ranges => "physnet1,physnet2:3000:4094",
         :integration_bridge => "br-int",
         :tunnel_bridge => "br-tun",
         :int_peer_patch_port => "patch-tun",
@@ -331,6 +341,49 @@ describe MrntQuantum do
         :provider => "sqlite",
         :database => "var/lib/aaa/bbb/ddd.sql",
       }).should == "sqlite:///var/lib/aaa/bbb/ddd.sql"
+    end
+  end
+
+  describe '.get_bridge_mappings' do
+    it 'should return string with mapping bridges to OS internal physnets' do
+      MrntQuantum.get_bridge_mappings({
+        :phys_nets => {
+          :physnet1 => {
+            :bridge => "br-ex",
+            :vlan_range => nil,
+          },
+          :physnet2 => {
+            :bridge => "br-prv",
+            :vlan_range => "3000:4094",
+          },
+          :physnet3 => {
+            :bridge => "br-xxx",
+            :vlan_range => "555:666",
+          },
+        }
+      }).should == "physnet1:br-ex,physnet2:br-prv,physnet3:br-xxx"
+#      }).should == "physnet1:br-ex,br-prv:3000:4094,physnet3:555:666"
+    end
+  end
+
+  describe '.get_network_vlan_ranges' do
+    it 'should return string with mapping vlan-IDs OS internal physnets' do
+      MrntQuantum.get_network_vlan_ranges({
+        :phys_nets => {
+          :physnet1 => {
+            :bridge => "br-ex",
+            :vlan_range => nil,
+          },
+          :physnet2 => {
+            :bridge => "br-prv",
+            :vlan_range => "3000:4094",
+          },
+          :physnet3 => {
+            :bridge => "br-xxx",
+            :vlan_range => "555:666",
+          },
+        }
+      }).should == "physnet1,physnet2:3000:4094,physnet3:555:666"
     end
   end
 end

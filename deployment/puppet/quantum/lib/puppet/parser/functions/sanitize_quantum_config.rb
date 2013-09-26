@@ -107,6 +107,16 @@ class MrntQuantum
     "#{kshash[:auth_protocol]}://#{kshash[:auth_host]}:#{kshash[:auth_port]}/#{kshash[:auth_api_version]}"
   end
 
+  # classmethod
+  def self.get_bridge_mappings(l2)
+    l2[:phys_nets].sort().map{|n| "#{n[0]}:#{n[1][:bridge]}"}.join(',')
+  end
+
+  # classmethod
+  def self.get_network_vlan_ranges(l2)
+    l2[:phys_nets].sort().map{|n| [n[0],n[1][:vlan_range]]}.map{|n| n.delete_if{|x| x==nil}}.map{|n| n.join(':')}.join(',')
+  end
+
   def get_quantum_srv_vip()
     @scope.lookupvar('quantum_vip') || @scope.lookupvar('management_vip')
   end
@@ -235,8 +245,18 @@ class MrntQuantum
         :mac_generation_retries => 32,
         :segmentation_type => "gre",
         :tunnel_id_ranges => "3000:65535",
-        :bridge_mappings => ["physnet1:#{get_bridge_name('public')}", "physnet2:#{get_bridge_name('private')}"],
-        :network_vlan_ranges => ["physnet1", "physnet2:3000:4094"],
+        :phys_nets => {
+          :physnet1 => {
+            :bridge => get_bridge_name('public'),
+            :vlan_range => nil,
+          },
+          :physnet2 => {
+            :bridge => get_bridge_name('private'),
+            :vlan_range => "3000:4094",
+          },
+        },
+        :bridge_mappings => nil, # will be calculated later
+        :network_vlan_ranges => nil, # will be calculated later
         :integration_bridge => get_bridge_name('integration'),
         :tunnel_bridge => get_bridge_name('tunnel'),
         :int_peer_patch_port => "patch-tun",
@@ -273,6 +293,8 @@ class MrntQuantum
       else
         raise(Puppet::ParseError, "Unknown database provider '#{rv[:database][:provider]}'")
     end
+    rv[:L2][:bridge_mappings] = MrntQuantum.get_bridge_mappings(rv[:L2])
+    rv[:L2][:network_vlan_ranges] = MrntQuantum.get_network_vlan_ranges(rv[:L2])
     if ['gre', 'vxlan', 'lisp'].include?(rv[:L2][:segmentation_type])
       rv[:L2][:enable_tunneling] = true
     else
