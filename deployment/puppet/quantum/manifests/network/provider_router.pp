@@ -18,8 +18,8 @@ define quantum::network::provider_router (
     ext_net       => $router_extnet,
     tenant        => $quantum_config['keystone']['admin_tenant_name'],
     auth_url      => $quantum_config['keystone']['auth_url'],
-    auth_user     => $quantum_config['keystone']['auth_user'],
-    auth_password => $quantum_config['keystone']['auth_password'],
+    auth_user     => $quantum_config['keystone']['admin_user'],
+    auth_password => $quantum_config['keystone']['admin_password'],
     auth_tenant   => $quantum_config['keystone']['admin_tenant_name'],
   }
 

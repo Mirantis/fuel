@@ -21,13 +21,13 @@ class quantum::plugins::ovs (
   # Quantum_plugin_ovs<||> ~> Service<| title == 'quantum-ovs-agent' |>
 
   case $quantum_config['database']['provider'] {
-    /(?i:mysql)/: {
+    /(?i)mysql/: {
       require 'mysql::python'
     }
-    /(?i:postgresql)/: {
+    /(?i)postgresql/: {
       $backend_package = 'python-psycopg2'
     }
-    /(?i:sqlite)/: {
+    /(?i)sqlite/: {
       $backend_package = 'python-pysqlite2'
     }
     defeault: {
@@ -93,7 +93,7 @@ class quantum::plugins::ovs (
       }
     }
     default: {
-      fail("Unsupported segmentation type: ${::osfamily}/${quantum_config['database']['L2']['segmentation_type']}")
+      fail("Unsupported segmentation type: ${quantum_config['database']['L2']['segmentation_type']}")
     }
   }
 

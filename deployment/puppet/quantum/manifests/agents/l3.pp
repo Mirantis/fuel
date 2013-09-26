@@ -38,8 +38,8 @@ class quantum::agents::l3 (
     'DEFAULT/verbose':        value => $verbose;
     'DEFAULT/root_helper':    value => $quantum_config['root_helper'];
     'DEFAULT/auth_url':       value => $quantum_config['keystone']['auth_url'];
-    'DEFAULT/admin_user':     value => $quantum_config['keystone']['auth_user'];
-    'DEFAULT/admin_password': value => $quantum_config['keystone']['auth_password'];
+    'DEFAULT/admin_user':     value => $quantum_config['keystone']['admin_user'];
+    'DEFAULT/admin_password': value => $quantum_config['keystone']['admin_password'];
     'DEFAULT/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];
     'DEFAULT/metadata_ip':   value => $quantum_config['metadata']['metadata_ip'];
     'DEFAULT/metadata_port': value => $quantum_config['metadata']['metadata_port'];
@@ -100,8 +100,8 @@ class quantum::agents::l3 (
         'syslog'      => $::use_syslog,
         'os_auth_url' => $quantum_config['keystone']['auth_url'],
         'tenant'      => $quantum_config['keystone']['admin_tenant_name'],
-        'username'    => $quantum_config['keystone']['auth_user'],
-        'password'    => $quantum_config['keystone']['auth_password'],
+        'username'    => $quantum_config['keystone']['admin_user'],
+        'password'    => $quantum_config['keystone']['admin_password'],
       },
       operations      => {
         'monitor'  => {

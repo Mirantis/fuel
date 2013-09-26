@@ -8,12 +8,6 @@ class quantum::agents::metadata (
   $cib_name = "quantum-metadata-agent"
   $res_name = "p_$cib_name"
 
-  if $enabled {
-    $ensure = 'running'
-  } else {
-    $ensure = 'stopped'
-  }
-
   include 'quantum::params'
 
   anchor {'quantum-metadata-agent': }
@@ -30,8 +24,8 @@ class quantum::agents::metadata (
     'DEFAULT/debug':              value => $debug;
     'DEFAULT/auth_region':        value => $quantum_config['keystone']['auth_region'],
     'DEFAULT/auth_url':           value => $quantum_config['keystone']['auth_url'],
-    'DEFAULT/admin_user':         value => $quantum_config['keystone']['auth_user'];
-    'DEFAULT/admin_password':     value => $quantum_config['keystone']['auth_password'];
+    'DEFAULT/admin_user':         value => $quantum_config['keystone']['admin_user'];
+    'DEFAULT/admin_password':     value => $quantum_config['keystone']['admin_password'];
     'DEFAULT/admin_tenant_name':  value => $quantum_config['keystone']['admin_tenant_name'];
     'DEFAULT/nova_metadata_ip':   value => $quantum_config['metadata']['nova_metadata_ip'];
     'DEFAULT/nova_metadata_port': value => $quantum_config['metadata']['nova_metadata_port'];

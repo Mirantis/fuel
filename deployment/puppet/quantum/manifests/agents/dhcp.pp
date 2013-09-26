@@ -52,8 +52,8 @@ class quantum::agents::dhcp (
     'DEFAULT/dhcp_driver':       value => $dhcp_driver;
     'DEFAULT/dhcp_agent_manager':value => $dhcp_agent_manager;
     'DEFAULT/auth_url':          value => $quantum_config['keystone']['auth_url'];
-    'DEFAULT/admin_user':        value => $quantum_config['keystone']['auth_user'];
-    'DEFAULT/admin_password':    value => $quantum_config['keystone']['auth_password'];
+    'DEFAULT/admin_user':        value => $quantum_config['keystone']['admin_user'];
+    'DEFAULT/admin_password':    value => $quantum_config['keystone']['admin_password'];
     'DEFAULT/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];
     'DEFAULT/resync_interval':   value => $quantum_config['L3']['resync_interval'];
     'DEFAULT/use_namespaces':    value => $quantum_config['L3']['use_namespaces'];
@@ -92,8 +92,8 @@ class quantum::agents::dhcp (
       parameters      => {
         'os_auth_url' => $quantum_config['keystone']['auth_url'],
         'tenant'      => $quantum_config['keystone']['admin_tenant_name'],
-        'username'    => $quantum_config['keystone']['auth_user'],
-        'password'    => $quantum_config['keystone']['auth_password'],
+        'username'    => $quantum_config['keystone']['admin_user'],
+        'password'    => $quantum_config['keystone']['admin_password'],
       }
       ,
       operations      => {
