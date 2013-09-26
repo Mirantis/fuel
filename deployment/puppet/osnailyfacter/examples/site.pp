@@ -1,3 +1,6 @@
+# Import setting from yaml fact
+$fuel_settings = parseyaml($::astute_settings_yaml)
+
 $openstack_version = {
   'keystone'   => 'latest',
   'glance'     => 'latest',
@@ -7,7 +10,7 @@ $openstack_version = {
   'cinder'     => 'latest',
 }
 
-tag("${deployment_id}::${::environment}")
+tag("${::fuel_settings['deployment_id']}::${::fuel_settings['environment']}")
 
 #Stages configuration
 stage {'first': } ->
@@ -15,42 +18,41 @@ stage {'openstack-custom-repo': } ->
 stage {'netconfig': } ->
 stage {'corosync_setup': } ->
 stage {'cluster_head': } ->
-stage {'openstack-firewall': } -> Stage['main']
+stage {'openstack-firewall': } ->
+Stage['main'] ->
+stage {'glance-image': }
 
-stage {'glance-image':
-  require => Stage['main'],
-}
+if $::fuel_settings['nodes'] {
 
+  $nodes_hash = $::fuel_settings['nodes']
+  $node = filter_nodes($::nodes_hash, 'name', $::hostname)
 
-
-if $nodes != undef {
-  $nodes_hash = parsejson($nodes)
-
-  $node = filter_nodes($nodes_hash,'name',$::hostname)
-  if empty($node) {
-    fail("Node $::hostname is not defined in the hash structure")
+  if empty($::node) {
+    fail("Node ${::hostname} is not defined in the hash structure!")
   }
 
-  $default_gateway = $node[0]['default_gateway']
-  $internal_address = $node[0]['internal_address']
-  $internal_netmask = $node[0]['internal_netmask']
-  $public_address = $node[0]['public_address']
-  $public_netmask = $node[0]['public_netmask']
-  $storage_address = $node[0]['storage_address']
-  $storage_netmask = $node[0]['storage_netmask']
-  $public_br = $node[0]['public_br']
-  $internal_br = $node[0]['internal_br']
-  $base_syslog_hash     = parsejson($::base_syslog)
-  $syslog_hash          = parsejson($::syslog)
+  $default_gateway  = $::node[0]['default_gateway']
+  $internal_address = $::node[0]['internal_address']
+  $internal_netmask = $::node[0]['internal_netmask']
+  $public_address   = $::node[0]['public_address']
+  $public_netmask   = $::node[0]['public_netmask']
+  $storage_address  = $::node[0]['storage_address']
+  $storage_netmask  = $::node[0]['storage_netmask']
+  $public_br        = $::node[0]['public_br']
+  $internal_br      = $::node[0]['internal_br']
+  $base_syslog_hash = $::fuel_settings['base_syslog']
+  $syslog_hash      = $::fuel_settings['syslog']
 
-  $use_quantum = str2bool($quantum)
-  if $use_quantum {
-    $public_int   = $public_br
-    $internal_int = $internal_br
+  $use_quantum = $::fuel_settings['quantum']
+  
+  if $::use_quantum {
+    $public_int   = $::public_br
+    $internal_int = $::internal_br
   } else {
-    $public_int   = $public_interface
-    $internal_int = $management_interface
+    $public_int   = $::fuel_settings['public_interface']
+    $internal_int = $::fuel_settings['management_interface']
   }
+
 }
 
 # This parameter specifies the verbosity level of log messages
@@ -59,14 +61,16 @@ if $nodes != undef {
 # Verbose would have set INFO level messages
 # In case of non debug and non verbose - WARNING, default level would have set.
 # Note: if syslog on, this default level may be configured (for syslog) with syslog_log_level option.
-# $verbose = true
-# $debug = false
+$verbose = $::fuel_settings['verbose']
+$debug = $::fuel_settings['debug']
 
 ### Syslog ###
 # Enable error messages reporting to rsyslog. Rsyslog must be installed in this case.
 $use_syslog = true
+
 # Default log level would have been used, if non verbose and non debug
-$syslog_log_level             = 'ERROR'
+$syslog_log_level = 'ERROR'
+
 # Syslog facilities for main openstack services, choose any, may overlap if needed
 # local0 is reserved for HA provisioning and orchestration services,
 # local1 is reserved for openstack-dashboard
@@ -76,13 +80,13 @@ $syslog_log_facility_quantum  = 'LOCAL4'
 $syslog_log_facility_nova     = 'LOCAL6'
 $syslog_log_facility_keystone = 'LOCAL7'
 
-
 $nova_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
   'PUT' => 1000, 'GET' => 1000,
   'DELETE' => 1000
 }
+
 $cinder_rate_limits = {
   'POST' => 1000,
   'POST_SERVERS' => 1000,
@@ -90,180 +94,145 @@ $cinder_rate_limits = {
   'DELETE' => 1000
 }
 
-
-###
-class node_netconfig (
-  $mgmt_ipaddr,
-  $mgmt_netmask  = '255.255.255.0',
-  $public_ipaddr = undef,
-  $public_netmask= '255.255.255.0',
-  $save_default_gateway=false,
-  $quantum = $use_quantum,
-  $default_gateway
-) {
-  if $use_quantum {
-    l23network::l3::create_br_iface {'mgmt':
-      interface => $management_interface, # !!! NO $internal_int /sv !!!
-      bridge    => $internal_br,
-      ipaddr    => $mgmt_ipaddr,
-      netmask   => $mgmt_netmask,
-      dns_nameservers  => $dns_nameservers,
-      gateway => $default_gateway,
-    } ->
-    l23network::l3::create_br_iface {'ex':
-      interface => $public_interface, # !! NO $public_int /sv !!!
-      bridge    => $public_br,
-      ipaddr    => $public_ipaddr,
-      netmask   => $public_netmask,
-      gateway   => $default_gateway,
-    }
-  } else {
-    # nova-network mode
-    l23network::l3::ifconfig {$public_int:
-      ipaddr  => $public_ipaddr,
-      netmask => $public_netmask,
-      gateway => $default_gateway,
-    }
-    l23network::l3::ifconfig {$internal_int:
-      ipaddr  => $mgmt_ipaddr,
-      netmask => $mgmt_netmask,
-      dns_nameservers      => $dns_nameservers,
-      gateway => $default_gateway
-    }
-  }
-  l23network::l3::ifconfig {$fixed_interface: ipaddr=>'none' }
-}
-
 case $::operatingsystem {
   'redhat' : {
-          $queue_provider = 'qpid'
-          $custom_mysql_setup_class = 'pacemaker_mysql'
+    $queue_provider = 'qpid'
+    $custom_mysql_setup_class = 'pacemaker_mysql'
   }
   default: {
-    $queue_provider='rabbitmq'
-    $custom_mysql_setup_class='galera'
+    $queue_provider = 'rabbitmq'
+    $custom_mysql_setup_class = 'galera'
   }
 }
 
-class os_common {
-  class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
-  if $deployment_source == 'cli' {
-    class {'::node_netconfig':
-      mgmt_ipaddr    => $internal_address,
-      mgmt_netmask   => $internal_netmask,
-      public_ipaddr  => $public_address,
-      public_netmask => $public_netmask,
-      stage          => 'netconfig',
-      default_gateway => $default_gateway
-    }
-  } else {
-    class {'osnailyfacter::network_setup': stage => 'netconfig'}
-  }
-
-  class {'openstack::firewall': stage => 'openstack-firewall'}
-
-  $base_syslog_rserver  = {
-    'remote_type' => 'udp',
-    'server' => $base_syslog_hash['syslog_server'],
-    'port' => $base_syslog_hash['syslog_port']
-  }
-
-  $syslog_rserver = {
-    'remote_type' => $syslog_hash['syslog_transport'],
-    'server' => $syslog_hash['syslog_server'],
-    'port' => $syslog_hash['syslog_port'],
-  }
-  if $syslog_hash['syslog_server'] != "" and $syslog_hash['syslog_port'] != "" and $syslog_hash['syslog_transport'] != "" {
-    $rservers = [$base_syslog_rserver, $syslog_rserver]
-  } else {
-    $rservers = [$base_syslog_rserver]
-  }
-
-  if $use_syslog {
-    class { "::openstack::logging":
-      stage          => 'first',
-      role           => 'client',
-      show_timezone => true,
-      # log both locally include auth, and remote
-      log_remote     => true,
-      log_local      => true,
-      log_auth_local => true,
-      # keep four weekly log rotations, force rotate if 300M size have exceeded
-      rotation       => 'weekly',
-      keep           => '4',
-      # should be > 30M
-      limitsize      => '300M',
-      # remote servers to send logs to
-      rservers       => $rservers,
-      # should be true, if client is running at virtual node
-      virtual        => true,
-      # facilities
-      syslog_log_facility_glance   => $syslog_log_facility_glance,
-      syslog_log_facility_cinder   => $syslog_log_facility_cinder,
-      syslog_log_facility_quantum  => $syslog_log_facility_quantum,
-      syslog_log_facility_nova     => $syslog_log_facility_nova,
-      syslog_log_facility_keystone => $syslog_log_facility_keystone,
-      # Rabbit doesn't support syslog directly, should be >= syslog_log_level,
-      # otherwise none rabbit's messages would have gone to syslog
-      rabbit_log_level => $syslog_log_level,
-      # debug mode
-      debug          => $debug ? { 'true' => true, true => true, default=> false },
-    }
-  }
-
-  #case $role {
-    #    /controller/:          { $hostgroup = 'controller' }
-    #    /swift-proxy/: { $hostgroup = 'swift-proxy' }
-    #    /storage/:{ $hostgroup = 'swift-storage'  }
-    #    /compute/: { $hostgroup = 'compute'  }
-    #    /cinder/: { $hostgroup = 'cinder'  }
-    #    default: { $hostgroup = 'generic' }
-    #}
-
-    #  if $nagios != 'false' {
-    #  class {'nagios':
-    #    proj_name       => $proj_name,
-    #    services        => [
-    #      'host-alive','nova-novncproxy','keystone', 'nova-scheduler',
-    #      'nova-consoleauth', 'nova-cert', 'haproxy', 'nova-api', 'glance-api',
-    #      'glance-registry','horizon', 'rabbitmq', 'mysql',
-    #    ],
-    #    whitelist       => ['127.0.0.1', $nagios_master],
-    #    hostgroup       => $hostgroup ,
-    #  }
-    # }
-
-  # Workaround for fuel bug with firewall
-  firewall {'003 remote rabbitmq ':
-    sport   => [ 4369, 5672, 41055, 55672, 61613 ],
-    source  => $master_ip,
-    proto   => 'tcp',
-    action  => 'accept',
-    require => Class['openstack::firewall'],
-  }
+if $::fuel_settings['quantum'] {
+  $quantum_hash   = $::fuel_settings['quantum_access']
+  $quantum_params = $::fuel_settings['quantum_parameters']
+  $novanetwork_params  = {}
+} else {
+  $quantum_hash = {}
+  $quantum_params = {}
+  $novanetwork_params  = $::fuel_settings['novanetwork_parameters']
 }
 
+if $fuel_settings['cinder_nodes'] {
+   $cinder_nodes_array   = $::fuel_settings['cinder_nodes']
+}
+else {
+  $cinder_nodes_array = []
+}
 
+$nova_hash            = $::fuel_settings['nova']
+$mysql_hash           = $::fuel_settings['mysql']
+$rabbit_hash          = $::fuel_settings['rabbit']
+$glance_hash          = $::fuel_settings['glance']
+$keystone_hash        = $::fuel_settings['keystone']
+$swift_hash           = $::fuel_settings['swift']
+$cinder_hash          = $::fuel_settings['cinder']
+$access_hash          = $::fuel_settings['access']
+$nodes_hash           = $::fuel_settings['nodes']
+$mp_hash              = $::fuel_settings['mp']
 
+$vlan_start           = $novanetwork_params['vlan_start']
+$network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
+$network_size         = $novanetwork_params['network_size']
+$num_networks         = $novanetwork_params['num_networks']
+$tenant_network_type  = $quantum_params['tenant_network_type']
+$segment_range        = $quantum_params['segment_range']
+
+if !$::rabbit_hash['user'] {
+  $::rabbit_hash['user'] = 'nova'
+}
+$rabbit_user = $::rabbit_hash['user']
+
+$auto_assign_floating_ip = $::fuel_settings['auto_assign_floating_ip']
+
+if $::use_quantum {
+  $floating_hash = $::fuel_settings['floating_network_range']
+} else {
+  $floating_hash = {}
+  $floating_ips_range = $::fuel_settings['floating_network_range']
+}
+
+$controller = filter_nodes($::nodes_hash, 'role', 'controller')
+$controller_node_address = $::controller[0]['internal_address']
+$controller_node_public = $::controller[0]['public_address']
+
+if ($::fuel_settings['cinder']) {
+  if (member($::cinder_nodes_array, 'all')) {
+    $is_cinder_node = true
+  } elsif (member($::cinder_nodes_array, $::hostname)) {
+    $is_cinder_node = true
+  } elsif (member($::cinder_nodes_array, $::internal_address)) {
+    $is_cinder_node = true
+  } elsif ($node[0]['role'] =~ /controller/ ) {
+    $is_cinder_node = member($::cinder_nodes_array, 'controller')
+  } else {
+    $is_cinder_node = member($::cinder_nodes_array, $node[0]['role'])
+  }
+} else {
+  $is_cinder_node = false
+}
+
+$cinder_iscsi_bind_addr = $::storage_address
+
+# do not edit the below line
+validate_re($::queue_provider,  'rabbitmq|qpid')
+
+$network_config = {
+  'vlan_start'     => $vlan_start,
+}
+
+$sql_connection = "mysql://nova:${::nova_hash['db_password']}@${::controller_node_address}/nova"
+$mirror_type    = 'external'
+$multi_host     = true
+
+Exec { logoutput => true }
+
+$quantum_host            = $::controller_node_address
+$quantum_metadata_proxy_shared_secret = $::quantum_params['metadata_proxy_shared_secret']
+$quantum_gre_bind_addr = $::internal_address
+
+#TODO: awoodward fix static $use_ceph
+$use_ceph = false
+
+if ($::use_ceph) {
+  $primary_mons   = $::controller
+  $primary_mon    = $::controller[0]['name']
+  $glance_backend = 'ceph'
+
+  class { 'ceph' : 
+    primary_mon  => $::primary_mon,
+    cluster_node_address => $::controller_node_address,
+  }
+
+} else {
+  $glance_backend = 'file'
+}
+
+# NODES SECTION #
 node default {
-  case $deployment_mode {
-    "singlenode": {
-      include "osnailyfacter::cluster_simple"
-      class {'os_common':}
-      }
-    "multinode": {
-      include osnailyfacter::cluster_simple
-      class {'os_common':}
-      }
+
+  case $::fuel_settings['deployment_mode'] {
+    'singlenode': {
+      class { 'osnailyfacter::cluster_simple' :}
+      class { 'osnailyfacter::os_common' :}
+    }
+    'multinode': {
+      class { 'osnailyfacter::cluster_simple' :}
+      class { 'osnailyfacter::os_common': }
+    }
     /^(ha|ha_compact)$/: {
-      include "osnailyfacter::cluster_ha"
-      class {'os_common':}
-      }
-     'ha_full': {
-      include "osnailyfacter::cluster_ha_full"
-      class {'os_common':}
-      }
-    "rpmcache": { include osnailyfacter::rpmcache }
+      class { 'osnailyfacter::cluster_ha' :}
+      class { 'osnailyfacter::os_common' :}
+    }
+    'ha_full': {
+      class { 'osnailyfacter::cluster_ha_full' :}
+      class { 'osnailyfacter::os_common' :}
+    }
+    'rpmcache': {
+      class { 'osnailyfacter::rpmcache' :}
+    }
   }
 
 }
