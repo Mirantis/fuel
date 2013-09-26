@@ -15,7 +15,6 @@ class quantum (
   $use_syslog           = false,
   $syslog_log_facility  = 'LOCAL4',
   $syslog_log_level     = 'WARNING',
-  $agent_down_time      = 15,
   $server_ha_mode       = false,
 ) {
   include 'quantum::params'

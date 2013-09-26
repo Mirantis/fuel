@@ -354,35 +354,24 @@ class openstack::compute (
     # }
 
     class { '::quantum':
-      queue_provider  => $queue_provider,
-      rabbit_host     => $rabbit_nodes ? { false => $rabbit_host, default => $rabbit_nodes },
-      rabbit_user     => $rabbit_user,
-      rabbit_password => $rabbit_password,
-      qpid_host       => $qpid_nodes ? { false => $qpid_host, default => $qpid_nodes },
-      qpid_user       => $qpid_user,
-      qpid_password   => $qpid_password,
+      quantum_config  => $quantum_config,
       verbose         => $verbose,
       debug           => $debug,
       use_syslog           => $use_syslog,
       syslog_log_level     => $syslog_log_level,
       syslog_log_facility  => $syslog_log_facility_quantum,
-      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-      auth_host            => $auth_host,
-      auth_tenant          => 'services',
-      auth_user            => 'quantum',
-      auth_password        => $quantum_user_password,
     }
 
+    #todo: Quantum plugin and database connection not need on compute.
     class { 'quantum::plugins::ovs':
-      sql_connection      => $quantum_sql_connection,
-      tenant_network_type => $tenant_network_type,
-      enable_tunneling    => $enable_tunneling,
-      bridge_mappings     => ['physnet2:br-prv'],
-      network_vlan_ranges => "physnet1,physnet2:${segment_range}",
-      tunnel_id_ranges    => "${segment_range}",
+      quantum_config      => $quantum_config,
+      # bridge_mappings     => ['physnet2:br-prv'],
+      # network_vlan_ranges => "physnet1,physnet2:${segment_range}",
+      # tunnel_id_ranges    => "${segment_range}",
     }
 
     class { 'quantum::agents::ovs':
+      quantum_config   => $quantum_config,
       bridge_uplinks   => ["br-prv:${private_interface}"],
       bridge_mappings  => ['physnet2:br-prv'],
       enable_tunneling => $enable_tunneling,

@@ -264,6 +264,7 @@ class MrntQuantum
       :predefined_routers => get_default_routers(),
       :predefined_networks => get_default_networks(),
       :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
+      :polling_interval => 2,
     }
     rv[:database][:port] = case rv[:database][:provider].upcase().to_sym()
       when :MYSQL then 3306

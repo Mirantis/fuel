@@ -128,6 +128,7 @@ class QuantumConfig
           },
         },
       },
+      :polling_interval => 2,
       :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
     }
     @def_config[:keystone][:auth_url] = "http://#{@def_v[:management_vip]}:35357/v2.0"
