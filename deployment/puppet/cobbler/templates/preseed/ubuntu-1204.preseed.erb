@@ -124,6 +124,6 @@ mkdir -p /target/etc/nailgun-agent && \
 echo -e "---\nurl: '<%= scope.lookupvar('nailgun::nailgun_api_url') %>'" > /target/etc/nailgun-agent/config.yaml && \
 echo target > /target/etc/nailgun_systemtype && \
 echo 'APT::Get::AllowUnauthenticated 1;' > /target/etc/apt/apt.conf.d/02mirantis-allow-unsigned && \
-echo 'deb @@server@@:8080/ubuntu/fuelweb/x86_64 main' > /target/etc/apt/sources.list' && \
+echo 'deb @@server@@:8080/ubuntu/fuelweb/x86_64 main' > /target/etc/apt/sources.list && \
 in-target update-initramfs -u && \
 true
