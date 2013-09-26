@@ -114,7 +114,7 @@ class os_common {
       stage => 'netconfig',
     }
     # moved to cluster_ha.pp
-    #$quantum_config = sanitize_quantum_config(parse_json($::quantum_parameters))
+    #$quantum_config = sanitize_quantum_config(parsejson($::quantum_parameters))
   } else {
     class {'osnailyfacter::network_setup': stage => 'netconfig'}
   }

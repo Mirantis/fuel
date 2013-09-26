@@ -1,6 +1,5 @@
 class osnailyfacter::cluster_ha {
 
-
 ##PARAMETERS DERIVED FROM YAML FILE
 
 
@@ -8,7 +7,7 @@ if $::use_quantum {
   #$quantum_hash   = parsejson($::quantum_access)
   #$quantum_params = parsejson($::quantum_parameters)
   $novanetwork_params  = {}
-  $quantum_config = sanitize_quantum_config(parse_json($::quantum_settings))
+  $quantum_config = sanitize_quantum_config(parsejson($::quantum_settings))
 } else {
   $quantum_hash = {}
   $quantum_params = {}
