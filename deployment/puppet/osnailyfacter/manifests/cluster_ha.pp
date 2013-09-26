@@ -46,9 +46,9 @@ if !$rabbit_hash[user]
 
 $rabbit_user          = $rabbit_hash['user']
 
-if $::use_quantum {
-$floating_hash =  $::floating_network_range
-}
+# if $::use_quantum {
+# $floating_hash =  $::floating_network_range
+# }
 else {
   $floating_hash = {}
   $floating_ips_range = parsejson($floating_network_range)
@@ -117,7 +117,7 @@ $mountpoints = filter_hash($mp_hash,'point')
 $swift_proxies = $controller_storage_addresses
 ##$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
 
-$quantum_gre_bind_addr = $::internal_address
+# $quantum_gre_bind_addr = $::internal_address
 
 $swift_local_net_ip      = $::storage_address
 
@@ -206,7 +206,7 @@ class compact_controller (
     internal_virtual_ip           => $management_vip,
     public_virtual_ip             => $public_vip,
     primary_controller            => $primary_controller,
-    floating_range                => $::use_quantum ? { true=>$floating_hash, default=>false},
+    floating_range                => false,
     fixed_range                   => $fixed_network_range,
     multi_host                    => $multi_host,
     network_manager               => $network_manager,
