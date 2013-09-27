@@ -41,20 +41,11 @@ class nailgun::ostf(
     group => 'root',
     mode => 0755,
   }->
-  nailgun::venv::pip { 'setuptools-git':
-    package => 'setuptools-git==1.0',
-  }->
-  nailgun::venv::pip { 'd2to1':
-    package => 'd2to1==0.2.10',
-  }->
-  nailgun::venv::pip { 'pbr':
-    package => 'pbr==0.5.17',
-  }->
   nailgun::venv::pip { 'ostf-req':
     package => "-r $venv/pip-requires.txt",
   }->
   nailgun::venv::pip { 'ostf':
-    package => 'ostf-tests==0.1 testing-adapter==0.2',
+    package => 'fuel-ostf==0.1',
   }
   exec {'ostf-init':
     command => "$venv/bin/ostf-server \
