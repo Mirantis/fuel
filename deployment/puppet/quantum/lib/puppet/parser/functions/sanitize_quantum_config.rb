@@ -49,7 +49,7 @@ class MrntQuantum
   end
 
   def get_database_vip()
-    @scope.lookupvar('management_vip')
+    @scope.lookupvar('database_vip') || @scope.lookupvar('management_vip')
   end
 
   # classmethod
@@ -119,7 +119,7 @@ class MrntQuantum
 
   # classmethod
   def self.get_network_vlan_ranges(l2)
-    l2[:phys_nets].sort().map{|n| [n[0],n[1][:vlan_range]]}.map{|n| n.delete_if{|x| x==nil}}.map{|n| n.join(':')}.join(',')
+    l2[:phys_nets].sort().map{|n| [n[0],n[1][:vlan_range]]}.map{|n| n.delete_if{|x| x==nil||x==''}}.map{|n| n.join(':')}.join(',')
   end
 
   def get_quantum_srv_vip()
@@ -127,7 +127,7 @@ class MrntQuantum
   end
 
   def get_quantum_gre_vip()
-    @scope.lookupvar('management_vip')
+    @scope.lookupvar('gre_vip') || @scope.lookupvar('management_vip')
   end
 
   def get_bridge_name(bb)
