@@ -123,11 +123,11 @@ class MrntQuantum
   end
 
   def get_quantum_srv_vip()
-    @scope.lookupvar('quantum_vip') || @scope.lookupvar('management_vip')
+    @scope.lookupvar('quantum_server_vip') || @scope.lookupvar('management_vip')
   end
 
-  def get_quantum_gre_vip()
-    @scope.lookupvar('gre_vip') || @scope.lookupvar('management_vip')
+  def get_quantum_gre_ip() # IP, not VIP !!!
+    @scope.lookupvar('quantum_gre_address') || @scope.lookupvar('$internal_address')
   end
 
   def get_bridge_name(bb)
@@ -269,7 +269,7 @@ class MrntQuantum
         :tunnel_bridge => get_bridge_name('tunnel'),
         :int_peer_patch_port => "patch-tun",
         :tun_peer_patch_port => "patch-int",
-        :local_ip => get_quantum_gre_vip(),
+        :local_ip => get_quantum_gre_ip(),
       },
       :L3 => {
         :router_id => nil,
