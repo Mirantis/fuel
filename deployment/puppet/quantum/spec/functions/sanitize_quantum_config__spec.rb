@@ -1,4 +1,6 @@
 require 'spec_helper'
+require 'json'
+require 'yaml'
 
 class QuantumConfig
   def initialize(init_v)
@@ -210,6 +212,12 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     res_cfg = Marshal.load(Marshal.dump(cfg))
     should run.with_params(cfg).and_return(res_cfg)
   end
+
+  # it 'should return network configuration' do
+  #   rv = run.with_params({})
+  #   should rv.and_return(@res_cfg)
+  #   puts rv[:L2][:predefined_networks]
+  # end
 
 end
 
