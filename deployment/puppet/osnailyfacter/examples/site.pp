@@ -89,7 +89,6 @@ $cinder_rate_limits = {
   'DELETE' => 1000
 }
 
-
 ###
 class node_netconfig (
   $mgmt_ipaddr,

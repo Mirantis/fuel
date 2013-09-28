@@ -46,13 +46,20 @@ if !$rabbit_hash[user]
 
 $rabbit_user          = $rabbit_hash['user']
 
-# if $::use_quantum {
-# $floating_hash =  $::floating_network_range
-# }
-else {
-  $floating_hash = {}
+if $::use_quantum {
+  $fixed_network_range = null
+  $management_vip = null
+  $public_vip = null
+  $internal_interface = null
+  $public_interface = null
+  $public_br = null
+  $internal_br = null
+  $public_int   = $public_br
+  $internal_int = $internal_br
+} else {
   $floating_ips_range = parsejson($floating_network_range)
 }
+$floating_hash = {}
 
 if !$swift_partition
 {
@@ -200,8 +207,7 @@ class compact_controller (
     controller_public_addresses   => $controller_public_addresses,
     controller_internal_addresses => $controller_internal_addresses,
     internal_address              => $internal_address,
-    public_interface              => $::public_int,
-    internal_interface            => $::internal_int,
+    public_interface              => $public_int,
     private_interface             => $fixed_interface,
     internal_virtual_ip           => $management_vip,
     public_virtual_ip             => $public_vip,

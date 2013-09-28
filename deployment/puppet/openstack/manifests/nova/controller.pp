@@ -277,7 +277,7 @@ class openstack::nova::controller (
     }
     if $quantum and !$quantum_network_node {
       class { '::quantum':
-        quantum_config       => $quantum_config
+        quantum_config       => $quantum_config,
         verbose              => $verbose,
         debug                => $debug,
         use_syslog           => $use_syslog,

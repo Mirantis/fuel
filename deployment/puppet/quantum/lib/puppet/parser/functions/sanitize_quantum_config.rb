@@ -1,5 +1,6 @@
 require 'ipaddr'
-
+require 'yaml'
+require 'json'
 
 class MrntQuantum
   #class method
@@ -324,6 +325,13 @@ class MrntQuantum
 
   def generate_config()
     rv = _generate_config(generate_default_quantum_config(), @given_config, [])
+    warn(rv.to_yaml())
+    #
+    #
+    #todo: output info to /tmp/xxx.yaml
+    #
+    #
+    #
   end
 
   private
@@ -335,7 +343,7 @@ class MrntQuantum
       #   raise(Puppet::ParseError, "Missing required field '#{path}.#{k}'.")
       # end
       if v != nil && cfg_user[k] != nil && v.class() != cfg_user[k].class()
-        raise(Puppet::ParseError, "Invalid format of config hash.")
+        raise(Puppet::ParseError, "Invalid format of config hash (field=\"#{k}\").")
       end
       #print ">>>>>>>>>>>>>>>>>>>>>#{v.class} -#{k}-\n"
       rv[k] = case v.class.to_s

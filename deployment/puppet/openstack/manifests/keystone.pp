@@ -228,7 +228,7 @@ class openstack::keystone (
     }
     if $quantum {
       class { 'quantum::keystone::auth':
-        quantum_config   => $quantum_config
+        quantum_config   => $quantum_config,
         public_address   => $quantum_public_real,
         admin_address    => $quantum_admin_real,
         internal_address => $quantum_internal_real,
