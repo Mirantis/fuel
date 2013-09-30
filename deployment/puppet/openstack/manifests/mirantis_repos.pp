@@ -51,6 +51,11 @@ class openstack::mirantis_repos (
           repos       => 'main',
           key         => '3E301371',
           key_source  => 'http://download.mirantis.com/precise-grizzly-fuel-3.2/Mirantis.key',
+          location    => 'http://download.mirantis.com/precise-fuel-grizzly',
+          release     => 'precise',
+          repos       => 'free',
+          key         => 'F8AF89DD',
+          key_source  => 'http://download.mirantis.com/precise-fuel-grizzly/Mirantis.key',
           include_src => false,
         }
       }
