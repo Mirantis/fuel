@@ -5,36 +5,16 @@ require 'puppet/parser/templatewrapper'
 require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
-def sanitize_hash(cfg)
-  def process_array(aa)
-    rv = []
-    aa.each do |v|
-      if v.is_a? Hash
-        rv.insert(-1, process_hash(v))
-      elsif v.is_a? Array
-        rv.insert(-1, process_array(v))
-      else
-        rv.insert(-1, v)
-      end
-    end
-    return rv
-  end
-  def process_hash(hh)
-    rv = {}
-    hh.each do |k, v|
-      #info("xx>>#{k}--#{k.to_sym}<<")
-      if v.is_a? Hash
-        rv[k.to_sym] = process_hash(v)
-      elsif v.is_a? Array
-        rv[k.to_sym] = process_array(v)
-      else
-        rv[k.to_sym] = v
-      end
-    end
-    return rv
-  end
-  process_hash(cfg)
+begin
+  require 'puppet/parser/functions/lib/sanitize_hash.rb'
+rescue LoadError => e
+  # puppet apply does not add module lib directories to the $LOAD_PATH (See
+  # #4248). It should (in the future) but for the time being we need to be
+  # defensive which is what this rescue block is doing.
+  rb_file = File.join(File.dirname(__FILE__),'lib','sanitize_hash.rb')
+  load rb_file if File.exists?(rb_file) or raise e
 end
+
 
 def sanitize_transformation(trans)
   action = trans[:action].downcase()

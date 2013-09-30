@@ -14,3 +14,4 @@ def prepare_cidr(cidr)
 
   return re_groups[1], re_groups[2].to_i
 end
+# vim: set ts=2 sw=2 et :
