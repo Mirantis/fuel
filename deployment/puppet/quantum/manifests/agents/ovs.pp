@@ -61,7 +61,6 @@ class quantum::agents::ovs (
     ensure        => present,
     skip_existing => true,
   }
-  
 
   if $enable_tunneling {
     L23network::L2::Bridge<| |> ->
@@ -182,6 +181,7 @@ class quantum::agents::ovs (
       hasrestart => false,
       provider   => $service_provider,
     }
+
   } else {
     service { 'quantum-ovs-agent':
       name       => $::quantum::params::ovs_agent_service,
@@ -195,7 +195,6 @@ class quantum::agents::ovs (
 
   Class[quantum::waistline] -> Service['quantum-ovs-agent']
 
-  if $::osfamily == "RedHat" {
   #todo: This service must be disabled if Quantum-ovs-agent managed by pacemaker
   service { 'quantum-ovs-cleanup':
     name       => 'quantum-ovs-cleanup',
@@ -215,15 +214,6 @@ class quantum::agents::ovs (
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-l3' |>
   Anchor['quantum-ovs-agent-done'] -> Anchor<| title=='quantum-dhcp-agent' |>
 
-    service { 'quantum-ovs-agent-cleanup':
-      name       => 'quantum-ovs-cleanup',
-      enable     => $enabled,
-      ensure     => false,
-      hasstatus  => false,
-      hasrestart => false,
-    }
-    Service['quantum-plugin-ovs-service'] -> Service['quantum-ovs-agent-cleanup']
-  } else {
-    anchor{'quantum-ovs-agent-done': }
-  }
 }
+#
+###
