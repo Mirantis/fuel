@@ -7,10 +7,14 @@ if $::use_quantum {
   #$quantum_hash   = parsejson($::quantum_access)
   #$quantum_params = parsejson($::quantum_parameters)
   $novanetwork_params  = {}
-  $quantum_config = sanitize_quantum_config(parsejson($::quantum_settings))
+  $quantum_config = sanitize_quantum_config($::quantum_settings_hash)
+  $kk = debug__dump_to_file('/tmp/xxx.yaml', $quantum_config)
+  $kkk = debug__dump_to_file('/tmp/root_helper.yaml', $quantum_config['!ruby/sym root_helper'])
+  $fixed_network_range = 'fucking puppet declarative style'
 } else {
   $quantum_hash = {}
   $quantum_params = {}
+  $quantum_config = {}
   $novanetwork_params  = parsejson($::novanetwork_parameters)
 }
 
@@ -46,17 +50,7 @@ if !$rabbit_hash[user]
 
 $rabbit_user          = $rabbit_hash['user']
 
-if $::use_quantum {
-  $fixed_network_range = null
-  $management_vip = null
-  $public_vip = null
-  $internal_interface = null
-  $public_interface = null
-  $public_br = null
-  $internal_br = null
-  $public_int   = $public_br
-  $internal_int = $internal_br
-} else {
+if ! $::use_quantum {
   $floating_ips_range = parsejson($floating_network_range)
 }
 $floating_hash = {}
@@ -245,7 +239,7 @@ class compact_controller (
     glance_backend                => $glance_backend,
     swift_proxies                 => $swift_proxies,
     quantum                       => $::use_quantum,
-    quantum_config                => $::quantum_config,
+    quantum_config                => $quantum_config,
     quantum_network_node          => $quantum_network_node,
     quantum_netnode_on_cnt        => $quantum_netnode_on_cnt,
     cinder                        => true,
@@ -415,7 +409,7 @@ class virtual_ips () {
         cinder_db_password     => $cinder_hash[db_password],
         db_host                => $management_vip,
         quantum                => $::use_quantum,
-        quantum_config         => $::quantum_config,
+        quantum_config         => $quantum_config,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
         syslog_log_facility    => $syslog_log_facility_nova,

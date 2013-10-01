@@ -175,7 +175,8 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     @q_config = QuantumConfig.new({
       :management_vip => '192.168.0.254'
     })
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_vip').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_gre_address').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_server_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('amqp_vip').returns(@q_config.get_def(:management_vip))

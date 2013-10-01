@@ -21,6 +21,10 @@ stage {'glance-image':
   require => Stage['main'],
 }
 
+$network_config_hash = sanitize_bool_in_hash(parsejson($::network_scheme))
+$quantum_settings_hash = sanitize_bool_in_hash(parsejson($::quantum_settings))
+#$quantum_config_hash__d1 = debug__dump_to_file('/tmp/$quantum_config_hash.yaml', $quantum_config_hash)
+
 
 if $nodes != undef {
   $nodes_hash = parsejson($nodes)
@@ -29,8 +33,6 @@ if $nodes != undef {
   if empty($node) {
     fail("Node $::hostname is not defined in the hash structure")
   }
-
-  $network_config_hash = sanitize_bool_in_hash(parsejson($::network_scheme))
 
   $default_gateway = $node[0]['default_gateway']
 
