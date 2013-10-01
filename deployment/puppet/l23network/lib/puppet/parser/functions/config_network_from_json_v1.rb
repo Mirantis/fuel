@@ -28,7 +28,7 @@ def sanitize_transformation(trans)
     when "add-port" then {
       :name => nil,
       :bridge => nil,
-      :type => "internal",
+      #:type => "internal",
       :tag => 0,
       :trunks => [],
       :port_properties => [],
@@ -138,11 +138,11 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
 
     # collect interfaces and endpoints
     endpoints = {}
-    borned_ports = []
+    born_ports = []
     config_hash[:interfaces].each do |int_name, int_properties|
       int_name = int_name.to_sym()
       endpoints[int_name] = create_endpoint()
-      borned_ports.insert(-1, int_name)
+      born_ports.insert(-1, int_name)
     end
     config_hash[:endpoints].each do |e_name, e_properties|
       e_name = e_name.to_sym()
@@ -151,10 +151,10 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       end
       e_properties.each do |k,v|
         if k.to_sym() == :IP
-          if not (v.is_a?(Array) or ['none','dhcp'].index(v))
+          if !(v.is_a?(Array) || ['none','dhcp',nil].include?(v))
             raise(Puppet::ParseError, "IP field for endpoint '#{e_name}' must be array of IP addresses, 'dhcp' or 'none'.")
-          elsif ['none','dhcp'].index(v)
-            endpoints[e_name][:IP].insert(-1, v)
+          elsif ['none','dhcp',nil].include?(v)
+            endpoints[e_name][:IP].insert(-1, v ? v : 'none')
           else
             v.each do |ip|
               begin
@@ -172,7 +172,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
     end
 
     # execute transformations
-    # todo: if pribider="lnx" execute transformations for LNX bridges
+    # todo: if provider="lnx" execute transformations for LNX bridges
     transformation_success = []
     previous = nil
     config_hash[:transformations].each do |t|
@@ -198,13 +198,13 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       resource.instantiate_resource(self, p_resource)
       compiler.add_resource(self, p_resource)
       transformation_success.insert(-1, "#{t[:action].strip()}(#{trans[:name]})")
-      borned_ports.insert(-1, trans[:name].to_sym()) if action != :patch
+      born_ports.insert(-1, trans[:name].to_sym()) if action != :patch
       previous = p_resource.to_s
     end
 
-    # check for all in endpoints are in interfaces or borned by transformation
+    # check for all in endpoints are in interfaces or born by transformation
     config_hash[:endpoints].each do |e_name, e_properties|
-      if not borned_ports.index(e_name.to_sym())
+      if not born_ports.index(e_name.to_sym())
         raise(Puppet::ParseError, "Endpoint '#{e_name}' not found in interfaces or transformations result.")
       end
     end
