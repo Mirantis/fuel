@@ -1,6 +1,15 @@
 require 'ipaddr'
 require 'yaml'
 require 'json'
+begin
+  require 'puppet/parser/functions/lib/sanitize_bool_in_hash.rb'
+rescue LoadError => e
+  # puppet apply does not add module lib directories to the $LOAD_PATH (See
+  # #4248). It should (in the future) but for the time being we need to be
+  # defensive which is what this rescue block is doing.
+  rb_file = File.join(File.dirname(__FILE__),'lib','sanitize_bool_in_hash.rb')
+  load rb_file if File.exists?(rb_file) or raise e
+end
 
 class MrntQuantum
   #class method
@@ -45,12 +54,21 @@ class MrntQuantum
   def get_amqp_vip(port)
     #todo myst give string like  "hostname1:5672, hostname2:5672" # rabbit_nodes.map {|x| x + ':5672'}.join ','
     #calculated from $controller_nodes
-    vip = @scope.lookupvar('amqp_vip') || @scope.lookupvar('management_vip')
+    vip = @scope.lookupvar('amqp_vip')
+    if [nil, :undefined].index(vip)
+      # todo: use network_roles
+      vip = get_management_vip()
+    end
     port ? "#{vip}:#{port}"  :  vip
   end
 
   def get_database_vip()
-    @scope.lookupvar('database_vip') || @scope.lookupvar('management_vip')
+    rv = @scope.lookupvar('database_vip')
+    if [nil, :undefined].index(rv)
+      # todo: use network_roles
+      return get_management_vip()
+    end
+    return rv
   end
 
   # classmethod
@@ -124,11 +142,21 @@ class MrntQuantum
   end
 
   def get_quantum_srv_vip()
-    @scope.lookupvar('quantum_server_vip') || @scope.lookupvar('management_vip')
+    rv = @scope.lookupvar('quantum_server_vip')
+    if [nil, :undefined].index(rv)
+      # todo: use network_roles
+      return get_management_vip()
+    end
+    return rv
   end
 
   def get_quantum_gre_ip() # IP, not VIP !!!
-    @scope.lookupvar('quantum_gre_address') || @scope.lookupvar('$internal_address')
+    rv = @scope.lookupvar('quantum_gre_address')
+    if [nil, :undefined].index(rv)
+      # todo: use network_roles
+      return get_management_vip()
+    end
+    return rv
   end
 
   def get_bridge_name(bb)
@@ -324,14 +352,10 @@ class MrntQuantum
   end
 
   def generate_config()
-    rv = _generate_config(generate_default_quantum_config(), @given_config, [])
-    warn(rv.to_yaml())
-    #
-    #
-    #todo: output info to /tmp/xxx.yaml
-    #
-    #
-    #
+    rv_sym = _generate_config(generate_default_quantum_config(), @given_config, [])
+    # pUPPET not allow hashes with SYM keys. normalize keys
+    rv = JSON.load(rv_sym.to_json)
+    return rv
   end
 
   private
@@ -345,7 +369,6 @@ class MrntQuantum
       if v != nil && cfg_user[k] != nil && v.class() != cfg_user[k].class()
         raise(Puppet::ParseError, "Invalid format of config hash (field=\"#{k}\").")
       end
-      #print ">>>>>>>>>>>>>>>>>>>>>#{v.class} -#{k}-\n"
       rv[k] = case v.class.to_s
         when "Hash"     then cfg_user[k] ? _generate_config(v,cfg_user[k], path.clone.insert(-1, k)) : v
         when "Array"    then cfg_user[k]&&cfg_user[k].empty?() ? v : cfg_user[k]
@@ -356,7 +379,6 @@ class MrntQuantum
     end
     return rv
   end
-
 end
 
 
@@ -372,7 +394,7 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
 
   given_config = MrntQuantum.sanitize_hash(argv[0])
   q_conf = MrntQuantum.new(self, given_config)
-  return q_conf.generate_config()
+  return sanitize_bool_in_hash(q_conf.generate_config())
 end
 
 # vim: set ts=2 sw=2 et :

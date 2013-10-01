@@ -1,150 +1,150 @@
 require 'spec_helper'
 require 'json'
 require 'yaml'
+require 'puppet/parser/functions/lib/sanitize_bool_in_hash.rb'
 
 class QuantumConfig
   def initialize(init_v)
     @def_v = {}
     @def_v.replace(init_v)
     @def_config = {
-      :amqp => {
-        :provider => "rabbitmq",
-        :username => "nova",
-        :passwd => "nova",
-        :hosts => "#{@def_v[:management_vip]}:5672",
-        :control_exchange => "quantum",
-        :heartbeat => 60,
-        :protocol => "tcp",
-        :rabbit_virtual_host => "/",
-        :ha_mode => true,
+      'amqp' => {
+        'provider' => "rabbitmq",
+        'username' => "nova",
+        'passwd' => "nova",
+        'hosts' => "#{@def_v[:management_vip]}:5672",
+        'control_exchange' => "quantum",
+        'heartbeat' => 60,
+        'protocol' => "tcp",
+        'rabbit_virtual_host' => "/",
+        'ha_mode' => true,
       },
-      :database => {
-        :provider => "mysql",
-        :host => "#{@def_v[:management_vip]}",
-        :port => 3306,
-        :database => "quantum",
-        :username => "quantum",
-        :passwd   => "quantum",
-        :reconnects => -1,
-        :reconnect_interval => 2,
-        :url  => nil,
-        :charset => nil,
+      'database' => {
+        'provider' => "mysql",
+        'host' => "#{@def_v[:management_vip]}",
+        'port' => 3306,
+        'database' => "quantum",
+        'username' => "quantum",
+        'passwd'   => "quantum",
+        'reconnects' => -1,
+        'reconnect_interval' => 2,
+        'url'  => nil,
+        'charset' => nil,
       },
-      :keystone => {
-        :auth_host => "#{@def_v[:management_vip]}",
-        :auth_port => 35357,
-        :auth_region => 'RegionOne',
-        :auth_protocol => "http",
-        :auth_api_version => "v2.0",
-        :admin_tenant_name => "services",
-        :admin_user => "quantum",
-        :admin_password => "quantum_pass",
-        :admin_email => "quantum@localhost",
-        :signing_dir => "/var/lib/quantum/keystone-signing",
+      'keystone' => {
+        'auth_host' => "#{@def_v[:management_vip]}",
+        'auth_port' => 35357,
+        'auth_region' => 'RegionOne',
+        'auth_protocol' => "http",
+        'auth_api_version' => "v2.0",
+        'admin_tenant_name' => "services",
+        'admin_user' => "quantum",
+        'admin_password' => "quantum_pass",
+        'admin_email' => "quantum@localhost",
+        'signing_dir' => "/var/lib/quantum/keystone-signing",
       },
-      :server => {
-        :api_url => "http://#{@def_v[:management_vip]}:9696",
-        :api_protocol => "http",
-        :bind_host => "#{@def_v[:management_vip]}",
-        :bind_port => 9696,
-        :agent_down_time => 15,
-        :allow_bulk      => true,
-        :control_exchange=> 'quantum',
+      'server' => {
+        'api_url' => "http://#{@def_v[:management_vip]}:9696",
+        'api_protocol' => "http",
+        'bind_host' => "#{@def_v[:management_vip]}",
+        'bind_port' => 9696,
+        'agent_down_time' => 15,
+        'allow_bulk'      => true,
+        'control_exchange'=> 'quantum',
       },
-      :metadata => {
-        :nova_metadata_ip => "#{@def_v[:management_vip]}",
-        :nova_metadata_port => 8775,
-        :metadata_ip => "169.254.169.254",
-        :metadata_port => 8775,
-        :metadata_proxy_shared_secret => "secret-word",
+      'metadata' => {
+        'nova_metadata_ip' => "#{@def_v[:management_vip]}",
+        'nova_metadata_port' => 8775,
+        'metadata_ip' => "169.254.169.254",
+        'metadata_port' => 8775,
+        'metadata_proxy_shared_secret' => "secret-word",
       },
-      :L2 => {
-        :base_mac => "fa:16:3e:00:00:00",
-        :mac_generation_retries => 32,
-        :segmentation_type => "gre",
-        :enable_tunneling=>true,
-        :tunnel_id_ranges => "3000:65535",
-        :phys_nets => {
-          :physnet1 => {
-            :bridge => "br-ex",
-            :vlan_range => nil,
+      'L2' => {
+        'base_mac' => "fa:16:3e:00:00:00",
+        'mac_generation_retries' => 32,
+        'segmentation_type' => "gre",
+        'enable_tunneling'=>true,
+        'tunnel_id_ranges' => "3000:65535",
+        'phys_nets' => {
+          'physnet1' => {
+            'bridge' => "br-ex",
+            'vlan_range' => nil,
           },
-          :physnet2 => {
-            :bridge => "br-prv",
-            :vlan_range => "3000:4094",
+          'physnet2' => {
+            'bridge' => "br-prv",
+            'vlan_range' => "3000:4094",
           },
         },
-        :phys_bridges => ['br-ex', 'br-prv'],
-        :bridge_mappings => "physnet1:br-ex,physnet2:br-prv",
-        :network_vlan_ranges => "physnet1,physnet2:3000:4094",
-        :integration_bridge => "br-int",
-        :tunnel_bridge => "br-tun",
-        :int_peer_patch_port => "patch-tun",
-        :tun_peer_patch_port => "patch-int",
-        :local_ip => "#{@def_v[:management_vip]}",
+        'phys_bridges' => ['br-ex', 'br-prv'],
+        'bridge_mappings' => "physnet1:br-ex,physnet2:br-prv",
+        'network_vlan_ranges' => "physnet1,physnet2:3000:4094",
+        'integration_bridge' => "br-int",
+        'tunnel_bridge' => "br-tun",
+        'int_peer_patch_port' => "patch-tun",
+        'tun_peer_patch_port' => "patch-int",
+        'local_ip' => "#{@def_v[:management_vip]}",
       },
-      :L3 => {
-        :router_id => nil,
-        :gateway_external_network_id => nil,
-        :use_namespaces => true,
-        :allow_overlapping_ips => false,
-        :network_auto_schedule => true,
-        :router_auto_schedule  => true,
-        :public_bridge => "br-ex",
-        #:public_network => "net04_ext",
-        :send_arp_for_ha => 8,
-        :resync_interval => 40,
-        :resync_fuzzy_delay => 5,
-        :dhcp_agent => {
-          :enable_isolated_metadata => false,
-          :enable_metadata_network => false,
-          :lease_duration => 120
+      'L3' => {
+        'router_id' => nil,
+        'gateway_external_network_id' => nil,
+        'use_namespaces' => true,
+        'allow_overlapping_ips' => false,
+        'network_auto_schedule' => true,
+        'router_auto_schedule'  => true,
+        'public_bridge' => "br-ex",
+        'send_arp_for_ha' => 8,
+        'resync_interval' => 40,
+        'resync_fuzzy_delay' => 5,
+        'dhcp_agent' => {
+          'enable_isolated_metadata' => false,
+          'enable_metadata_network' => false,
+          'lease_duration' => 120
         }
       },
-      :predefined_routers => {
-        :router04 => {
-          :tenant => 'admin',
-          :virtual => false,
-          :external_network => "net04_ext",
-          :internal_networks => ["net04"],
+      'predefined_routers' => {
+        'router04' => {
+          'tenant' => 'admin',
+          'virtual' => false,
+          'external_network' => "net04_ext",
+          'internal_networks' => ["net04"],
         }
       },
-      :predefined_networks => {
-        :net04_ext => {
-          :shared => false,
-          :L2 => {
-            :router_ext   => true,
-            :network_type => 'flat',
-            :physnet      => 'physnet1',
-            :segment_id   => nil,
+      'predefined_networks' => {
+        'net04_ext' => {
+          'shared' => false,
+          'L2' => {
+            'router_ext'   => true,
+            'network_type' => 'flat',
+            'physnet'      => 'physnet1',
+            'segment_id'   => nil,
           },
-          :L3 => {
-            :subnet => "10.100.100.0/24",
-            :gateway => "10.100.100.1",
-            :nameservers => [],
-            :floating => "10.100.100.130:10.100.100.254",
+          'L3' => {
+            'subnet' => "10.100.100.0/24",
+            'gateway' => "10.100.100.1",
+            'nameservers' => [],
+            'floating' => "10.100.100.130:10.100.100.254",
           },
         },
-        :net04 => {
-          :shared => false,
-          :L2 => {
-            :router_ext   => false,
-            :network_type => 'gre', # or vlan
-            :physnet      => 'physnet2',
-            :segment_id   => nil,
+        'net04' => {
+          'shared' => false,
+          'L2' => {
+            'router_ext'   => false,
+            'network_type' => 'gre', # or vlan
+            'physnet'      => 'physnet2',
+            'segment_id'   => nil,
           },
-          :L3 => {
-            :subnet => "192.168.111.0/24",
-            :gateway => "192.168.111.1",
-            :nameservers => ["8.8.4.4", "8.8.8.8"],
-            :floating => nil,
+          'L3' => {
+            'subnet' => "192.168.111.0/24",
+            'gateway' => "192.168.111.1",
+            'nameservers' => ["8.8.4.4", "8.8.8.8"],
+            'floating' => nil,
           },
         },
       },
-      :polling_interval => 2,
-      :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
+      'polling_interval' => 2,
+      'root_helper' => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
     }
-    @def_config[:keystone][:auth_url] = "http://#{@def_v[:management_vip]}:35357/v2.0"
+    @def_config['keystone']['auth_url'] = "http://#{@def_v[:management_vip]}:35357/v2.0"
   end
 
   def get_def_config()
@@ -198,17 +198,17 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
 
   it 'should substitute default values if missing required field in config' do
     cfg = @cfg.clone()
-    cfg[:L3].delete(:dhcp_agent)
+    cfg['L3'].delete('dhcp_agent')
     should run.with_params(cfg).and_return(@res_cfg)
   end
 
   it 'should can substitute values in deep level' do
     cfg = @cfg.clone()
-    cfg[:amqp][:provider] = "XXXXXXXXXXxxxx"
-    cfg[:L2][:base_mac] = "aa:aa:aa:00:00:00"
-    cfg[:L2][:integration_bridge] = "xx-xxx"
-    cfg[:L2][:local_ip] = "9.9.9.9"
-    cfg[:predefined_networks][:net04_ext][:L3][:nameservers] = ["127.0.0.1"]
+    cfg['amqp']['provider'] = "XXXXXXXXXXxxxx"
+    cfg['L2']['base_mac'] = "aa:aa:aa:00:00:00"
+    cfg['L2']['integration_bridge'] = "xx-xxx"
+    cfg['L2']['local_ip'] = "9.9.9.9"
+    cfg['predefined_networks']['net04_ext']['L3']['nameservers'] = ["127.0.0.1"]
     res_cfg = Marshal.load(Marshal.dump(cfg))
     should run.with_params(cfg).and_return(res_cfg)
   end
