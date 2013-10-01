@@ -29,7 +29,7 @@ class horizon(
   $cache_server_port     = '11211',
   $swift                 = false,
   $quantum               = false,
-  $package_ensure	       = present,
+  $package_ensure         = present,
   $horizon_app_links     = false,
   $keystone_host         = '127.0.0.1',
   $keystone_port         = 5000,
@@ -187,14 +187,14 @@ class horizon(
       }
       if $use_syslog {
         file {'/etc/httpd/conf.d/openstack-dashboard.conf':
-	  ensure  => present,
-	} ->
-	file_line { "enable_syslog":
-	  path => "/etc/httpd/conf.d/openstack-dashboard.conf",
-	  line => 'ErrorLog syslog:local1',
-	  before  => Service['httpd'],
-	  require => [Package["$::horizon::params::http_service", "$::horizon::params::http_modwsgi"]],
-	}
+    ensure  => present,
+  } ->
+  file_line { "enable_syslog":
+    path => "/etc/httpd/conf.d/openstack-dashboard.conf",
+    line => 'ErrorLog syslog:local1',
+    before  => Service['httpd'],
+    require => [Package["$::horizon::params::http_service", "$::horizon::params::http_modwsgi"]],
+  }
       }
     }
     'Debian': {

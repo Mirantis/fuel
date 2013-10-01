@@ -20,24 +20,24 @@ $module_dir_path = '/var/lib/puppet/modules'
 # Usage:
 #  module_dir { ["common", "common/dir1", "common/dir2" ]: }
 define module_dir (
-		$mode = 0644,
-		$owner = root,
-		$group = 0
-	)
+    $mode = 0644,
+    $owner = root,
+    $group = 0
+  )
 {
-	$dir = "${module_dir_path}/${name}"
-	if defined(File[$dir]) {
-		debug("${dir} already defined")
-	} else {
-		file {
-			$dir:
-				source => [ "puppet:///modules/${name}/module_dir", "puppet:///modules/common/empty"],
-				checksum => md5,
-				# ignore the placeholder
-				ignore => '\.ignore', 
-				recurse => true, purge => true, force => true,
-				mode => $mode, owner => $owner, group => $group;
-		}
-	}
+  $dir = "${module_dir_path}/${name}"
+  if defined(File[$dir]) {
+    debug("${dir} already defined")
+  } else {
+    file {
+      $dir:
+        source => [ "puppet:///modules/${name}/module_dir", "puppet:///modules/common/empty"],
+        checksum => md5,
+        # ignore the placeholder
+        ignore => '\.ignore', 
+        recurse => true, purge => true, force => true,
+        mode => $mode, owner => $owner, group => $group;
+    }
+  }
 }
 

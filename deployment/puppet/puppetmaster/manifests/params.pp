@@ -23,18 +23,18 @@ class puppetmaster::params
         fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat and Debian")
       }
   } 
-	  
-	 
-	case $::osfamily {
-	    'RedHat': {
-	       $mysql_packages = ['mysql',  'mysql-server', 'mysql-devel', 'rubygems', 'ruby-devel',  'make',  'gcc']      
-	    }
-	    'Debian': {
-	       $mysql_packages = ['mysql-server', 'libmysql-ruby', 'rubygems', 'make',  'gcc']  
-	    }
-	    default: {
-	      fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat and Debian")
-	    }
-	}
+    
+   
+  case $::osfamily {
+      'RedHat': {
+         $mysql_packages = ['mysql',  'mysql-server', 'mysql-devel', 'rubygems', 'ruby-devel',  'make',  'gcc']      
+      }
+      'Debian': {
+         $mysql_packages = ['mysql-server', 'libmysql-ruby', 'rubygems', 'make',  'gcc']  
+      }
+      default: {
+        fail("Unsupported osfamily: ${::osfamily} operatingsystem: ${::operatingsystem}, module ${module_name} only support osfamily RedHat and Debian")
+      }
+  }
   
 }

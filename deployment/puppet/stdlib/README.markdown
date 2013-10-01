@@ -582,7 +582,7 @@ To return the date:
     %R - time, 24-hour (%H:%M)
     %s - Number of seconds since 1970-01-01 00:00:00 UTC.
     %S - Second of the minute (00..60)
-    %t - Tab character (	)
+    %t - Tab character (  )
     %T - time, 24-hour (%H:%M:%S)
     %u - Day of the week as a decimal, Monday being 1. (1..7)
     %U - Week  number  of the current year,

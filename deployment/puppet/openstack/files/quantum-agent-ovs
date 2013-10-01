@@ -204,13 +204,13 @@ quantum_ovs_agent_status() {
         
         if [ $? -eq 0 ]
         then
-        	ocf_log warn "OpenStack OVS Server (quantum-ovs-agent) was run, but no pid file found."
-        	ocf_log warn "Will use $pid as PID of process (quantum-ovs-agent)"
-        	ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
-        	echo $pid > $OCF_RESKEY_pid
-    	else
-    		return $OCF_NOT_RUNNING
-    	fi
+          ocf_log warn "OpenStack OVS Server (quantum-ovs-agent) was run, but no pid file found."
+          ocf_log warn "Will use $pid as PID of process (quantum-ovs-agent)"
+          ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
+          echo $pid > $OCF_RESKEY_pid
+      else
+        return $OCF_NOT_RUNNING
+      fi
     else
         pid=`cat $OCF_RESKEY_pid`
     fi
@@ -232,29 +232,29 @@ quantum_ovs_agent_monitor() {
 }
 
 clean_up() {
-	
-	ocf_log info "cleaning up integration bridge"
-	ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_segmentation_bridge}
-	rc=$?
-	if [ $rc -ne 0 ]; then
+  
+  ocf_log info "cleaning up integration bridge"
+  ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_segmentation_bridge}
+  rc=$?
+  if [ $rc -ne 0 ]; then
         ocf_log err "Could not clean up segmentation bridge ${OCF_RESKEY_segmentation_bridge}"
         exit $OCF_ERR_GENERIC
     fi
     ocf_log info "cleaning up segmentation bridge"
-	ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_integration_bridge}
-	rc=$?
-	if [ $rc -ne 0 ]; then
+  ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_integration_bridge}
+  rc=$?
+  if [ $rc -ne 0 ]; then
         ocf_log err "Could not clean up integration bridge ${OCF_RESKEY_integration_bridge}"
         exit $OCF_ERR_GENERIC
     fi
     ocf_log info "recreating integration bridge"
-	ovs-vsctl -- --may-exist add-br ${OCF_RESKEY_integration_bridge}
-	rc=$?
-	if [ $rc -ne 0 ]; then
+  ovs-vsctl -- --may-exist add-br ${OCF_RESKEY_integration_bridge}
+  rc=$?
+  if [ $rc -ne 0 ]; then
         ocf_log err "Could not start up integration bridge ${OCF_RESKEY_integration_bridge}"
         exit $OCF_ERR_GENERIC
     fi
-    	            
+                  
 
 }
 
@@ -274,7 +274,7 @@ quantum_ovs_agent_start() {
     # straight to /dev/null anyway and using ocf_run would break stdout-redirection here.
     su ${OCF_RESKEY_user} -s /bin/sh -c "${OCF_RESKEY_binary} --config-file=$OCF_RESKEY_config \
        --config-file=$OCF_RESKEY_plugin_config $OCF_RESKEY_additional_parameters"' >> \
-	/dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
+  /dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
 
     # Spin waiting for the server to come up.
     # Let the CRM/LRM time us out if required
@@ -300,7 +300,7 @@ quantum_ovs_agent_stop() {
     quantum_ovs_agent_status
     rc=$?
     if [ $rc -eq $OCF_NOT_RUNNING ]; then
-    	clean_up
+      clean_up
         ocf_log info "OpenStack OVS Server (quantum-ovs-agent) already stopped"
         return $OCF_SUCCESS
     fi

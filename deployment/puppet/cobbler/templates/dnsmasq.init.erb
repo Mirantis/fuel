@@ -36,7 +36,7 @@ case "$1" in
         fi
         echo -n "Starting dnsmasq: "
         daemon $dnsmasq $OPTIONS
-	RETVAL=$?
+  RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && touch /var/lock/subsys/dnsmasq
         ;;
@@ -45,7 +45,7 @@ case "$1" in
             echo -n "Shutting down dnsmasq: "
             killproc dnsmasq
         fi
-	RETVAL=$?
+  RETVAL=$?
         echo
         [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/dnsmasq /var/run/dnsmasq.pid
         ;;
@@ -61,9 +61,9 @@ case "$1" in
   ;;
   force-reload)
         # new configuration takes effect only after restart
-	$0 stop
-	$0 start
-	RETVAL=$?
+  $0 stop
+  $0 start
+  RETVAL=$?
         ;;
   restart)
   $0 stop
@@ -72,11 +72,11 @@ case "$1" in
   ;;
   condrestart)
       if test "x`/sbin/pidof dnsmasq`" != x; then
-      	 $0 stop
-	    $0 start
-	       RETVAL=$?
-	           fi
-		       ;;
+         $0 stop
+      $0 start
+         RETVAL=$?
+             fi
+           ;;
   *)
         echo "Usage: $0 {start|stop|restart|reload|condrestart|status}"
         exit 2

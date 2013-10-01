@@ -13,22 +13,22 @@ describe provider_class do
   end
   it 'should query privilegess from the database' do
     provider_class.expects(:mysql) .with('mysql', '-Be', 'describe user').returns <<-EOT
-Field	Type	Null	Key	Default	Extra
-Host	char(60)	NO	PRI		
-User	char(16)	NO	PRI		
-Password	char(41)	NO			
-Select_priv	enum('N','Y')	NO		N	
-Insert_priv	enum('N','Y')	NO		N	
-Update_priv	enum('N','Y')	NO		N
+Field  Type  Null  Key  Default  Extra
+Host  char(60)  NO  PRI    
+User  char(16)  NO  PRI    
+Password  char(41)  NO      
+Select_priv  enum('N','Y')  NO    N  
+Insert_priv  enum('N','Y')  NO    N  
+Update_priv  enum('N','Y')  NO    N
 EOT
     provider_class.expects(:mysql).with('mysql', '-Be', 'describe db').returns <<-EOT
-Field	Type	Null	Key	Default	Extra
-Host	char(60)	NO	PRI		
-Db	char(64)	NO	PRI		
-User	char(16)	NO	PRI		
-Select_priv	enum('N','Y')	NO		N	
-Insert_priv	enum('N','Y')	NO		N	
-Update_priv	enum('N','Y')	NO		N
+Field  Type  Null  Key  Default  Extra
+Host  char(60)  NO  PRI    
+Db  char(64)  NO  PRI    
+User  char(16)  NO  PRI    
+Select_priv  enum('N','Y')  NO    N  
+Insert_priv  enum('N','Y')  NO    N  
+Update_priv  enum('N','Y')  NO    N
 EOT
     provider_class.user_privs.should == [ 'Select_priv', 'Insert_priv', 'Update_priv' ]
     provider_class.db_privs.should == [ 'Select_priv', 'Insert_priv', 'Update_priv' ]
@@ -36,24 +36,24 @@ EOT
 
   it 'should query set priviliges' do
     provider_class.expects(:mysql).with('mysql', '-Be', 'select * from user where user="user" and host="host"').returns <<-EOT
-Host	User	Password	Select_priv	Insert_priv	Update_priv
-host	user		Y	N	Y
+Host  User  Password  Select_priv  Insert_priv  Update_priv
+host  user    Y  N  Y
 EOT
     @provider.privileges.should == [ 'Select_priv', 'Update_priv' ]
   end
 
   it 'should recognize when all priviliges are set' do
     provider_class.expects(:mysql).with('mysql', '-Be', 'select * from user where user="user" and host="host"').returns <<-EOT
-Host	User	Password	Select_priv	Insert_priv	Update_priv
-host	user		Y	Y	Y
+Host  User  Password  Select_priv  Insert_priv  Update_priv
+host  user    Y  Y  Y
 EOT
     @provider.all_privs_set?.should == true
   end
 
   it 'should recognize when all privileges are not set' do
     provider_class.expects(:mysql).with('mysql', '-Be', 'select * from user where user="user" and host="host"').returns <<-EOT
-Host	User	Password	Select_priv	Insert_priv	Update_priv
-host	user		Y	N	Y
+Host  User  Password  Select_priv  Insert_priv  Update_priv
+host  user    Y  N  Y
 EOT
     @provider.all_privs_set?.should == false
   end

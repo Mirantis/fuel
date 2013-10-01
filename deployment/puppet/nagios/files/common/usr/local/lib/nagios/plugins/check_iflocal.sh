@@ -99,9 +99,9 @@ RUNETHTOOL=1
 RUNMIITOOL=0
 
 # How do you want "no link" to be reported?
-# NOLINK=$STATOK	# OK
-# NOLINK=$STATWARN	# Warning
-NOLINK=$STATCRIT	# Critical
+# NOLINK=$STATOK  # OK
+# NOLINK=$STATWARN  # Warning
+NOLINK=$STATCRIT  # Critical
 
 # if your ifconfig output is different, these may have to change
 # DO NOT CHANGE OTHERWISE!!!
@@ -119,106 +119,106 @@ ETHTOOLNOTOK="no"
 
 show_usage()
 {
-	echo	"Usage : `basename $0` ethX [VAR=VAL] [VAR=VAL] [...]"
-	echo	""
-	echo	"This script checks the 4 values found in the output of ifconfig "
-	echo	"RX Errors, TX Errors, RX dropped, TX dropped"
-	echo	"It assumes that if the interface is functioning properly,"
-	echo	"these values will be 0.  Rather than flag absolute values"
-	echo	"the script flags delta values from one invocation to the next"
-	echo	"It is also smart enough to reset itself e.g. on reboot"
-	echo	""
-	echo	"Please read comments at top of script for installation details"
-	echo	""
-	echo	"Variable names can be mixed-cased.  Valid variables : "
-	echo	"	WARNDELTA=number (default 1)"
-	echo	"	CRITDELTA=number (default 10)"
-	echo	"		How big of a delta to flag as warning or critical?"
-	echo	"		Applies to all of RX Errors, TX Errors, RX Dropped, TX Dropped"
-	echo	"		So if any one of those 4 exceeds the delta from one invocation"
-	echo	"		to the next, the appropriate action is taken"
-	echo 	"	NOLINK=[0|1|2|3] (default 1)"
-	echo	"		How to report when there is no link on this interface?"
-	echo	"		Nagios return codes - 0=OK,1=WARNING,2=CRITICAL,3=SCRIPT ERROR"
-	echo 	"		but note that you use the numbers, not the strings"
-	echo	"		This is only used if either ethtool or mii-tool is enabled"
-	echo	"	RUNETHTOOL=[0|1]"
-	echo	"	RUNMIITOOL=[0|1]"
-	echo	"		Only 1 of the above 2 can be enabled otherwise it's an error"
-	echo	"		These give more info on each interface, but require sudo"
-	echo	"		See script comments for details"
-	echo	"	STROK=STRING (see script comments)"
-	echo	"	STRWARN=STRING (see script comments)"
-	echo	"	STRCRIT=STRING (see script comments)"
-	echo	"	STRYIKES=STRING (see script comments)"
-	echo	""
+  echo  "Usage : `basename $0` ethX [VAR=VAL] [VAR=VAL] [...]"
+  echo  ""
+  echo  "This script checks the 4 values found in the output of ifconfig "
+  echo  "RX Errors, TX Errors, RX dropped, TX dropped"
+  echo  "It assumes that if the interface is functioning properly,"
+  echo  "these values will be 0.  Rather than flag absolute values"
+  echo  "the script flags delta values from one invocation to the next"
+  echo  "It is also smart enough to reset itself e.g. on reboot"
+  echo  ""
+  echo  "Please read comments at top of script for installation details"
+  echo  ""
+  echo  "Variable names can be mixed-cased.  Valid variables : "
+  echo  "  WARNDELTA=number (default 1)"
+  echo  "  CRITDELTA=number (default 10)"
+  echo  "    How big of a delta to flag as warning or critical?"
+  echo  "    Applies to all of RX Errors, TX Errors, RX Dropped, TX Dropped"
+  echo  "    So if any one of those 4 exceeds the delta from one invocation"
+  echo  "    to the next, the appropriate action is taken"
+  echo   "  NOLINK=[0|1|2|3] (default 1)"
+  echo  "    How to report when there is no link on this interface?"
+  echo  "    Nagios return codes - 0=OK,1=WARNING,2=CRITICAL,3=SCRIPT ERROR"
+  echo   "    but note that you use the numbers, not the strings"
+  echo  "    This is only used if either ethtool or mii-tool is enabled"
+  echo  "  RUNETHTOOL=[0|1]"
+  echo  "  RUNMIITOOL=[0|1]"
+  echo  "    Only 1 of the above 2 can be enabled otherwise it's an error"
+  echo  "    These give more info on each interface, but require sudo"
+  echo  "    See script comments for details"
+  echo  "  STROK=STRING (see script comments)"
+  echo  "  STRWARN=STRING (see script comments)"
+  echo  "  STRCRIT=STRING (see script comments)"
+  echo  "  STRYIKES=STRING (see script comments)"
+  echo  ""
 }
 
 # rudimentary check for proper usage
 if [ $# -lt 1 ]
 then
-	show_usage
-	exit $STATYIKES
+  show_usage
+  exit $STATYIKES
 fi
 IFACE=$1
 shift
 
 if [ "$IFACE" == "-h" -o "$IFACE" == "--help" ]
 then
-	show_usage
-	exit $STATOK
+  show_usage
+  exit $STATOK
 fi
 
 # process command line
 
 while [ $# -gt 0 ]
 do
-	case $1 in
-		*=*)
-			MYVAR=`echo $1 | $AWK -F= '{print $1}'`
-			MYVAL=`echo $1 | $AWK -F= '{print $2}'`
-			case $MYVAR in
-				[Ww][Aa][Rr][Nn][Dd][Ee][Ll][Tt][Aa])
-					WARNDELTA=$MYVAL
-					;;
-				[Cc][Rr][Ii][Tt][Dd][Ee][Ll][Tt][Aa])
-					CRITDELTA=$MYVAL
-					;;
-				[Nn][Oo][Ll][Ii][Nn][Kk])
-					NOLINK=$MYVAL
-					;;
-				[Rr][Uu][Nn][Ee][Tt][Hh][Tt][Oo][Oo][Ll])
-					RUNETHTOOL=$MYVAL
-					;;
-				[Rr][Uu][Nn][Mm][Ii][Ii][Tt][Oo][Oo][Ll])
-					RUNMIITOOL=$MYVAL
-					;;
-				[Ss][Tt][Rr][Oo][Kk])
-					STROK=$MYVAL
-					;;
-				[Ss][Tt][Rr][Ww][Aa][Rr][Nn])
-					STRWARN=$MYVAL
-					;;
-				[Ss][Tt][Rr][Cc][Rr][Ii][Tt])
-					STRCRIT=$MYVAL
-					;;
-				[Ss][Tt][Rr][Yy][Ii][Kk][Ee][Ss])
-					STRYIKES=$MYVAL
-					;;
-			esac
-			;;
-		*)
-			echo "Invalid command argument $1"
-			exit $STATYIKES
-			;;
-	esac
-	shift
+  case $1 in
+    *=*)
+      MYVAR=`echo $1 | $AWK -F= '{print $1}'`
+      MYVAL=`echo $1 | $AWK -F= '{print $2}'`
+      case $MYVAR in
+        [Ww][Aa][Rr][Nn][Dd][Ee][Ll][Tt][Aa])
+          WARNDELTA=$MYVAL
+          ;;
+        [Cc][Rr][Ii][Tt][Dd][Ee][Ll][Tt][Aa])
+          CRITDELTA=$MYVAL
+          ;;
+        [Nn][Oo][Ll][Ii][Nn][Kk])
+          NOLINK=$MYVAL
+          ;;
+        [Rr][Uu][Nn][Ee][Tt][Hh][Tt][Oo][Oo][Ll])
+          RUNETHTOOL=$MYVAL
+          ;;
+        [Rr][Uu][Nn][Mm][Ii][Ii][Tt][Oo][Oo][Ll])
+          RUNMIITOOL=$MYVAL
+          ;;
+        [Ss][Tt][Rr][Oo][Kk])
+          STROK=$MYVAL
+          ;;
+        [Ss][Tt][Rr][Ww][Aa][Rr][Nn])
+          STRWARN=$MYVAL
+          ;;
+        [Ss][Tt][Rr][Cc][Rr][Ii][Tt])
+          STRCRIT=$MYVAL
+          ;;
+        [Ss][Tt][Rr][Yy][Ii][Kk][Ee][Ss])
+          STRYIKES=$MYVAL
+          ;;
+      esac
+      ;;
+    *)
+      echo "Invalid command argument $1"
+      exit $STATYIKES
+      ;;
+  esac
+  shift
 done
 
 if [ $RUNETHTOOL -eq 1 -a $RUNMIITOOL -eq 1 ]
 then
-	echo	"$STRYIKES : must disable either ethtool or mii-tool"
-	exit $STATYIKES
+  echo  "$STRYIKES : must disable either ethtool or mii-tool"
+  exit $STATYIKES
 fi
 
 RXERR=0
@@ -227,15 +227,15 @@ TXERR=0
 gt()
 # simply returns the greater of the two values handed in
 {
-	local	V1=$1
-	local	V2=$2
+  local  V1=$1
+  local  V2=$2
 
-	if [ $V1 -gt $V2 ]
-	then 
-		return	$V1
-	else
-		return	$V2
-	fi
+  if [ $V1 -gt $V2 ]
+  then 
+    return  $V1
+  else
+    return  $V2
+  fi
 }
 
 check_vals()
@@ -244,59 +244,59 @@ check_vals()
 # Note we pass the old return code in and back out again
 # this is important due to the way it is called
 {
-	if [ $# -ne 6 ]
-	then
-		echo "Usage : $0 VARNAME newval oldval warndelta critdelta RCODE"
-		return
-	fi
-	local	VNAME=$1
-	local	VNEW=$2
-	local	VOLD=$3
-	local	VWARN=$4
-	local	VCRIT=$5
-	local	RCODE=$6
-	local	RETSTR=
-	
-	if [ $VNEW -lt $VOLD ]
-	then
-		# errors have decreased - probably upon reboot
-		# so reset ourselves by removing the $RUNFILE
-		RETSTR="$VNAME ${VOLD}->${VNEW}"
-		$RM -f $RUNFILE
-	elif [ $VNEW -gt $VOLD ]
-	then
-		# have increased 
+  if [ $# -ne 6 ]
+  then
+    echo "Usage : $0 VARNAME newval oldval warndelta critdelta RCODE"
+    return
+  fi
+  local  VNAME=$1
+  local  VNEW=$2
+  local  VOLD=$3
+  local  VWARN=$4
+  local  VCRIT=$5
+  local  RCODE=$6
+  local  RETSTR=
+  
+  if [ $VNEW -lt $VOLD ]
+  then
+    # errors have decreased - probably upon reboot
+    # so reset ourselves by removing the $RUNFILE
+    RETSTR="$VNAME ${VOLD}->${VNEW}"
+    $RM -f $RUNFILE
+  elif [ $VNEW -gt $VOLD ]
+  then
+    # have increased 
 
-		RETSTR="$VNAME ${VOLD}->${VNEW}"
-		((VDELTA=VNEW-VOLD))
+    RETSTR="$VNAME ${VOLD}->${VNEW}"
+    ((VDELTA=VNEW-VOLD))
 
-		if [ $VDELTA -lt $VWARN ]
-		then
-			# below the warning threshold 
-			# so just hand back the same return
-			# code that was handed into us
-			RCODE=$RCODE
+    if [ $VDELTA -lt $VWARN ]
+    then
+      # below the warning threshold 
+      # so just hand back the same return
+      # code that was handed into us
+      RCODE=$RCODE
 
-		elif [ $VDELTA -lt $VCRIT ]
-		then
-			# above warning threshold but below
-			# critical threshold, so return warning
-			# return the greater of $STATWARN or 
-			# whatever RCODE was handed in to us
-			gt $STATWARN $RCODE
-			RCODE=$?
+    elif [ $VDELTA -lt $VCRIT ]
+    then
+      # above warning threshold but below
+      # critical threshold, so return warning
+      # return the greater of $STATWARN or 
+      # whatever RCODE was handed in to us
+      gt $STATWARN $RCODE
+      RCODE=$?
 
-		else
-			# above critical threshold
-			RCODE=$STATCRIT
-		fi
-	else
-		# no change
-		RETSTR="$VNAME $VOLD"
-	fi
+    else
+      # above critical threshold
+      RCODE=$STATCRIT
+    fi
+  else
+    # no change
+    RETSTR="$VNAME $VOLD"
+  fi
 
-	echo $RETSTR
-	return $RCODE
+  echo $RETSTR
+  return $RCODE
 }
 
 # see if we have permissions on the run directory
@@ -304,8 +304,8 @@ check_vals()
 $TOUCH $RUNDIR/tmpfile
 if [ $? -ne 0 ]
 then
-	echo	"FAILED : no permissions on $RUNDIR"
-	exit	$STATYIKES
+  echo  "FAILED : no permissions on $RUNDIR"
+  exit  $STATYIKES
 fi
 $RM -f $RUNDIR/tmpfile
 
@@ -316,17 +316,17 @@ TFILE=$RUNFILE.tmp
 FIRSTRUN=0
 if [ ! -f $RUNFILE ]
 then
-	FIRSTRUN=1
+  FIRSTRUN=1
 fi
 
 # get all the current info from the interface
 
-$IFCONFIG $IFACE	> $TFILE	2>&1
+$IFCONFIG $IFACE  > $TFILE  2>&1
 RCODE=$?
 if [ $RCODE -ne 0 ]
 then
-	echo	"FAILED : invalid interface $IFACE"
-	exit	$STATYIKES
+  echo  "FAILED : invalid interface $IFACE"
+  exit  $STATYIKES
 fi
 
 RXLINE=`$GREP "$RXSTR" $TFILE`
@@ -340,27 +340,27 @@ TXDROP=`echo $TXLINE | $AWK '{print $4}' | $AWK -F: '{print $2}'`
 
 if [ $FIRSTRUN -eq 1 ]
 then
-	RXERROLD=$RXERR
-	TXERROLD=$TXERR
-	RXDROPOLD=$RXDROP
-	TXDROPOLD=$TXDROP
+  RXERROLD=$RXERR
+  TXERROLD=$TXERR
+  RXDROPOLD=$RXDROP
+  TXDROPOLD=$TXDROP
 else
-	RXLINEOLD=`$GREP "$RXSTR" $RUNFILE`
-	TXLINEOLD=`$GREP "$TXSTR" $RUNFILE`
+  RXLINEOLD=`$GREP "$RXSTR" $RUNFILE`
+  TXLINEOLD=`$GREP "$TXSTR" $RUNFILE`
 
-	RXERROLD=`echo $RXLINEOLD | $AWK '{print $3}' | $AWK -F: '{print $2}'`
-	TXERROLD=`echo $TXLINEOLD | $AWK '{print $3}' | $AWK -F: '{print $2}'`
-	RXDROPOLD=`echo $RXLINEOLD | $AWK '{print $4}' | $AWK -F: '{print $2}'`
-	TXDROPOLD=`echo $TXLINEOLD | $AWK '{print $4}' | $AWK -F: '{print $2}'`
+  RXERROLD=`echo $RXLINEOLD | $AWK '{print $3}' | $AWK -F: '{print $2}'`
+  TXERROLD=`echo $TXLINEOLD | $AWK '{print $3}' | $AWK -F: '{print $2}'`
+  RXDROPOLD=`echo $RXLINEOLD | $AWK '{print $4}' | $AWK -F: '{print $2}'`
+  TXDROPOLD=`echo $TXLINEOLD | $AWK '{print $4}' | $AWK -F: '{print $2}'`
 fi
 
 # put current data into place as "last time" for next time around
 $MV -f $TFILE $RUNFILE
 if [ $? -ne 0 ]
 then
-	RCODE=$STATYIKES
-	echo "YIKES : unable to \"$MV -f $TFILE $RUNFILE\""
-	exit $RCODE
+  RCODE=$STATYIKES
+  echo "YIKES : unable to \"$MV -f $TFILE $RUNFILE\""
+  exit $RCODE
 fi
 $CHOWN ${NAGUSER}:${NAGGROUP} $RUNFILE
 $CHMOD 0660 $RUNFILE
@@ -381,82 +381,82 @@ RSTR="$RXERRSTR, $TXERRSTR, $RXDROPSTR, $TXDROPSTR"
 
 if [ $RUNETHTOOL -eq 1 ]
 then
-	# ethtool can only detect link status for the physical interface
-	# so for any interface named ethX.nnn (VLANed virtual interface)
-	# we convert it to the physical interface name first
-	PHYSIF=`echo $IFACE | $AWK -F. '{print $1}'`
-	ETFILE=$RUNDIR/`basename $ETHTOOL`.$PHSIF
-	$SUDO $ETHTOOL $PHYSIF	> $ETFILE	2>&1
-	if [ $? -eq 0 ]
-	then
-		IFACESTATUS=`$GREP "${ETHTOOLGREP}" $ETFILE | $AWK '{print $3}'`
-		case $IFACESTATUS in
-			${ETHTOOLOK})
-				RCODE=$RCODE
-				;;
-			${ETHTOOLNOTOK})
-				gt $RCODE $NOLINK
-				RCODE=$?
-				;;
-			*)
-				RCODE=$STATYIKES
-				;;
-		esac
+  # ethtool can only detect link status for the physical interface
+  # so for any interface named ethX.nnn (VLANed virtual interface)
+  # we convert it to the physical interface name first
+  PHYSIF=`echo $IFACE | $AWK -F. '{print $1}'`
+  ETFILE=$RUNDIR/`basename $ETHTOOL`.$PHSIF
+  $SUDO $ETHTOOL $PHYSIF  > $ETFILE  2>&1
+  if [ $? -eq 0 ]
+  then
+    IFACESTATUS=`$GREP "${ETHTOOLGREP}" $ETFILE | $AWK '{print $3}'`
+    case $IFACESTATUS in
+      ${ETHTOOLOK})
+        RCODE=$RCODE
+        ;;
+      ${ETHTOOLNOTOK})
+        gt $RCODE $NOLINK
+        RCODE=$?
+        ;;
+      *)
+        RCODE=$STATYIKES
+        ;;
+    esac
 
-		RSTR="${RSTR}, Link: $IFACESTATUS"
+    RSTR="${RSTR}, Link: $IFACESTATUS"
 
-		if [ "$IFACESTATUS" == "yes" ]
-		then
-			SPEED=`$GREP Speed: $ETFILE | $AWK '{print $2}' | $AWK -F/ '{print $1}'`
-			DUPLEX=`$GREP Duplex: $ETFILE | $AWK '{print $2}'`
-			AUTONEG=`$GREP Auto-negotiation: $ETFILE | $AWK '{print $2}'`
-			RSTR="${RSTR} - $SPEED $DUPLEX, Autoneg $AUTONEG" 
-		fi
-	else
-		RSTR="${RSTR} - `$CAT $ETFILE`"
-		RCODE=$STATYIKES
-	fi
+    if [ "$IFACESTATUS" == "yes" ]
+    then
+      SPEED=`$GREP Speed: $ETFILE | $AWK '{print $2}' | $AWK -F/ '{print $1}'`
+      DUPLEX=`$GREP Duplex: $ETFILE | $AWK '{print $2}'`
+      AUTONEG=`$GREP Auto-negotiation: $ETFILE | $AWK '{print $2}'`
+      RSTR="${RSTR} - $SPEED $DUPLEX, Autoneg $AUTONEG" 
+    fi
+  else
+    RSTR="${RSTR} - `$CAT $ETFILE`"
+    RCODE=$STATYIKES
+  fi
 
 fi
 
 if [ $RUNMIITOOL -eq 1 ]
 then
-	# mii-tool is a bit smarter than ethtool and will work on virtual interfaces
-	MIIFILE=$RUNDIR/`basename $MIITOOL`.$IFACE
-	$SUDO $MIITOOL $IFACE	> $MIIFILE	2>&1
-	if [ $? -eq 0 ]
-	then
-		$GREP -q "link ok" $MIIFILE
-		if [ $? -eq 0 ]
-		then
-			RCODE=$RCODE
-		else
-			gt $RCODE $NOLINK
-			RCODE=$?
-		fi
+  # mii-tool is a bit smarter than ethtool and will work on virtual interfaces
+  MIIFILE=$RUNDIR/`basename $MIITOOL`.$IFACE
+  $SUDO $MIITOOL $IFACE  > $MIIFILE  2>&1
+  if [ $? -eq 0 ]
+  then
+    $GREP -q "link ok" $MIIFILE
+    if [ $? -eq 0 ]
+    then
+      RCODE=$RCODE
+    else
+      gt $RCODE $NOLINK
+      RCODE=$?
+    fi
 
-		IFACESTATUS=`$CAT $MIIFILE | $AWK -F: '{print $2}'`
-		RSTR="${RSTR}, $IFACESTATUS"
-	else
-		RSTR="${RSTR} - `$CAT $MIIFILE`"
-		RCODE=$STATYIKES
-	fi
-	
+    IFACESTATUS=`$CAT $MIIFILE | $AWK -F: '{print $2}'`
+    RSTR="${RSTR}, $IFACESTATUS"
+  else
+    RSTR="${RSTR} - `$CAT $MIIFILE`"
+    RCODE=$STATYIKES
+  fi
+  
 fi
 
 case $RCODE in
-	$STATOK)
-		CSTR=$STROK
-		;;
-	$STATWARN)
-		CSTR=$STRWARN
-		;;
-	$STATCRIT)
-		CSTR=$STRCRIT
-		;;
-	*)
-		CSTR=$STRYIKES
-		;;
+  $STATOK)
+    CSTR=$STROK
+    ;;
+  $STATWARN)
+    CSTR=$STRWARN
+    ;;
+  $STATCRIT)
+    CSTR=$STRCRIT
+    ;;
+  *)
+    CSTR=$STRYIKES
+    ;;
 esac
 
 echo "$CSTR : $RSTR"

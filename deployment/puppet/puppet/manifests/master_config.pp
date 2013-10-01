@@ -23,11 +23,11 @@ class puppet::master_config(
   }
   
   if ($dns_alt_names) {  
-	  ini_setting {'dns_alt_names':
-	    setting => 'dns_alt_names',
-	    value   => $dns_alt_names,
-	  }
-	}
+    ini_setting {'dns_alt_names':
+      setting => 'dns_alt_names',
+      value   => $dns_alt_names,
+    }
+  }
 
 }
   

@@ -184,13 +184,13 @@ rabbit_mq_status() {
         
         if [ $? -eq 0 ]
         then
-        	ocf_log warn "Rabbit-MQ server was run, but no pid file found."
-        	ocf_log warn "Will use $pid as PID of process Rabbit-MQ server"
-        	ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
-        	echo $pid > $OCF_RESKEY_pid
-    	else
-    		return $OCF_NOT_RUNNING
-    	fi
+          ocf_log warn "Rabbit-MQ server was run, but no pid file found."
+          ocf_log warn "Will use $pid as PID of process Rabbit-MQ server"
+          ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
+          echo $pid > $OCF_RESKEY_pid
+      else
+        return $OCF_NOT_RUNNING
+      fi
     else
         pid=`cat $OCF_RESKEY_pid`
     fi
@@ -212,7 +212,7 @@ rabbit_mq_monitor() {
 }
 
 clean_up() {
-	ocf_log info "cleaning up Rabbit-MQ server. nothing to do."
+  ocf_log info "cleaning up Rabbit-MQ server. nothing to do."
 }
 
 # rotate_logs_rabbitmq() {
@@ -238,7 +238,7 @@ rabbit_mq_start() {
     # straight to /dev/null anyway and using ocf_run would break stdout-redirection here.
     su ${OCF_RESKEY_user} -s /bin/sh -c "${OCF_RESKEY_binary} --config-file=$OCF_RESKEY_config \
        --config-file=$OCF_RESKEY_agent_config $OCF_RESKEY_additional_parameters"' >> \
-	/dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
+  /dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
 
     # Spin waiting for the server to come up.
     # Let the CRM/LRM time us out if required
@@ -264,7 +264,7 @@ rabbit_mq_stop() {
     rabbit_mq_status
     rc=$?
     if [ $rc -eq $OCF_NOT_RUNNING ]; then
-    	clean_up
+      clean_up
         ocf_log info "Rabbit-MQ server already stopped"
         return $OCF_SUCCESS
     fi

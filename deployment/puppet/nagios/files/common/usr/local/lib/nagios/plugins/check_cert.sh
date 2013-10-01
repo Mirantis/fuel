@@ -31,26 +31,26 @@ warn=1209600
 crit=86400
 
 if [ "$#" != 1 ]; then
-	echo "Usage: $0 <certfile>" >&2
-	exit 3
+  echo "Usage: $0 <certfile>" >&2
+  exit 3
 fi
 
 cert="$1"
 
 if ! [ -r "$cert" ] ; then
-	echo "Cert file ($cert) does not exist or is not readable" >&2
-	exit 3
+  echo "Cert file ($cert) does not exist or is not readable" >&2
+  exit 3
 fi
 
 expires=`openssl x509 -enddate -noout < "$cert"`
 
 if openssl x509 -checkend "$warn" -noout < "$cert" ; then
-	echo "OK: $expires"
-	exit 0
+  echo "OK: $expires"
+  exit 0
 fi
 if openssl x509 -checkend "$crit" -noout < "$cert" ; then
-	echo "WARN: $expires"
-	exit 1
+  echo "WARN: $expires"
+  exit 1
 fi
 echo "CRITICAL: $expires"
 exit 2

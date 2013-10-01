@@ -102,8 +102,8 @@
 +        delay = 1
 +        attempt = 0
          while True:
-+	    broker = self.brokers[attempt % len(self.brokers)]
-+	    attempt += 1
++      broker = self.brokers[attempt % len(self.brokers)]
++      attempt += 1
              try:
 +                self.create_connection(broker)
                  self.connection.open()

@@ -15,9 +15,9 @@ apt::builddep { "glusterfs-server": }
 Force a package to be installed from a specific release.  Useful when using repositories like Debian unstable in Ubuntu.
 <pre>
 apt::force { "glusterfs-server":
-	release => "unstable",
-	version => '3.0.3',
-	require => Apt::Source["debian_unstable"],
+  release => "unstable",
+  version => '3.0.3',
+  require => Apt::Source["debian_unstable"],
 }
 </pre>
 

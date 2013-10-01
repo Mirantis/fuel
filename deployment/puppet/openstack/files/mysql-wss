@@ -603,8 +603,8 @@ set_master() {
     get_slave_info
 
     if [ "$master_log_file" -a "$new_master" = "$master_host" ]; then
-        #	master_params=", MASTER_LOG_FILE='$master_log_file', \
-        #	    MASTER_LOG_POS=$master_log_pos"
+        #  master_params=", MASTER_LOG_FILE='$master_log_file', \
+        #      MASTER_LOG_POS=$master_log_pos"
         ocf_log info "Kept master pos for $master_host : $master_log_file:$master_log_pos"
         rm -f $tmpfile
         return

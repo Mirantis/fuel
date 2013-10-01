@@ -171,13 +171,13 @@ quantum_metadata_agent_status() {
         
         if [ $? -eq 0 ]
         then
-        	ocf_log warn "OpenStack Quantum Metadata Agent (quantum-metadata-agent) was run, but no pid file found."
-        	ocf_log warn "Will use $pid as PID of process (quantum-metadata-agent)"
-        	ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
-        	echo $pid > $OCF_RESKEY_pid
-    	else
-    		return $OCF_NOT_RUNNING
-    	fi
+          ocf_log warn "OpenStack Quantum Metadata Agent (quantum-metadata-agent) was run, but no pid file found."
+          ocf_log warn "Will use $pid as PID of process (quantum-metadata-agent)"
+          ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
+          echo $pid > $OCF_RESKEY_pid
+      else
+        return $OCF_NOT_RUNNING
+      fi
     else
         pid=`cat $OCF_RESKEY_pid`
     fi
@@ -199,7 +199,7 @@ quantum_metadata_agent_monitor() {
 }
 
 clean_up() {
-	ocf_log info "cleaning up quantum-metadata-agent. nothing to do."
+  ocf_log info "cleaning up quantum-metadata-agent. nothing to do."
 }
 
 quantum_metadata_agent_start() {
@@ -217,7 +217,7 @@ quantum_metadata_agent_start() {
     # straight to /dev/null anyway and using ocf_run would break stdout-redirection here.
     su ${OCF_RESKEY_user} -s /bin/sh -c "${OCF_RESKEY_binary} --config-file=$OCF_RESKEY_config \
        --config-file=$OCF_RESKEY_agent_config $OCF_RESKEY_additional_parameters"' >> \
-	/dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
+  /dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
 
     # Spin waiting for the server to come up.
     # Let the CRM/LRM time us out if required
@@ -243,7 +243,7 @@ quantum_metadata_agent_stop() {
     quantum_metadata_agent_status
     rc=$?
     if [ $rc -eq $OCF_NOT_RUNNING ]; then
-    	clean_up
+      clean_up
         ocf_log info "OpenStack Quantum Metadata Agent (quantum-metadata-agent) already stopped"
         return $OCF_SUCCESS
     fi

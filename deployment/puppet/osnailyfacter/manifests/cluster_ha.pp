@@ -23,7 +23,7 @@ else {
 }
 
 
-$nova_hash	      = parsejson($::nova)
+$nova_hash        = parsejson($::nova)
 $mysql_hash           = parsejson($::mysql)
 $rabbit_hash          = parsejson($::rabbit)
 $glance_hash          = parsejson($::glance)
@@ -436,7 +436,7 @@ class virtual_ips () {
         segment_range          => $segment_range,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
-	syslog_log_facility    => $syslog_log_facility_nova,
+  syslog_log_facility    => $syslog_log_facility_nova,
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
         syslog_log_facility_cinder => $syslog_log_facility_cinder,
         nova_rate_limits       => $nova_rate_limits,
