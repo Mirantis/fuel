@@ -39,6 +39,8 @@ if $nodes != undef {
 
   $base_syslog_hash     = parsejson($::base_syslog)
   $syslog_hash          = parsejson($::syslog)
+  $savanna_hash         = parsejson($::savanna)
+
   $use_quantum = str2bool($quantum)
   if $use_quantum {
     $public_int   = get_network_role_property($network_config_hash, 'ex', 'interface')
@@ -110,7 +112,6 @@ class node_netconfig (
   $quantum = $use_quantum,
   $default_gateway
 ) {
-  class {"l23network::hosts_file": stage => 'netconfig', hosts => $nodes_hash }
   if $use_quantum {
     $sdn = config_network_from_json_v1($network_config_hash)
     notify {"SDN: ${sdn}": }
@@ -143,6 +144,7 @@ case $::operatingsystem {
 }
 
 class os_common {
+  class {"l23network::hosts_file": stage => 'netconfig', nodes => $nodes_hash }
   class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
   if $deployment_source == 'cli' {
     class {'::node_netconfig':

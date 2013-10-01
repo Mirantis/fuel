@@ -163,12 +163,12 @@ if !$debug
 
 
 
-if $node[0]['role'] == 'primary-controller' {
+if $::role == 'primary-controller' {
   $primary_proxy = true
 } else {
   $primary_proxy = false
 }
-if $node[0]['role'] == 'primary-controller' {
+if $::role == 'primary-controller' {
   $primary_controller = true
 } else {
   $primary_controller = false
@@ -369,6 +369,18 @@ class virtual_ips () {
         Class['glance::api']           -> Class['ceph::glance']
         Class['openstack::controller'] -> Class['ceph::cinder']
       }
+
+      #ADDONS START
+
+      if $savanna_hash['enabled'] {
+        class { 'savanna' :
+          savanna_enabled     => true,
+          savanna_db_password => $savanna_hash['db_password'],
+        }
+      }
+
+     #ADDONS END
+
      }
 
     "compute" : {
