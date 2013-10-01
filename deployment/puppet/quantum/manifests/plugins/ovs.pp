@@ -84,13 +84,6 @@ class quantum::plugins::ovs (
         'OVS/network_vlan_ranges':  value => $quantum_config['L2']['network_vlan_ranges'];
         'OVS/bridge_mappings':      value => $quantum_config['L2']['bridge_mappings'];
       }
-
-      if ! (defined(Package["$::quantum::params::vlan_package"]) or defined(Package["$::l23network::params::lnx_vlan_tools"])) {
-        package {"$::l23network::params::lnx_vlan_tools":
-          name    => "$::l23network::params::lnx_vlan_tools",
-          ensure  => latest,
-        } -> Package['quantum-plugin-ovs']
-      }
     }
     default: {
       fail("Unsupported segmentation type: ${quantum_config['L2']['segmentation_type']}")
@@ -107,5 +100,4 @@ class quantum::plugins::ovs (
 
   anchor {'quantum-plugin-ovs-done':}
 }
-#
-###
+# vim: set ts=2 sw=2 et :
