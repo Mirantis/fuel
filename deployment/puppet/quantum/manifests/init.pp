@@ -63,7 +63,7 @@ class quantum (
   case $quantum_config['amqp']['provider'] {
     'rabbitmq': {
         quantum_config {
-          'DEFAULT/rpc_backend':          value => 'quantum.openstack.common.rpc.impl_kombu',
+          'DEFAULT/rpc_backend':          value => 'quantum.openstack.common.rpc.impl_kombu';
           'DEFAULT/rabbit_userid':        value => $quantum_config['amqp']['username'];
           'DEFAULT/rabbit_password':      value => $quantum_config['amqp']['passwd'];
           'DEFAULT/rabbit_virtual_host':  value => $quantum_config['amqp']['rabbit_virtual_host'];

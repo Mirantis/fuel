@@ -51,7 +51,7 @@ class quantum::server (
   service {'quantum-server':
     name       => $::quantum::params::server_service,
     ensure     => running,
-    enable     => true
+    enable     => true,
     hasstatus  => true,
     hasrestart => true,
     provider   => $::quantum::params::service_provider,

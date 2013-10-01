@@ -22,5 +22,5 @@ define quantum::network::provider_router (
     auth_password => $quantum_config['keystone']['admin_password'],
     auth_tenant   => $quantum_config['keystone']['admin_tenant_name'],
   }
-
+}
 # vim: set ts=2 sw=2 et :

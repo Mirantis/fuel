@@ -13,8 +13,7 @@ class nova::network::quantum (
   }
 
   nova_config {
-    'DEFAULT/quantum_url':               value => $quantum_config['L3']['public_bridge'];
-    'DEFAULT/network_api_class':         value => 'nova.network.quantumv2.api.API';
+    'DEFAULT/network_api_class':         value => 'nova.network.quantumv2.api.API';  # quantumv2 !!! not a quantum.v2
     'DEFAULT/quantum_auth_strategy':     value => $quantum_auth_strategy;
     'DEFAULT/quantum_url':               value => $quantum_config['server']['api_url'];
     'DEFAULT/quantum_admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];

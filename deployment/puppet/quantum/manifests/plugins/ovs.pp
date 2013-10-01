@@ -7,7 +7,7 @@ class quantum::plugins::ovs (
 
   include 'quantum::params'
   include 'l23network::params'
-  
+
   Anchor<| title=='quantum-server-config-done' |> ->
     Anchor['quantum-plugin-ovs']
   Anchor['quantum-plugin-ovs-done'] ->
@@ -65,24 +65,24 @@ class quantum::plugins::ovs (
     'DATABASE/reconnect_interval':  value => $quantum_config['database']['reconnect_interval'];
   } ->
   quantum_plugin_ovs {
-    'OVS/integration_bridge':       value => $quantum_config['database']['L2']['integration_bridge'];
-    'OVS/tenant_network_type':      value => $quantum_config['database']['L2']['segmentation_type'];
-    'OVS/enable_tunneling':         value => $quantum_config['database']['L2']['enable_tunneling'];
+    'OVS/integration_bridge':       value => $quantum_config['L2']['integration_bridge'];
+    'OVS/tenant_network_type':      value => $quantum_config['L2']['segmentation_type'];
+    'OVS/enable_tunneling':         value => $quantum_config['L2']['enable_tunneling'];
     'AGENT/polling_interval':       value => $quantum_config['polling_interval'];
     'AGENT/root_helper':            value => $quantum_config['root_helper'];
   }
 
-  case $quantum_config['database']['L2']['segmentation_type'] {
+  case $quantum_config['L2']['segmentation_type'] {
     'gre': {
       quantum_plugin_ovs {
-        'OVS/tunnel_bridge':     value => $quantum_config['database']['L2']['tunnel_bridge'];
-        'OVS/tunnel_id_ranges':  value => $quantum_config['database']['L2']['tunnel_id_ranges'];
+        'OVS/tunnel_bridge':     value => $quantum_config['L2']['tunnel_bridge'];
+        'OVS/tunnel_id_ranges':  value => $quantum_config['L2']['tunnel_id_ranges'];
       }
     }
     'vlan': {
       quantum_plugin_ovs {
-        'OVS/network_vlan_ranges':  value => $quantum_config['database']['L2']['network_vlan_ranges'];
-        'OVS/bridge_mappings':      value => $quantum_config['database']['L2']['bridge_mappings'];
+        'OVS/network_vlan_ranges':  value => $quantum_config['L2']['network_vlan_ranges'];
+        'OVS/bridge_mappings':      value => $quantum_config['L2']['bridge_mappings'];
       }
 
       if ! (defined(Package["$::quantum::params::vlan_package"]) or defined(Package["$::l23network::params::lnx_vlan_tools"])) {
@@ -93,7 +93,7 @@ class quantum::plugins::ovs (
       }
     }
     default: {
-      fail("Unsupported segmentation type: ${quantum_config['database']['L2']['segmentation_type']}")
+      fail("Unsupported segmentation type: ${quantum_config['L2']['segmentation_type']}")
     }
   }
 

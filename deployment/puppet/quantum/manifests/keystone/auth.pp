@@ -28,7 +28,7 @@ class quantum::keystone::auth (
 
   if $configure_endpoint {
     # keystone_endpoint { "${region}/$quantum_config['keystone']['admin_user']":
-    keystone_endpoint { "$quantum_config['keystone']['admin_user']":
+    keystone_endpoint { $quantum_config['keystone']['admin_user']:
       region       => $quantum_config['keystone']['auth_region'],
       ensure       => present,
       public_url   => "http://${public_address}:${quantum_config['server']['bind_port']}",

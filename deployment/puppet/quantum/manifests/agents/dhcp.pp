@@ -59,8 +59,8 @@ class quantum::agents::dhcp (
     'DEFAULT/use_namespaces':    value => $quantum_config['L3']['use_namespaces'];
     'DEFAULT/root_helper':       value => $quantum_config['root_helper'];
     'DEFAULT/signing_dir':       value => $quantum_config['keystone']['signing_dir'];
-    'DEFAULT/enable_isolated_metadata': value => $quantum_config['l3']['dhcp_agent']['enable_isolated_metadata'];
-    'DEFAULT/enable_metadata_network':  value => $quantum_config['l3']['dhcp_agent']['enable_metadata_network'];
+    'DEFAULT/enable_isolated_metadata': value => $quantum_config['L3']['dhcp_agent']['enable_isolated_metadata'];
+    'DEFAULT/enable_metadata_network':  value => $quantum_config['L3']['dhcp_agent']['enable_metadata_network'];
   }
 
   Service <| title == 'quantum-server' |> -> Service['quantum-dhcp-service']

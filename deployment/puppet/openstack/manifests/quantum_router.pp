@@ -17,7 +17,7 @@ class openstack::quantum_router (
   $syslog_log_level         = 'WARNING',
   $ha_mode                  = false,
   $service_provider         = 'generic',
-  # $internal_address         = $::ipaddress_br_mgmt,
+  #$internal_address         = $::ipaddress_br_mgmt,
   # $public_interface         = "br-ex",
   # $private_interface        = "br-mgmt",
   # $create_networks          = true,
@@ -40,11 +40,11 @@ class openstack::quantum_router (
     if $quantum_network_node {
       class { 'quantum::agents::ovs':
         #bridge_uplinks   => ["br-prv:${private_interface}"],
-        bridge_mappings  => ['physnet2:br-prv'],
-        enable_tunneling => $enable_tunneling,
-        local_ip         => $internal_address,
-        service_provider => $service_provider
-      }
+        #bridge_mappings  => ['physnet2:br-prv'],
+        #verbose          => $verbose,
+        #debug            => $debug,
+        service_provider => $service_provider,
+        quantum_config   => $quantum_config,      }
       # Quantum metadata agent starts only under pacemaker
       # and co-located with l3-agent
       class {'quantum::agents::metadata':
@@ -58,7 +58,6 @@ class openstack::quantum_router (
         quantum_config   => $quantum_config,
         verbose          => $verbose,
         debug            => $debug,
-        use_namespaces   => $use_namespaces,
         service_provider => $service_provider,
       }
       class { 'quantum::agents::l3':

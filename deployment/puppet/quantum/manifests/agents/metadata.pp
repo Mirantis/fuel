@@ -22,14 +22,14 @@ class quantum::agents::metadata (
 
   quantum_metadata_agent_config {
     'DEFAULT/debug':              value => $debug;
-    'DEFAULT/auth_region':        value => $quantum_config['keystone']['auth_region'],
-    'DEFAULT/auth_url':           value => $quantum_config['keystone']['auth_url'],
+    'DEFAULT/auth_region':        value => $quantum_config['keystone']['auth_region'];
+    'DEFAULT/auth_url':           value => $quantum_config['keystone']['auth_url'];
     'DEFAULT/admin_user':         value => $quantum_config['keystone']['admin_user'];
     'DEFAULT/admin_password':     value => $quantum_config['keystone']['admin_password'];
     'DEFAULT/admin_tenant_name':  value => $quantum_config['keystone']['admin_tenant_name'];
     'DEFAULT/nova_metadata_ip':   value => $quantum_config['metadata']['nova_metadata_ip'];
     'DEFAULT/nova_metadata_port': value => $quantum_config['metadata']['nova_metadata_port'];
-    #'DEFAULT/use_namespaces': value => $quantum_config['L3']['use_namespaces'];
+    'DEFAULT/use_namespaces':     value => $quantum_config['L3']['use_namespaces'];
     'DEFAULT/metadata_proxy_shared_secret': value => $quantum_config['metadata']['metadata_proxy_shared_secret'];
   }
 
