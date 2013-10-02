@@ -1,4 +1,5 @@
 $fuel_settings = parseyaml($astute_settings_yaml)
+validate_schema($fuel_settings)
 
 $openstack_version = {
   'keystone'   => 'latest',

@@ -1,0 +1,353 @@
+type: seq
+sequence:
+  - type: map
+    mapping:
+      "uid": &uid
+        type: text
+        required: true
+      "priority":
+        type: int
+        required: true
+      "role": &role
+        type: text
+        required: true
+        enum: ["primary-controller", "controller", "storage", "swift-proxy", "primary-swift-proxy", "compute", "quantum", "cinder"]
+      "master_ip":
+        type: text
+        required: true
+        desc: IP of puppet master
+      "fqdn": &fqdn
+        type: text
+        required: true
+        desc: Fully-qualified domain name of the node
+      "cobbler":
+        type: map
+        mapping:
+          "profile":
+            type: text
+            enum: ["centos-x86_64", "ubuntu_1204_x86_64", 'rhel-x86_64']
+      "deployment_mode":
+        type: text
+        enum: ['ha', 'ha_full', 'multinode']
+        desc:
+        required: true
+      "use_cow_images":
+        type: bool
+        required: true
+        desc: Whether to use cow images
+      "management_interface":
+        type: text
+        required: true
+      "storage_interface":
+        type: text
+        required: true
+      "public_interface":
+        type: text
+        required: true
+      "floating_interface":
+        type: text
+        required: true
+      "fixed_interface":
+        type: text
+        required: true
+      "admin_interface":
+        type: text
+        required: true
+      "libvirt_type":
+        type: text
+        enum: [qemu, kvm]
+        required: true
+        desc: "Nova libvirt hypervisor type. Values: qemu|kvm"
+      "base_syslog":
+        type: map
+        required: true
+        desc: Main syslog server configuration
+        mapping:
+          "syslog_server":
+            type: text
+            required: true
+          "syslog_port":
+            type: text
+            required: true
+      "syslog":
+        type: map
+        required: true
+        desc: Additional syslog servers configuration
+        mapping:
+          "syslog_port":
+            type: text
+          "syslog_transport":
+            type: text
+            enum: ['tcp', 'udp']
+          "syslog_server":
+            type: text
+      "mysql":
+        type: map
+        required: true
+        desc: Credentials for MySQL
+        mapping:
+          "root_password":
+            type: text
+            required: true
+      "swift":
+        type: map
+        required: true
+        desc: Credentials for Swift
+        mapping:
+          "user_password":
+            type: text
+            required: true
+      "glance":
+        type: map
+        required: true
+        desc: Credentials for Glance
+        mapping:
+          "user_password":
+            type: text
+            required: true
+          "db_password":
+            type: text
+            required: true
+          "image_cache_max_size":
+            type: text
+      "murano":
+        type: map
+        desc: Credentials for Murano
+        mapping:
+          "db_password":
+            type: text
+            required: true
+          "enabled":
+            type: bool
+            required: true
+      "savanna":
+        type: map
+        desc: Credentials for Savanna
+        mapping:
+          "db_password":
+            type: text
+            required: true
+          "enabled":
+            type: bool
+            required: true
+      "nova":
+        type: map
+        required: true
+        desc: Credentials for Nova
+        mapping:
+          "user_password":
+            type: text
+            required: true
+          "db_password":
+            type: text
+            required: true
+          "state_path":
+            type: text
+      "keystone":
+        type: map
+        required: true
+        desc: Credentials for Keystone
+        mapping:
+          "db_password":
+            type: text
+            required: true
+          "admin_token":
+            type: text
+            required: true
+      "cinder":
+        type: map
+        required: true
+        desc: Credentials for Cinder
+        mapping:
+          "db_password":
+            type: text
+            required: true
+          "user_password":
+            type: text
+            required: true
+      "storage":
+        type: map
+        mapping:
+          "cinder":
+            type: text
+          "glance":
+            type: text
+      "access":
+        type: map
+        required: true
+        mapping:
+          "password":
+            type: text
+            required: true
+          "user":
+            type: text
+            required: true
+          "tenant":
+            type: text
+            required: true
+          "email":
+            type: text
+            required: true
+      "rabbit":
+        type: map
+        required: true
+        desc: Credentials for RabbitMQ
+        mapping:
+          "user":
+            type: text
+          "password":
+            type: text
+            required: true
+      # Quantum true
+      "quantum_access":
+        type: map
+        desc: Credentials for Quantum Access
+        mapping:
+          "user_password":
+            type: text
+            required: true
+          "db_password":
+            type: text
+            required: true
+      "online":
+        type: bool
+      "status":
+        type: text
+        enum: ["ready", "provisioned", "provisioning", "discover"]
+      "network_data":
+        type: map
+        mapping:
+          =:
+            type: map
+            mapping:
+              "_name":
+                type: text
+                enum: ['management', 'public', 'storage', 'fixed', 'admin']
+              "interface":
+                type: text
+              "ipaddr":
+                type: any
+              "gateway":
+                type: text
+      "novanetwork_parameters":
+        type: map
+        mapping:
+          "network_manager":
+            type: text
+            required: true
+          "network_size":
+            type: int
+            required: true
+      # CIDR (for quantum == true) or array if IPs (for quantum == false)
+      "floating_network_range":
+        type: any
+        required: true
+        desc: |
+              Used for creation of floating networks/IPs during deployment.  
+              CIDR (for quantum == true) or array if IPs (for quantum == false)
+      "fixed_network_range":
+        type: text
+        required: true
+        desc: CIDR for fixed network created during deployment
+      "storage_network_range":
+        type: any
+        required: true
+      "management_network_range":
+        type: any
+        required: true
+      "auto_assign_floating_ip":
+        type: bool
+        required: true
+        desc: Whether to assign floating IPs automatically
+      "start_guests_on_host_boot":
+        type: bool
+        required: true
+      "auth_key":
+        type: text
+      "horizon_use_ssl":
+        type: text
+        enum: ['false', 'default', 'exist', 'custom']
+        desc: Use HTTP or HTTPS for OpenStack dashboard (Horizon)
+      "use_unicast_corosync":
+        type: bool
+        default: false
+        desc: | 
+          Fuel uses Corosync and Pacemaker cluster engines for HA scenarios, thus 
+          requiring consistent multicast networking. Sometimes it is not possible to configure 
+          multicast in your network. In this case, you can tweak Corosync to use unicast addressing 
+          by setting use_unicast_corosync variable to true.
+      "network_manager":
+        type: text
+      "compute_scheduler_driver":
+        type: text
+        enum: ['nova.scheduler.multi.MultiScheduler', 'nova.scheduler.filter_scheduler.FilterScheduler']
+        desc: Nova scheduler driver class
+      "verbose":
+        type: bool
+        desc: How much information OpenStack provides when performing configuration (verbose mode)
+      "debug":
+        type: bool
+        desc: How much information OpenStack provides when performing configuration (debug mode)
+      "deployment_id":
+        type: int
+        required: true
+        desc: Deployment ID(for CI just set 1)
+      "quantum":
+        type: bool
+        default: false
+      # Quantum true
+      "quantum_parameters":
+        type: map
+        mapping:
+          "tenant_network_type":
+            type: text
+            enum: ['gre', 'vlan']
+            required: true
+            desc: "Which type of network segmentation to use. Values: gre|vlan"
+          "segment_range":
+            type: text
+            required: true
+            desc: "Range of IDs for network segmentation. Consult Quantum documentation."
+          "metadata_proxy_shared_secret":
+            type: text
+            required: true
+            desc: Shared secret for metadata proxy services
+      "public_netmask": &public_netmask
+        type: text
+      "internal_netmask": &internal_netmask
+        type: text
+        required: true
+      "storage_netmask": &storage_netmask
+        type: text
+        required: true
+      "public_address": &public_address
+        type: text
+        required: true
+      "internal_address": &internal_address
+        type: text
+        required: true
+      "storage_address": &storage_address
+        type: text
+        required: true
+      "nodes": &nodes
+        type: seq
+        required: true
+        desc: Array of nodes
+        name: Nodes
+        sequence:
+          - type: map
+            mapping:
+              "uid": *uid
+              "role": *role
+              "fqdn": *fqdn
+              "name":
+                type: text
+                required: true
+              "swift_zone":
+                type: text
+              "public_netmask": *public_netmask
+              "internal_netmask": *internal_netmask
+              "storage_netmask": *storage_netmask
+              "public_address": *public_address
+              "internal_address": *internal_address
+              "storage_address": *storage_address
