@@ -154,7 +154,7 @@ class MrntQuantum
     rv = @scope.lookupvar('quantum_gre_address')
     if [nil, :undefined].index(rv)
       # todo: use network_roles
-      return get_management_vip()
+      return @scope.function_get_network_role_property(@scope.lookupvar('network_config_hash'), 'management', 'ipaddr')
     end
     return rv
   end
@@ -391,7 +391,7 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
 
     EOS
   ) do |argv|
-
+  Puppet::Parser::Functions.autoloader.loadall
   given_config = MrntQuantum.sanitize_hash(argv[0])
   q_conf = MrntQuantum.new(self, given_config)
   return sanitize_bool_in_hash(q_conf.generate_config())
