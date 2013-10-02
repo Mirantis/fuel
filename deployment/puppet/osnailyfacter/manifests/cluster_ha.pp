@@ -8,8 +8,9 @@ if $::use_quantum {
   #$quantum_params = parsejson($::quantum_parameters)
   $novanetwork_params  = {}
   $quantum_config = sanitize_quantum_config($::quantum_settings_hash)
-  $kk = debug__dump_to_file('/tmp/xxx.yaml', $quantum_config)
-  $kkk = debug__dump_to_file('/tmp/root_helper.yaml', $quantum_config['!ruby/sym root_helper'])
+ $quantum_config__d1 = debug__dump_to_file('/tmp/quantum_config-from_ng.yaml', $::quantum_settings_hash)
+ $quantum_config__d2 = debug__dump_to_file('/tmp/quantum_config-zz-ready.yaml', $quantum_config)
+
   $fixed_network_range = 'fucking puppet declarative style'
 } else {
   $quantum_hash = {}
