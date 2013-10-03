@@ -153,8 +153,7 @@ class MrntQuantum
   def get_quantum_gre_ip() # IP, not VIP !!!
     rv = @scope.lookupvar('quantum_gre_address')
     if [nil, :undefined].index(rv)
-      # todo: use network_roles
-      return @scope.function_get_network_role_property(@scope.lookupvar('network_config_hash'), 'management', 'ipaddr')
+      return @scope.function_get_network_role_property('management', 'ipaddr')
     end
     return rv
   end
@@ -390,7 +389,7 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
     EOS
   ) do |argv|
   Puppet::Parser::Functions.autoloader.loadall
-  given_config = MrntQuantum.sanitize_hash(argv[0])
+  given_config = MrntQuantum.sanitize_hash(sanitize_bool_in_hash(argv[0]))
   q_conf = MrntQuantum.new(self, given_config)
   rv = q_conf.generate_config()
   # pUPPET not allow hashes with SYM keys. normalize keys

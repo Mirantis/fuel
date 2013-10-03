@@ -2,11 +2,40 @@ require 'spec_helper'
 require 'json'
 require 'yaml'
 require 'puppet/parser/functions/lib/sanitize_bool_in_hash.rb'
+# rb_file = File.join(File.dirname(__FILE__),'..','..','..','l23network','lib','puppet','parser','functions','lib','l23network_scheme.rb')
+# load rb_file
 
 class QuantumConfig
   def initialize(init_v)
     @def_v = {}
     @def_v.replace(init_v)
+    # ::L23network::Scheme.set = {
+    #   :endpoints => {
+    #     :eth0 => {
+    #       :IP =>  'dhcp',
+    #     },
+    #     :'br-ex' => {
+    #       :gateway => '10.1.3.1',
+    #       :IP => ['10.1.3.11/24'],
+    #     },
+    #     :'br-mgmt' => {
+    #       :IP => ['10.20.1.2/24'],
+    #     },
+    #     :'br-storage' => {
+    #       :IP => ['192.168.1.2/24'],
+    #     },
+    #     :'br-prv' => {
+    #       :IP => 'none',
+    #     },
+    #   },
+    #   :roles => {
+    #     :management =>  'br-mgmt',
+    #     :private => 'br-prv',
+    #     :ex =>  'br-ex',
+    #     :storage =>  'br-storage',
+    #     :admin =>  'eth0',
+    #   },
+    # }
     @def_config = {
       'amqp' => {
         'provider' => "rabbitmq",
@@ -82,7 +111,7 @@ class QuantumConfig
         'tunnel_bridge' => "br-tun",
         'int_peer_patch_port' => "patch-tun",
         'tun_peer_patch_port' => "patch-int",
-        'local_ip' => "#{@def_v[:management_vip]}",
+        'local_ip' => "#{@def_v[:management_ip]}",
       },
       'L3' => {
         'router_id' => nil,
@@ -173,13 +202,15 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     # @scope.parent = @topscope
     # Puppet::Parser::Functions.function(:create_resources)
     @q_config = QuantumConfig.new({
-      :management_vip => '192.168.0.254'
+      :management_vip => '192.168.0.254',
+      :management_ip => '192.168.0.11'
     })
-    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_gre_address').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_gre_address').returns(@q_config.get_def(:management_ip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('quantum_server_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('database_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('management_vip').returns(@q_config.get_def(:management_vip))
     Puppet::Parser::Scope.any_instance.stubs(:lookupvar).with('amqp_vip').returns(@q_config.get_def(:management_vip))
+    Puppet::Parser::Scope.any_instance.stubs(:function_get_network_role_property).with('management', 'ipaddr').returns(@q_config.get_def(:management_ip))
     @cfg = @q_config.get_def_config()
     @res_cfg = Marshal.load(Marshal.dump(@cfg))
 
