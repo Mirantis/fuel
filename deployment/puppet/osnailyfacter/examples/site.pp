@@ -21,9 +21,7 @@ stage {'glance-image':
   require => Stage['main'],
 }
 
-$network_config_hash = sanitize_bool_in_hash(parsejson($::network_scheme))
-$quantum_settings_hash = sanitize_bool_in_hash(parsejson($::quantum_settings))
-#$quantum_config_hash__d1 = debug__dump_to_file('/tmp/$quantum_config_hash.yaml', $quantum_config_hash)
+prepare_network_config(parsejson($::network_scheme))
 
 
 if $nodes != undef {
@@ -43,14 +41,15 @@ if $nodes != undef {
 
   $use_quantum = str2bool($quantum)
   if $use_quantum {
-    $public_int   = get_network_role_property($network_config_hash, 'ex', 'interface')
-    $internal_int = get_network_role_property($network_config_hash, 'management', 'interface')
-    $internal_address = get_network_role_property($network_config_hash, 'management', 'ipaddr')
-    $internal_netmask = get_network_role_property($network_config_hash, 'management', 'netmask')
-    $public_address = get_network_role_property($network_config_hash, 'ex', 'ipaddr')
-    $public_netmask = get_network_role_property($network_config_hash, 'ex', 'netmask')
-    $storage_address = get_network_role_property($network_config_hash, 'storage', 'ipaddr')
-    $storage_netmask = get_network_role_property($network_config_hash, 'storage', 'netmask')
+    $quantum_settings_hash = sanitize_bool_in_hash(parsejson($::quantum_settings))
+    $public_int   = get_network_role_property('ex', 'interface')
+    $internal_int = get_network_role_property('management', 'interface')
+    $internal_address = get_network_role_property('management', 'ipaddr')
+    $internal_netmask = get_network_role_property('management', 'netmask')
+    $public_address = get_network_role_property('ex', 'ipaddr')
+    $public_netmask = get_network_role_property('ex', 'netmask')
+    $storage_address = get_network_role_property('storage', 'ipaddr')
+    $storage_netmask = get_network_role_property('storage', 'netmask')
   } else {
     $internal_address = $node[0]['internal_address']
     $internal_netmask = $node[0]['internal_netmask']
@@ -112,10 +111,6 @@ class node_netconfig (
   $quantum = $use_quantum,
   $default_gateway
 ) {
-  if $use_quantum {
-    $sdn = config_network_from_json_v1($network_config_hash)
-    notify {"SDN: ${sdn}": }
-  } else {
     # nova-network mode
     l23network::l3::ifconfig {$public_int:
       ipaddr  => $public_ipaddr,
@@ -129,7 +124,11 @@ class node_netconfig (
       gateway => $default_gateway
     }
     l23network::l3::ifconfig {$fixed_interface: ipaddr=>'none' }
-  }
+}
+
+class advanced_node_netconfig {
+    $sdn = generate_network_config()
+    notify {"SDN: ${sdn}": }
 }
 
 case $::operatingsystem {
@@ -147,13 +146,19 @@ class os_common {
   class {"l23network::hosts_file": stage => 'netconfig', nodes => $nodes_hash }
   class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
   if $deployment_source == 'cli' {
-    class {'::node_netconfig':
-      mgmt_ipaddr    => $internal_address,
-      mgmt_netmask   => $internal_netmask,
-      public_ipaddr  => $public_address,
-      public_netmask => $public_netmask,
-      stage          => 'netconfig',
-      default_gateway => $default_gateway
+    if $use_quantum {
+      class {'advanced_node_netconfig':
+        stage => 'netconfig'
+      }
+    } else {
+      class {'::node_netconfig':
+        mgmt_ipaddr    => $internal_address,
+        mgmt_netmask   => $internal_netmask,
+        public_ipaddr  => $public_address,
+        public_netmask => $public_netmask,
+        stage          => 'netconfig',
+        default_gateway => $default_gateway
+      }
     }
   } else {
     class {'osnailyfacter::network_setup': stage => 'netconfig'}

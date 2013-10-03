@@ -113,7 +113,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
       }
     end
 
-    if argv.size != 1
+    if argv.size != 0
       raise(Puppet::ParseError, "generate_network_config(): Wrong number of arguments.")
     end
 
@@ -189,7 +189,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
         action = t[:action].to_sym()
       end
 
-      trans = self.sanitize_transformation(t)
+      trans = L23network.sanitize_transformation(t)
       resource = res_factory[action][:resource]
       p_resource = Puppet::Parser::Resource.new(
           res_factory[action][:name_of_resource],
