@@ -289,6 +289,8 @@ if ($use_ceph) {
         class { 'savanna' :
           savanna_enabled     => true,
           savanna_db_password => $savanna_hash['db_password'],
+          use_neutron         => $quantum,
+          use_floating_ips    => $bool_auto_assign_floating_ip,
         }
       }
 
