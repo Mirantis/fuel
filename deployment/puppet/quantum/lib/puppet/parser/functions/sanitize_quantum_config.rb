@@ -330,7 +330,6 @@ class MrntQuantum
       else
         raise(Puppet::ParseError, "Unknown database provider '#{rv[:database][:provider]}'")
     end
-    rv[:database][:url] = MrntQuantum.get_database_url(rv[:database])
     rv[:L2][:bridge_mappings] = MrntQuantum.get_bridge_mappings(rv[:L2])
     rv[:L2][:phys_bridges] = MrntQuantum.get_phys_bridges(rv[:L2])
     rv[:L2][:network_vlan_ranges] = MrntQuantum.get_network_vlan_ranges(rv[:L2])
@@ -340,10 +339,6 @@ class MrntQuantum
       rv[:L2][:enable_tunneling] = false
       rv[:L2][:tunnel_id_ranges] = nil
     end
-    rv[:keystone][:auth_url] = MrntQuantum.get_keystone_auth_url(rv[:keystone])
-    rv[:server][:api_url] = MrntQuantum.get_quantum_srv_api_url(rv[:server])
-    rv[:amqp] = MrntQuantum.get_amqp_config(rv[:amqp])
-    #rv[:database][:url] = MrntQuantum.get_database_url(rv[:database])
     return rv
   end
 
@@ -353,9 +348,11 @@ class MrntQuantum
   end
 
   def generate_config()
-    rv_sym = _generate_config(generate_default_quantum_config(), @given_config, [])
-    # pUPPET not allow hashes with SYM keys. normalize keys
-    rv = JSON.load(rv_sym.to_json)
+    rv = _generate_config(generate_default_quantum_config(), @given_config, [])
+    rv[:database][:url] ||= MrntQuantum.get_database_url(rv[:database])
+    rv[:keystone][:auth_url] ||= MrntQuantum.get_keystone_auth_url(rv[:keystone])
+    rv[:server][:api_url] ||= MrntQuantum.get_quantum_srv_api_url(rv[:server])
+    rv[:amqp] ||= MrntQuantum.get_amqp_config(rv[:amqp])
     return rv
   end
 
@@ -395,7 +392,11 @@ Puppet::Parser::Functions::newfunction(:sanitize_quantum_config, :type => :rvalu
   Puppet::Parser::Functions.autoloader.loadall
   given_config = MrntQuantum.sanitize_hash(argv[0])
   q_conf = MrntQuantum.new(self, given_config)
-  return sanitize_bool_in_hash(q_conf.generate_config())
+  rv = q_conf.generate_config()
+  # pUPPET not allow hashes with SYM keys. normalize keys
+  rv = JSON.load(rv.to_json)
+  return sanitize_bool_in_hash(rv)
+
 end
 
 # vim: set ts=2 sw=2 et :

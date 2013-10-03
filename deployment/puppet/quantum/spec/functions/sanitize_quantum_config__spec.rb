@@ -190,18 +190,36 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
   end
 
   it 'should return default config if incoming hash is empty' do
+    @res_cfg['database']['url'] = 'mysql://quantum:quantum@192.168.0.254:3306/quantum'
     should run.with_params({}).and_return(@res_cfg)
   end
 
   it 'should return default config if default config given as incoming' do
+    @res_cfg['database']['url'] = 'mysql://quantum:quantum@192.168.0.254:3306/quantum'
     should run.with_params(@cfg).and_return(@res_cfg)
   end
 
   it 'should substitute default values if missing required field in config' do
-    cfg = @cfg.clone()
+    cfg = Marshal.load(Marshal.dump(@cfg))
     cfg['L3'].delete('dhcp_agent')
-    should run.with_params(cfg).and_return(@res_cfg)
+    res_cfg = Marshal.load(Marshal.dump(@res_cfg))
+    res_cfg['database']['url'] = 'mysql://quantum:quantum@192.168.0.254:3306/quantum'
+    should run.with_params(cfg).and_return(res_cfg)
   end
+
+  it 'should substitute database, username and password to database url' do
+    cfg = Marshal.load(Marshal.dump(@cfg))
+    cfg['database']['database'] = 'qq_database'
+    cfg['database']['username'] = 'qq_username'
+    cfg['database']['passwd'] = 'qq_password'
+    res_cfg = Marshal.load(Marshal.dump(@res_cfg))
+    res_cfg['database']['database'] = 'qq_database'
+    res_cfg['database']['username'] = 'qq_username'
+    res_cfg['database']['passwd'] = 'qq_password'
+    res_cfg['database']['url'] = 'mysql://qq_username:qq_password@192.168.0.254:3306/qq_database'
+    should run.with_params(cfg).and_return(res_cfg)
+  end
+
 
   it 'should can substitute values in deep level' do
     cfg = @cfg.clone()
@@ -211,14 +229,9 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     cfg['L2']['local_ip'] = "9.9.9.9"
     cfg['predefined_networks']['net04_ext']['L3']['nameservers'] = ["127.0.0.1"]
     res_cfg = Marshal.load(Marshal.dump(cfg))
+    res_cfg['database']['url'] = 'mysql://quantum:quantum@192.168.0.254:3306/quantum'
     should run.with_params(cfg).and_return(res_cfg)
   end
-
-  # it 'should return network configuration' do
-  #   rv = run.with_params({})
-  #   should rv.and_return(@res_cfg)
-  #   puts rv[:L2][:predefined_networks]
-  # end
 
 end
 

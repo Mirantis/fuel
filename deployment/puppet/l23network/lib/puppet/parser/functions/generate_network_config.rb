@@ -14,15 +14,8 @@ rescue LoadError => e
   rb_file = File.join(File.dirname(__FILE__),'lib','l23network_scheme.rb')
   load rb_file if File.exists?(rb_file) or raise e
 end
-# begin
-#   require 'puppet/parser/functions/lib/hash_tools.rb'
-# rescue LoadError => e
-#   # puppet apply does not add module lib directories to the $LOAD_PATH (See
-#   # #4248). It should (in the future) but for the time being we need to be
-#   # defensive which is what this rescue block is doing.
-#   rb_file = File.join(File.dirname(__FILE__),'lib','hash_tools.rb')
-#   load rb_file if File.exists?(rb_file) or raise e
-# end
+
+
 
 module L23network
   def self.sanitize_transformation(trans)
@@ -102,7 +95,7 @@ module L23network
   end
 end
 
-Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :rvalue, :doc => <<-EOS
+Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalue, :doc => <<-EOS
     This function get Hash of network interfaces and endpoints configuration
     and realized it.
 
@@ -165,7 +158,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
       e_properties.each do |k,v|
         if k.to_sym() == :IP
           if !(v.is_a?(Array) || ['none','dhcp',nil].include?(v))
-            raise(Puppet::ParseError, "IP field for endpoint '#{e_name}' must be array of IP addresses, 'dhcp' or 'none'.")
+            raise(Puppet::ParseError, "generate_network_config(): IP field for endpoint '#{e_name}' must be array of IP addresses, 'dhcp' or 'none'.")
           elsif ['none','dhcp',nil].include?(v)
             endpoints[e_name][:IP].insert(-1, v ? v : 'none')
           else
@@ -174,7 +167,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
                 iip = IPAddr.new(ip)
                 endpoints[e_name][:IP].insert(-1, ip)
               rescue
-                raise(Puppet::ParseError, "IP address '#{ip}' for endpoint '#{e_name}' wrong!.")
+                raise(Puppet::ParseError, "generate_network_config(): IP address '#{ip}' for endpoint '#{e_name}' wrong!.")
               end
             end
           end
@@ -218,7 +211,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
     # check for all in endpoints are in interfaces or born by transformation
     config_hash[:endpoints].each do |e_name, e_properties|
       if not born_ports.index(e_name.to_sym())
-        raise(Puppet::ParseError, "Endpoint '#{e_name}' not found in interfaces or transformations result.")
+        raise(Puppet::ParseError, "generate_network_config(): Endpoint '#{e_name}' not found in interfaces or transformations result.")
       end
     end
     # execute interfaces and endpoints
@@ -262,5 +255,4 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
 
     return transformation_success.join(" -> ")
 end
-
 # vim: set ts=2 sw=2 et :
