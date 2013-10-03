@@ -2,7 +2,7 @@ class osnailyfacter::cluster_ha {
 
 ##PARAMETERS DERIVED FROM YAML FILE
 
-
+xxxxx
 if $::use_quantum {
   #$quantum_hash   = parsejson($::quantum_access)
   #$quantum_params = parsejson($::quantum_parameters)

@@ -6,90 +6,100 @@ require 'puppet/resource/type_collection_helper'
 require 'puppet/util/methodhelper'
 
 begin
-  require 'puppet/parser/functions/lib/sanitize_hash.rb'
+  require 'puppet/parser/functions/lib/l23network_scheme.rb'
 rescue LoadError => e
   # puppet apply does not add module lib directories to the $LOAD_PATH (See
   # #4248). It should (in the future) but for the time being we need to be
   # defensive which is what this rescue block is doing.
-  rb_file = File.join(File.dirname(__FILE__),'lib','sanitize_hash.rb')
+  rb_file = File.join(File.dirname(__FILE__),'lib','l23network_scheme.rb')
   load rb_file if File.exists?(rb_file) or raise e
 end
+# begin
+#   require 'puppet/parser/functions/lib/hash_tools.rb'
+# rescue LoadError => e
+#   # puppet apply does not add module lib directories to the $LOAD_PATH (See
+#   # #4248). It should (in the future) but for the time being we need to be
+#   # defensive which is what this rescue block is doing.
+#   rb_file = File.join(File.dirname(__FILE__),'lib','hash_tools.rb')
+#   load rb_file if File.exists?(rb_file) or raise e
+# end
 
-
-def sanitize_transformation(trans)
-  action = trans[:action].downcase()
-  # Setup defaults
-  rv = case action
-    when "add-br" then {
-      :name => nil,
-      #:stp_enable => true,
-      :skip_existing => true
-    }
-    when "add-port" then {
-      :name => nil,
-      :bridge => nil,
-      #:type => "internal",
-      :tag => 0,
-      :trunks => [],
-      :port_properties => [],
-      :interface_properties => [],
-      :skip_existing => true
-    }
-    when "add-bond" then {
-      :name => nil,
-      :bridge => nil,
-      :interfaces => [],
-      :tag => 0,
-      :trunks => [],
-      :properties => [],
-      #:port_properties => [],
-      #:interface_properties => [],
-      :skip_existing => true
-    }
-    when "add-patch" then {
-      :name => "unnamed", # calculated later
-      :peers => [nil, nil],
-      :bridges => [],
-      :tags => [0, 0],
-      :trunks => [],
-    }
-    else
-      raise(Puppet::ParseError, "Unknown transformation: '#{action}'.")
-  end
-  # replace defaults to real parameters
-  rv[:action] = action
-  rv.each do |k,v|
-    if trans[k]
-      rv[k] = trans[k]
+module L23network
+  def self.sanitize_transformation(trans)
+    action = trans[:action].downcase()
+    # Setup defaults
+    rv = case action
+      when "add-br" then {
+        :name => nil,
+        #:stp_enable => true,
+        :skip_existing => true
+      }
+      when "add-port" then {
+        :name => nil,
+        :bridge => nil,
+        #:type => "internal",
+        :tag => 0,
+        :trunks => [],
+        :port_properties => [],
+        :interface_properties => [],
+        :skip_existing => true
+      }
+      when "add-bond" then {
+        :name => nil,
+        :bridge => nil,
+        :interfaces => [],
+        :tag => 0,
+        :trunks => [],
+        :properties => [],
+        #:port_properties => [],
+        #:interface_properties => [],
+        :skip_existing => true
+      }
+      when "add-patch" then {
+        :name => "unnamed", # calculated later
+        :peers => [nil, nil],
+        :bridges => [],
+        :tags => [0, 0],
+        :trunks => [],
+      }
+      else
+        raise(Puppet::ParseError, "Unknown transformation: '#{action}'.")
     end
-  end
-  # Check for incorrect parameters
-  if not rv[:name].is_a? String
-    raise(Puppet::ParseError, "Unnamed transformation: '#{action}'.")
-  end
-  name = rv[:name]
-  if not rv[:bridge].is_a? String and not ["add-patch", "add-br"].index(action)
-    raise(Puppet::ParseError, "Undefined bridge for transformation '#{action}' with name '#{name}'.")
-  end
-  if action == "add-patch"
-    if not rv[:bridges].is_a? Array  and  rv[:bridges].size() != 2
-      raise(Puppet::ParseError, "Transformation patch have wrong 'bridges' parameter.")
+    # replace defaults to real parameters
+    rv[:action] = action
+    rv.each do |k,v|
+      if trans[k]
+        rv[k] = trans[k]
+      end
     end
-    name = "patch__#{rv[:bridges][0]}__#{rv[:bridges][1]}"
-    if not rv[:peers].is_a? Array  and  rv[:peers].size() != 2
-      raise(Puppet::ParseError, "Transformation patch '#{name}' have wrong 'peers' parameter.")
+    # Check for incorrect parameters
+    if not rv[:name].is_a? String
+      raise(Puppet::ParseError, "Unnamed transformation: '#{action}'.")
     end
-    rv[:name] = name
-  end
-  if action == "add-bond"
-    if not rv[:interfaces].is_a? Array or rv[:interfaces].size() != 2
-      raise(Puppet::ParseError, "Transformation bond '#{name}' have wrong 'interfaces' parameter.")
+    name = rv[:name]
+    if not rv[:bridge].is_a? String and not ["add-patch", "add-br"].index(action)
+      raise(Puppet::ParseError, "Undefined bridge for transformation '#{action}' with name '#{name}'.")
     end
-    # rv[:interfaces].each do |i|
-    #   if
-    # end
+    if action == "add-patch"
+      if not rv[:bridges].is_a? Array  and  rv[:bridges].size() != 2
+        raise(Puppet::ParseError, "Transformation patch have wrong 'bridges' parameter.")
+      end
+      name = "patch__#{rv[:bridges][0]}__#{rv[:bridges][1]}"
+      if not rv[:peers].is_a? Array  and  rv[:peers].size() != 2
+        raise(Puppet::ParseError, "Transformation patch '#{name}' have wrong 'peers' parameter.")
+      end
+      rv[:name] = name
+    end
+    if action == "add-bond"
+      if not rv[:interfaces].is_a? Array or rv[:interfaces].size() != 2
+        raise(Puppet::ParseError, "Transformation bond '#{name}' have wrong 'interfaces' parameter.")
+      end
+      # rv[:interfaces].each do |i|
+      #   if
+      # end
+    end
+    return rv
   end
-  return rv
 end
 
 Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :rvalue, :doc => <<-EOS
@@ -111,10 +121,13 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
     end
 
     if argv.size != 1
-      raise(Puppet::ParseError, "config_network_from_json_v1(hash): Wrong number of arguments.")
+      raise(Puppet::ParseError, "generate_network_config(): Wrong number of arguments.")
     end
 
-    config_hash = sanitize_hash(argv[0])
+    config_hash = L23network::Scheme.get()
+    if config_hash.nil?
+      raise(Puppet::ParseError, "get_network_role_property(...): You must call prepare_network_config(...) first!")
+    end
 
     # define internal puppet parameters for creating resources
     res_factory = {
@@ -183,7 +196,7 @@ Puppet::Parser::Functions::newfunction(:config_network_from_json_v1, :type => :r
         action = t[:action].to_sym()
       end
 
-      trans = sanitize_transformation(t)
+      trans = self.sanitize_transformation(t)
       resource = res_factory[action][:resource]
       p_resource = Puppet::Parser::Resource.new(
           res_factory[action][:name_of_resource],

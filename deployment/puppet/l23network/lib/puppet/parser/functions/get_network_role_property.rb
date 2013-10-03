@@ -9,20 +9,20 @@ rescue LoadError => e
   load rb_file if File.exists?(rb_file) or raise e
 end
 begin
-  require 'puppet/parser/functions/lib/sanitize_hash.rb'
+  require 'puppet/parser/functions/lib/l23network_scheme.rb'
 rescue LoadError => e
   # puppet apply does not add module lib directories to the $LOAD_PATH (See
   # #4248). It should (in the future) but for the time being we need to be
   # defensive which is what this rescue block is doing.
-  rb_file = File.join(File.dirname(__FILE__),'lib','sanitize_hash.rb')
+  rb_file = File.join(File.dirname(__FILE__),'lib','l23network_scheme.rb')
   load rb_file if File.exists?(rb_file) or raise e
 end
 
 Puppet::Parser::Functions::newfunction(:get_network_role_property, :type => :rvalue, :doc => <<-EOS
-    This function get get network config Hash, network_role name and mode --
+    This function get get network the network_role name and mode --
     and return information about network role.
 
-    ex: get_network_role_property(hash, 'admin', 'interface')
+    ex: get_network_role_property('admin', 'interface')
 
     You can use following modes:
       interface -- network interface for the network_role
@@ -33,28 +33,34 @@ Puppet::Parser::Functions::newfunction(:get_network_role_property, :type => :rva
 
     EOS
   ) do |argv|
-  if argv.size == 3
-    mode = argv[2].to_s().upcase()
+  if argv.size == 2
+    mode = argv[1].to_s().upcase()
   else
-      raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): Wrong number of arguments.")
+      raise(Puppet::ParseError, "get_network_role_property(...): Wrong number of arguments.")
   end
-  cfg = sanitize_hash(argv[0])
-  network_role = argv[1].to_sym()
+
+  cfg = L23network::Scheme.get()
+  File.open("/tmp/L23network_scheme.yaml", 'w'){ |file| file.write cfg.to_yaml() }
+  if cfg.nil?
+    raise(Puppet::ParseError, "get_network_role_property(...): You must call prepare_network_config(...) first!")
+  end
+
+  network_role = argv[0].to_sym()
 
   if !cfg[:roles] || !cfg[:endpoints] || cfg[:roles].class.to_s() != "Hash" || cfg[:endpoints].class.to_s() != "Hash"
-      raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): Invalid cfg_hash format.")
+      raise(Puppet::ParseError, "get_network_role_property(...): Invalid cfg_hash format.")
   end
 
   # search interface for role
   interface = cfg[:roles][network_role]
   if !interface
-      raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): Undefined network_role '#{network_role}'.")
+      raise(Puppet::ParseError, "get_network_role_property(...): Undefined network_role '#{network_role}'.")
   end
 
   # get endpoint configuration hash for interface
   ep = cfg[:endpoints][interface.to_sym()]
   if !ep
-      raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): Can't find interface '#{interface}' in endpoints for network_role '#{network_role}'.")
+      raise(Puppet::ParseError, "get_network_role_property(...): Can't find interface '#{interface}' in endpoints for network_role '#{network_role}'.")
   end
 
   if mode == 'INTERFACE'
@@ -68,7 +74,7 @@ Puppet::Parser::Functions::newfunction(:get_network_role_property, :type => :rva
       #raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): Can't determine dynamic or empty IP address for endpoint '#{interface}' (#{ep[:IP]}).")
       ipaddr_cidr = nil
     else
-      raise(Puppet::ParseError, "get_network_role_property(cfg_hash, role_name): invalid IP address for endpoint '#{interface}'.")
+      raise(Puppet::ParseError, "get_network_role_property(...): invalid IP address for endpoint '#{interface}'.")
   end
 
   if ipaddr_cidr == nil

@@ -1,36 +1,11 @@
-def process_array(aa)
-  rv = []
-  aa.each do |v|
-    if v.is_a? Hash
-      rv.insert(-1, process_hash(v))
-    elsif v.is_a? Array
-      rv.insert(-1, process_array(v))
-    else
-      rv.insert(-1, v)
-    end
-  end
-  return rv
-end
-
-def process_hash(hh)
-  rv = {}
-  hh.each do |k, v|
-    if v.is_a? String or v.is_a? Symbol
-      rv[k] = case v.upcase()
-        when 'TRUE', :TRUE then true
-        when 'FALSE', :FALSE then false
-        when 'NONE', :NONE, 'NULL', :NULL, 'NIL', :NIL, 'NILL', :NILL then nil
-        else v
-      end
-    elsif v.is_a? Hash
-      rv[k] = process_hash(v)
-    elsif v.is_a? Array
-      rv[k] = process_array(v)
-    else
-      rv[k] = v
-    end
-  end
-  return rv
+begin
+  require 'puppet/parser/functions/lib/hash_tools.rb'
+rescue LoadError => e
+  # puppet apply does not add module lib directories to the $LOAD_PATH (See
+  # #4248). It should (in the future) but for the time being we need to be
+  # defensive which is what this rescue block is doing.
+  rb_file = File.join(File.dirname(__FILE__),'lib','hash_tools.rb')
+  load rb_file if File.exists?(rb_file) or raise e
 end
 
 module Puppet::Parser::Functions
@@ -45,7 +20,7 @@ module Puppet::Parser::Functions
       raise(Puppet::ParseError, "sanitize_bool_in_hash(hash): Wrong number of arguments.")
     end
 
-    return process_hash(argv[0])
+    return L23network.sanitize_bool_in_hash(argv[0])
   end
 end
 

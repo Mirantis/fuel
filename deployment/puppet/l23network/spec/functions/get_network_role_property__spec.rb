@@ -1,9 +1,19 @@
 require 'spec_helper'
+begin
+  require 'puppet/parser/functions/lib/l23network_scheme.rb'
+rescue LoadError => e
+  # puppet apply does not add module lib directories to the $LOAD_PATH (See
+  # #4248). It should (in the future) but for the time being we need to be
+  # defensive which is what this rescue block is doing.
+  rb_file = File.join(File.dirname(__FILE__),'lib','l23network_scheme.rb')
+  load rb_file if File.exists?(rb_file) or raise e
+end
+
 
 describe 'get_network_role_property' do
   let(:scope) { PuppetlabsSpec::PuppetInternals.scope }
-  let(:cfg) do
-    {
+  before(:each) do
+    L23network::Scheme.set = {
       :endpoints => {
         :eth0 => {:IP => 'dhcp'},
         :"br-ex" => {
@@ -29,40 +39,40 @@ describe 'get_network_role_property' do
   end
 
   it 'should return interface name for "private" network role' do
-    should run.with_params(cfg, 'private', 'interface').and_return('br-prv')
+    should run.with_params('private', 'interface').and_return('br-prv')
   end
 
   it 'should raise for non-existing role name' do
-    should run.with_params(cfg, 'not_exist', 'interface').and_raise_error(Puppet::ParseError)
+    should run.with_params('not_exist', 'interface').and_raise_error(Puppet::ParseError)
   end
 
   it 'should return ip address for "management" network role' do
-    should run.with_params(cfg, 'management', 'ipaddr').and_return('10.20.1.11')
+    should run.with_params('management', 'ipaddr').and_return('10.20.1.11')
   end
 
   it 'should return cidr-notated ip address for "management" network role' do
-    should run.with_params(cfg, 'management', 'cidr').and_return('10.20.1.11/25')
+    should run.with_params('management', 'cidr').and_return('10.20.1.11/25')
   end
 
   it 'should return netmask for "management" network role' do
-    should run.with_params(cfg, 'management', 'netmask').and_return('255.255.255.128')
+    should run.with_params('management', 'netmask').and_return('255.255.255.128')
   end
 
   it 'should return ip address and netmask for "management" network role' do
-    should run.with_params(cfg, 'management', 'ipaddr_netmask_pair').and_return(['10.20.1.11','255.255.255.128'])
+    should run.with_params('management', 'ipaddr_netmask_pair').and_return(['10.20.1.11','255.255.255.128'])
   end
 
   it 'should return NIL for "admin" network role' do
-    should run.with_params(cfg, 'admin', 'netmask').and_return(nil)
+    should run.with_params('admin', 'netmask').and_return(nil)
   end
   it 'should return NIL for "admin" network role' do
-    should run.with_params(cfg, 'admin', 'ipaddr').and_return(nil)
+    should run.with_params('admin', 'ipaddr').and_return(nil)
   end
   it 'should return NIL for "admin" network role' do
-    should run.with_params(cfg, 'admin', 'cidr').and_return(nil)
+    should run.with_params('admin', 'cidr').and_return(nil)
   end
   it 'should return NIL for "admin" network role' do
-    should run.with_params(cfg, 'admin', 'ipaddr_netmask_pair').and_return(nil)
+    should run.with_params('admin', 'ipaddr_netmask_pair').and_return(nil)
   end
 
 end

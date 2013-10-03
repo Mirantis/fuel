@@ -59,7 +59,7 @@ class MrntQuantum
       # todo: use network_roles
       vip = get_management_vip()
     end
-    port ? "#{vip}:#{port}"  :  vip
+    port  ?  "#{vip}:#{port}"  :  vip
   end
 
   def get_database_vip()
@@ -330,6 +330,7 @@ class MrntQuantum
       else
         raise(Puppet::ParseError, "Unknown database provider '#{rv[:database][:provider]}'")
     end
+    rv[:database][:url] = MrntQuantum.get_database_url(rv[:database])
     rv[:L2][:bridge_mappings] = MrntQuantum.get_bridge_mappings(rv[:L2])
     rv[:L2][:phys_bridges] = MrntQuantum.get_phys_bridges(rv[:L2])
     rv[:L2][:network_vlan_ranges] = MrntQuantum.get_network_vlan_ranges(rv[:L2])
