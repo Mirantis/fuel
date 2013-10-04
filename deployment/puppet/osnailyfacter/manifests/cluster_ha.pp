@@ -3,13 +3,18 @@ class osnailyfacter::cluster_ha {
 ##PARAMETERS DERIVED FROM YAML FILE
 
 if $::use_quantum {
-  $quantum_hash   = $::fuel_settings['quantum_access']
-  $quantum_params = $::fuel_settings['quantum_parameters']
+  #$quantum_hash   = $::fuel_settings['quantum_access']
+  #$quantum_params = $::fuel_settings['quantum_parameters']
   $novanetwork_params  = {}
-} 
-else {
+  $quantum_config = sanitize_quantum_config($::quantum_settings_hash)
+debug__dump_to_file('/tmp/quantum_config-from_ng.yaml', $::quantum_settings_hash)
+debug__dump_to_file('/tmp/quantum_config-zz-ready.yaml', $quantum_config)
+
+  $fixed_network_range = 'fucking puppet declarative style'
+} else {
   $quantum_hash = {}
   $quantum_params = {}
+  $quantum_config = {}
   $novanetwork_params  = $::fuel_settings['novanetwork_parameters']
 }
 
@@ -34,28 +39,22 @@ $mp_hash              = $::fuel_settings['mp']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 $network_size         = $novanetwork_params['network_size']
 $num_networks         = $novanetwork_params['num_networks']
-$tenant_network_type  = $quantum_params['tenant_network_type']
-$segment_range        = $quantum_params['segment_range']
+##$tenant_network_type  = $quantum_params['tenant_network_type']
+##$segment_range        = $quantum_params['segment_range']
 $vlan_start           = $novanetwork_params['vlan_start']
 
-if !$rabbit_hash[user]
-{
-  $rabbit_hash[user] = 'nova'
+if !$rabbit_hash['user'] {
+  $rabbit_hash['user'] = 'nova'
 }
+$rabbit_user = $rabbit_hash['user']
 
-$rabbit_user          = $rabbit_hash['user']
-
-if $::use_quantum {
-$floating_hash =  $::fuel_settings['floating_network_range']
+if ! $::use_quantum {
+  $floating_ips_range = parsejson($floating_network_range)
 }
-else {
-  $floating_hash = {}
-  $floating_ips_range = $::fuel_settings['floating_network_range']
-}
+$floating_hash = {}
 
 
-if !$::fuel_settings['swift_partition']
-{
+if !$::fuel_settings['swift_partition'] {
   $swift_partition = '/var/lib/glance/node'
 }
 
@@ -99,9 +98,7 @@ if ($cinder) {
   $is_cinder_node = false
 }
 
-$quantum_sql_connection  = "mysql://${quantum_db_user}:${quantum_db_password}@${quantum_host}/${quantum_db_dbname}"
-
-$quantum_host            = $::fuel_settings['management_vip']
+$quantum_host = $management_vip
 
 ##REFACTORING NEEDED
 
@@ -117,9 +114,6 @@ $controller_node_public  = $::fuel_settings['public_vip']
 $controller_node_address = $::fuel_settings['management_vip']
 $mountpoints = filter_hash($mp_hash,'point')
 $swift_proxies = $controller_storage_addresses
-$quantum_metadata_proxy_shared_secret = $quantum_params['metadata_proxy_shared_secret']
-
-$quantum_gre_bind_addr = $::internal_address
 
 $swift_local_net_ip      = $::storage_address
 
@@ -230,14 +224,9 @@ class compact_controller (
     glance_backend                => $glance_backend,
     swift_proxies                 => $swift_proxies,
     quantum                       => $::use_quantum,
-    quantum_user_password         => $quantum_hash[user_password],
-    quantum_db_password           => $quantum_hash[db_password],
+    quantum_config                => $quantum_config,
     quantum_network_node          => $quantum_network_node,
     quantum_netnode_on_cnt        => $quantum_netnode_on_cnt,
-    quantum_gre_bind_addr         => $quantum_gre_bind_addr,
-    quantum_external_ipinfo       => $external_ipinfo,
-    tenant_network_type           => $tenant_network_type,
-    segment_range                 => $segment_range,
     cinder                        => true,
     cinder_user_password          => $cinder_hash[user_password],
     cinder_iscsi_bind_addr        => $cinder_iscsi_bind_addr,
@@ -412,11 +401,7 @@ class virtual_ips () {
         cinder_db_password     => $cinder_hash[db_password],
         db_host                => $::fuel_settings['management_vip'],
         quantum                => $::use_quantum,
-        quantum_host           => $quantum_host,
-        quantum_sql_connection => $quantum_sql_connection,
-        quantum_user_password  => $quantum_hash[user_password],
-        tenant_network_type    => $tenant_network_type,
-        segment_range          => $segment_range,
+        quantum_config         => $quantum_config,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
         syslog_log_facility    => $syslog_log_facility_nova,
@@ -479,6 +464,5 @@ class virtual_ips () {
       notify {"ceph_osd: ${::ceph::osd_devices}": }
       notify {"osd_devices:  ${::osd_devices_list}": }
     }
-  
   }
 }
