@@ -17,10 +17,43 @@ class heat::params {
       $engine_service_name          = 'openstack-heat-engine'
       $heat_cli_package_name        = 'openstack-heat-cli'
       $db_sync_command              = '/usr/bin/heat-manage db_sync'
+      $legacy_db_sync_command       = '/usr/bin/python -m heat.db.sync'
       $deps_pbr_package_name        = 'python-pbr'
       $deps_routes_package_name     = 'python-routes'
       $deps_routes_package_vesion   = '1.13-1.el6'
+      $heat_version                 = $heat_version_rh
+      $client_package_name          = 'python-heatclient'
     }
+
+    'Debian': {
+      # package names
+      $api_package_name            = 'heat-api'
+      $api_cloudwatch_package_name = 'heat-api-cloudwatch'
+      $api_cfn_package_name        = 'heat-api-cfn'
+      $engine_package_name         = 'heat-engine'
+      $common_package_name         = 'heat-common'
+      # service names
+      $api_service_name            = 'heat-api'
+      $api_cloudwatch_service_name = 'heat-api-cloudwatch'
+      $api_cfn_service_name        = 'heat-api-cfn'
+      $engine_service_name         = 'heat-engine'
+      # Operating system specific
+      case $::operatingsystem {
+        'Ubuntu': {
+          $libvirt_group                = 'libvirtd'
+          $deps_pbr_package_name        = 'python-pbr'
+          $deps_routes_package_name     = 'python-routes'
+          $client_package_name          = 'python-heatclient'
+          $heat_version                 = $heat_version_deb
+          $db_sync_command              = '/usr/bin/heat-manage db_sync'
+          $legacy_db_sync_command       = '/usr/bin/python -m heat.db.sync'
+        }
+        default: {
+          $libvirt_group = 'libvirt'
+        }
+      }
+    }
+
     default: {
       fail("Unsupported osfamily: ${::osfamily} operatingsystem: \
 ${::operatingsystem}, module ${module_name} only support osfamily \
