@@ -1,23 +1,12 @@
-require 'kwalify'
-
-module Osnailyfacter
-  class Validator < Kwalify::Validator
-    def initialize
-      schema_dir_path = File.expand_path(File.dirname(__FILE__))
-      schema_path = File.join(schema_dir_path, "deploy_schema.yaml")
-      schema_hash = YAML.load_file(schema_path)
-
-      super(schema_hash)
-    end
-  end
-end
-
 module Puppet::Parser::Functions
   newfunction(:validate_schema, :type => :rvalue, :doc => <<-EOS
 Validate input hash from facts for compliance with data structure.
 Raise Puppet::ParseError if error is found
     EOS
   ) do |args|
+    require 'rubygems'
+    require 'kwalify'
+
     raise(Puppet::ParseError, "validate_schema(): Wrong number of arguments " +
       "given (#{arguments.size} for 1)") if args.size != 1
 
@@ -25,28 +14,32 @@ Raise Puppet::ParseError if error is found
     unless yaml_settings.is_a?(Hash)
       raise(Puppet::ParseError, 'validate_schema(): Requires hash to work with')
     end
-    
+
     do_raise = args[1]
     do_raise = true if do_raise.nil?
-    unless yaml_settings.is_a?(Boolean)
-      raise(Puppet::ParseError, 'validate_schema(): Requires boolean to work with')
-    end
+    # unless yaml_settings.is_a?(Boolean)
+    #   raise(Puppet::ParseError, 'validate_schema(): Requires boolean to work with')
+    # end
 
     errors = Osnailyfacter::Validator.new(yaml_settings)
 
     # Check structure and basic types for expected params
+    messages = []
     errors.each do |e|
+      msg = "[#{e.path}] #{e.message}"
       if e.message.include?("is undefined")
-        debug "WARNING: [#{e.path}] #{e.message}"
+        Puppet.debug msg
+        messages << "DEBUG: msg"
       else
-        debug "ERROR: [#{e.path}] #{e.message}"
+        Puppet.err msg
+        messages << "ERROR: msg"
       end
     end
-    
+
     result = true
 
     if errors.select {|e| !e.message.include?("is undefined") }.size > 0
-      raise Puppet::ParseError, "Data validation failed" if do_raise
+      raise Puppet::ParseError, "Data validation failed. #{$/} #{messages.join($/)}" if do_raise
       result = false
     end
 
@@ -59,7 +52,7 @@ Raise Puppet::ParseError if error is found
       settings['nodes'].each do |node|
         ['public_br', 'internal_br'].each do |br|
           if node[br].nil? || node[br].empty?
-            msg = "Node #{node['uid']} required 'public_br' and 'internal_br' 
+            msg = "Node #{node['uid']} required 'public_br' and 'internal_br'
                    when quantum is 'true'"
             result = raise_or_send_debug(do_raise, msg)
           end
@@ -97,10 +90,10 @@ Raise Puppet::ParseError if error is found
       result = raise_or_send_debug(do_raise, msg)
     end
   end
-  
+
   def raise_or_send_debug(do_raise, msg)
     raise Puppet::ParseError, msg if do_raise
-    debug msg
+    Puppet.err msg
     false
   end
 
