@@ -112,32 +112,6 @@ $cinder_rate_limits = {
 }
 
 ###
-<<<<<<< HEAD
-class node_netconfig (
-  $mgmt_ipaddr,
-  $mgmt_netmask  = '255.255.255.0',
-  $public_ipaddr = undef,
-  $public_netmask= '255.255.255.0',
-  $save_default_gateway=false,
-  $quantum = $use_quantum,
-  $default_gateway
-) {
-    # nova-network mode
-    l23network::l3::ifconfig {$public_int:
-      ipaddr  => $public_ipaddr,
-      netmask => $public_netmask,
-      gateway => $default_gateway,
-    }
-    l23network::l3::ifconfig {$internal_int:
-      ipaddr  => $mgmt_ipaddr,
-      netmask => $mgmt_netmask,
-      dns_nameservers      => $dns_nameservers,
-      gateway => $default_gateway
-    }
-    l23network::l3::ifconfig {$fixed_interface: ipaddr=>'none' }
-}
-
-
 class advanced_node_netconfig {
     $sdn = generate_network_config()
     notify {"SDN: ${sdn}": }
