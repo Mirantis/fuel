@@ -17,11 +17,12 @@ Raise Puppet::ParseError if error is found
 
     do_raise = args[1]
     do_raise = true if do_raise.nil?
-    # unless yaml_settings.is_a?(Boolean)
-    #   raise(Puppet::ParseError, 'validate_schema(): Requires boolean to work with')
-    # end
 
-    errors = Osnailyfacter::Validator.new(yaml_settings)
+    schema_dir_path = File.expand_path(File.dirname(__FILE__))
+    schema_path = File.join(schema_dir_path, "deploy_schema.yaml")
+    schema_hash = YAML.load_file(schema_path)
+    validator = Kwalify::Validator.new(schema_hash)
+    errors = validator.validate(yaml_settings)
 
     # Check structure and basic types for expected params
     messages = []
@@ -29,24 +30,27 @@ Raise Puppet::ParseError if error is found
       msg = "[#{e.path}] #{e.message}"
       if e.message.include?("is undefined")
         Puppet.debug msg
-        messages << "DEBUG: msg"
+        messages << "DEBUG: #{msg}"
       else
         Puppet.err msg
-        messages << "ERROR: msg"
+        messages << "ERROR: #{msg}"
       end
     end
 
     result = true
-
     if errors.select {|e| !e.message.include?("is undefined") }.size > 0
       raise Puppet::ParseError, "Data validation failed. #{$/} #{messages.join($/)}" if do_raise
       result = false
     end
 
-    result && yaml_schema_validation(yaml_settings, do_raise)
+    result && ValidationSchema.yaml_schema_validation(yaml_settings, do_raise)
   end
+end
 
-  def yaml_schema_validation(settings, do_raise)
+module ValidationSchema
+  require 'puppet'
+
+  def self.yaml_schema_validation(settings, do_raise)
     result = true
     if settings['quantum']
       settings['nodes'].each do |node|
@@ -79,28 +83,26 @@ Raise Puppet::ParseError if error is found
         result = raise_or_send_debug(do_raise, msg)
       end
     else
-      if settings['floating_network_range'].is_a?(Array)
+      if !settings['floating_network_range'].is_a?(Array)
         msg = "'floating_network_range' is required array of IPs when quantum is 'false'"
         result = raise_or_send_debug(do_raise, msg)
       end
     end
 
     if !is_cidr_notation?(settings['fixed_network_range'])
-      msg = "'fixed_network_range' is required CIDR notation"
+      msg = "'fixed_network_range' is required CIDR notation, but got #{settings['fixed_network_range']}"
       result = raise_or_send_debug(do_raise, msg)
     end
   end
 
-  def raise_or_send_debug(do_raise, msg)
+  def self.raise_or_send_debug(do_raise, msg)
     raise Puppet::ParseError, msg if do_raise
     Puppet.err msg
     false
   end
 
-  def is_cidr_notation?(value)
-    cidr = Regexp.new('^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.)
-                      {3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/
-                      (\d|[1-2]\d|3[0-2]))$')
+  def self.is_cidr_notation?(value)
+    cidr = Regexp.new('^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/(\d|[1-2]\d|3[0-2]))$')
     !cidr.match(value).nil?
   end
 end
