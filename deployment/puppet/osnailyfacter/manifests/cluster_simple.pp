@@ -32,7 +32,6 @@ $swift_hash           = $::fuel_settings['swift']
 $cinder_hash          = $::fuel_settings['cinder']
 $access_hash          = $::fuel_settings['access']
 $nodes_hash           = $::fuel_settings['nodes']
-$storage_hash         = $::fuel_settings['storage']
 $vlan_start           = $novanetwork_params['vlan_start']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 $network_size         = $novanetwork_params['network_size']
@@ -108,10 +107,10 @@ if !$::fuel_settings['debug']
 
 # Determine who should get the volume service
 if ($::fuel_settings['role'] == 'cinder' or
-    $storage_hash['volumes_lvm']
+    $::storage_hash['volumes_lvm']
 ) {
   $manage_volumes = 'iscsi'
-} elsif ($storage_hash['volumes_ceph']) {
+} elsif ($::storage_hash['volumes_ceph']) {
   $manage_volumes = 'ceph'
 } else {
   $manage_volumes = false
@@ -119,19 +118,19 @@ if ($::fuel_settings['role'] == 'cinder' or
 
 #Determine who should be the default backend
 
-if ($storage_hash['images_ceph']) {
+if ($::storage_hash['images_ceph']) {
   $glance_backend = 'ceph'
 } else {
   $glance_backend = 'file'
 }
 
-if ($use_ceph) {
+if ($::use_ceph) {
   $primary_mons   = $controller
   $primary_mon    = $controller[0]['name']
   class {'ceph': 
     primary_mon          => $primary_mon,
     cluster_node_address => $controller_node_public,
-    use_rgw              => $storage_hash['objects_ceph'],
+    use_rgw              => $::storage_hash['objects_ceph'],
     use_ssl              => false,
     glance_backend       => $glance_backend,
   }
@@ -267,7 +266,7 @@ if ($use_ceph) {
       #   require          => Class[glance::api],
       # }
 #TODO: fix this so it dosn't break ceph
-      if !($use_ceph) {
+      if !($::use_ceph) {
         class { 'openstack::img::cirros':
           os_username               => shellescape($access_hash[user]),
           os_password               => shellescape($access_hash[password]),
@@ -291,37 +290,37 @@ if ($use_ceph) {
       Class[nova::api] -> Nova_floating_range <| |>
       }
 
-      if ($use_ceph){
+      if ($::use_ceph){
         Class['openstack::controller'] -> Class['ceph']
       }
 
       #ADDONS START
 
-      if $savanna_hash['enabled'] {
+      if $::savanna_hash['enabled'] {
         class { 'savanna' :
           savanna_enabled     => true,
-          savanna_db_password => $savanna_hash['db_password'],
-          use_neutron         => $quantum,
+          savanna_db_password => $::savanna_hash['db_password'],
+          use_neutron         => $::use_quantum,
           use_floating_ips    => $bool_auto_assign_floating_ip,
         }
       }
 
-      if $murano_hash['enabled'] {
+      if $::murano_hash['enabled'] {
 
         class { 'murano' :
           murano_enabled         => true,
           murano_rabbit_host     => $controller_node_address,
-          murano_rabbit_login    => $heat_hash['rabbit_user'], # heat_hash is not mistake here
-          murano_rabbit_password => $heat_hash['rabbit_password'],
-          murano_db_password     => $murano_hash['db_password'],
+          murano_rabbit_login    => $::heat_hash['rabbit_user'], # heat_hash is not mistake here
+          murano_rabbit_password => $::heat_hash['rabbit_password'],
+          murano_db_password     => $::murano_hash['db_password'],
         }
 
         class { 'heat' :
           heat_enabled         => true,
           heat_rabbit_host     => $controller_node_address,
-          heat_rabbit_userid   => $heat_hash['rabbit_user'],
-          heat_rabbit_password => $heat_hash['rabbit_password'],
-          heat_db_password     => $heat_hash['db_password'],
+          heat_rabbit_userid   => $::heat_hash['rabbit_user'],
+          heat_rabbit_password => $::heat_hash['rabbit_password'],
+          heat_db_password     => $::heat_hash['db_password'],
         }
 
         Class['heat'] -> Class['murano']
@@ -385,7 +384,7 @@ if ($use_ceph) {
       nova_config { 'DEFAULT/use_cow_images': value => $::fuel_settings['use_cow_images'] }
       nova_config { 'DEFAULT/compute_scheduler_driver': value => $::fuel_settings['compute_scheduler_driver'] }
 
-      if ($use_ceph){
+      if ($::use_ceph){
         Class['openstack::compute'] -> Class['ceph']
       }
     }
