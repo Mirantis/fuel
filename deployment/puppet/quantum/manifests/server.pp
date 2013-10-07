@@ -47,7 +47,7 @@ class quantum::server (
   quantum_api_config {
     'filter:authtoken/auth_host':         value => $quantum_config['keystone']['auth_host'];
     'filter:authtoken/auth_port':         value => $quantum_config['keystone']['auth_port'];
-    'filter:authtoken/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant'];
+    'filter:authtoken/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];
     'filter:authtoken/admin_user':        value => $quantum_config['keystone']['admin_user'];
     'filter:authtoken/admin_password':    value => $quantum_config['keystone']['admin_password'];
   }
