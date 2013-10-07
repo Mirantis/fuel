@@ -3,19 +3,19 @@ class osnailyfacter::cluster_ha {
 ##PARAMETERS DERIVED FROM YAML FILE
 
 if $::use_quantum {
-  #$quantum_hash   = $::fuel_settings['quantum_access']
-  #$quantum_params = $::fuel_settings['quantum_parameters']
   $novanetwork_params  = {}
-  $quantum_config = sanitize_quantum_config($::quantum_settings_hash)
-debug__dump_to_file('/tmp/quantum_config-from_ng.yaml', $::quantum_settings_hash)
+  $quantum_config = sanitize_quantum_config($::fuel_settings, 'quantum_settings')
 debug__dump_to_file('/tmp/quantum_config-zz-ready.yaml', $quantum_config)
-
-  $fixed_network_range = 'fucking puppet declarative style'
 } else {
   $quantum_hash = {}
   $quantum_params = {}
   $quantum_config = {}
   $novanetwork_params  = $::fuel_settings['novanetwork_parameters']
+  $network_size         = $novanetwork_params['network_size']
+  $num_networks         = $novanetwork_params['num_networks']
+  ##$tenant_network_type  = $quantum_params['tenant_network_type']
+  ##$segment_range        = $quantum_params['segment_range']
+  $vlan_start           = $novanetwork_params['vlan_start']
 }
 
 if $cinder_nodes {
@@ -37,11 +37,6 @@ $access_hash          = $::fuel_settings['access']
 $nodes_hash           = $::fuel_settings['nodes']
 $mp_hash              = $::fuel_settings['mp']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
-$network_size         = $novanetwork_params['network_size']
-$num_networks         = $novanetwork_params['num_networks']
-##$tenant_network_type  = $quantum_params['tenant_network_type']
-##$segment_range        = $quantum_params['segment_range']
-$vlan_start           = $novanetwork_params['vlan_start']
 
 if !$rabbit_hash['user'] {
   $rabbit_hash['user'] = 'nova'
@@ -186,13 +181,13 @@ class compact_controller (
     controller_internal_addresses => $controller_internal_addresses,
     internal_address              => $internal_address,
     public_interface              => $::public_int,
-    internal_interface            => $::internal_int,
+    #internal_interface            => $::internal_int,
     private_interface             => $::fuel_settings['fixed_interface'],
     internal_virtual_ip           => $::fuel_settings['management_vip'],
     public_virtual_ip             => $::fuel_settings['public_vip'],
     primary_controller            => $primary_controller,
     floating_range                => $::use_quantum ? { true=>$floating_hash, default=>false},
-    fixed_range                   => $::fuel_settings['fixed_network_range'],
+    fixed_range                   => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_network_range']},
     multi_host                    => $multi_host,
     network_manager               => $network_manager,
     num_networks                  => $num_networks,
@@ -371,7 +366,7 @@ class virtual_ips () {
         private_interface      => $::fuel_settings['fixed_interface'],
         internal_address       => $internal_address,
         libvirt_type           => $::fuel_settings['libvirt_type'],
-        fixed_range            => $::fuel_settings['fixed_network_range'],
+        fixed_range            => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_network_range']},
         network_manager        => $network_manager,
         network_config         => $network_config,
         multi_host             => $multi_host,

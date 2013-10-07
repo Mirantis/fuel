@@ -23,9 +23,6 @@ stage {'glance-image':
   require => Stage['main'],
 }
 
-prepare_network_config(parsejson($::network_scheme))
-
-
 if $::fuel_settings['nodes'] {
   $nodes_hash = $::fuel_settings['nodes']
 
@@ -49,7 +46,7 @@ if $::fuel_settings['nodes'] {
 
   $use_quantum = $::fuel_settings['quantum']
   if $use_quantum {
-    $quantum_settings_hash = sanitize_bool_in_hash(parsejson($::quantum_settings))
+    prepare_network_config($::fuel_settings['network_scheme'])
     $public_int   = get_network_role_property('ex', 'interface')
     $internal_int = get_network_role_property('management', 'interface')
     $internal_address = get_network_role_property('management', 'ipaddr')
