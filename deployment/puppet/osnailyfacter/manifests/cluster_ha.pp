@@ -35,7 +35,6 @@ $cinder_hash          = $::fuel_settings['cinder']
 $access_hash          = $::fuel_settings['access']
 $nodes_hash           = $::fuel_settings['nodes']
 $mp_hash              = $::fuel_settings['mp']
-$storage_hash         = $::fuel_settings['storage']
 $network_manager      = "nova.network.manager.${novanetwork_params['network_manager']}"
 
 if !$rabbit_hash['user'] {
@@ -71,7 +70,7 @@ $vips = { # Do not convert to ARRAY, It can't work in 2.7
 
 $vip_keys = keys($vips)
 
-if ($cinder) {
+if ($::fuel_settings['cinder']) {
   if (member($cinder_nodes_array,'all')) {
     $is_cinder_node = true
   } elsif (member($cinder_nodes_array,$::hostname)) {
@@ -111,10 +110,10 @@ $cinder_iscsi_bind_addr = $::storage_address
 
 # Determine who should get the volume service
 if ($::fuel_settings['role'] == 'cinder' or
-    $storage_hash['volumes_lvm']
+    $::storage_hash['volumes_lvm']
 ) {
   $manage_volumes = 'iscsi'
-} elsif ($storage_hash['volumes_ceph']) {
+} elsif ($::storage_hash['volumes_ceph']) {
   $manage_volumes = 'ceph'
 } else {
   $manage_volumes = false
@@ -123,27 +122,27 @@ if ($::fuel_settings['role'] == 'cinder' or
 }
 #Determine who should be the default backend
 
-if ($storage_hash['images_ceph']) {
+if ($::storage_hash['images_ceph']) {
   $glance_backend = 'ceph'
 } else {
   $glance_backend = 'swift'
 }
 
-if ($use_ceph) {
+if ($::use_ceph) {
   $primary_mons   = $controllers
   $primary_mon    = $controllers[0]['name']
   class {'ceph':
     primary_mon          => $primary_mon,
     cluster_node_address => $controller_node_public,
-    use_rgw              => $storage_hash['objects_ceph'],
+    use_rgw              => $::storage_hash['objects_ceph'],
     use_ssl              => false,
     glance_backend       => $glance_backend,
   }
 }
 
 #Test to determine if swift should be enabled
-if ($storage_hash['objects_swift'] or
-    ! $storage_hash['images_ceph']
+if ($::storage_hash['objects_swift'] or
+    ! $::storage_hash['images_ceph']
 ) {
   $use_swift = true
 } else {
@@ -329,7 +328,7 @@ class virtual_ips () {
           debug                   => $debug ? { 'true' => true, true => true, default=> false },
           verbose                 => $verbose ? { 'true' => true, true => true, default=> false },
         }
-        if $storage_hash['objects_swift'] {
+        if $::storage_hash['objects_swift'] {
           class { 'swift::keystone::auth':
             password         => $swift_hash[user_password],
             public_address   => $::fuel_settings['public_vip'],
@@ -368,37 +367,37 @@ class virtual_ips () {
         }
         Class[nova::api] -> Nova_floating_range <| |>
       }
-      if ($use_ceph){
+      if ($::use_ceph){
         Class['openstack::controller'] -> Class['ceph']
       }
 
       #ADDONS START
 
-      if $savanna_hash['enabled'] {
+      if $::savanna_hash['enabled'] {
         class { 'savanna' :
           savanna_enabled     => true,
-          savanna_db_password => $savanna_hash['db_password'],
-          use_neutron         => $quantum,
+          savanna_db_password => $::savanna_hash['db_password'],
+          use_neutron         => $::use_quantum,
           use_floating_ips    => $bool_auto_assign_floating_ip,
         }
       }
 
-      if $murano_hash['enabled'] {
+      if $::murano_hash['enabled'] {
 
         class { 'murano' :
           murano_enabled         => true,
           murano_rabbit_host     => $controller_node_address,
-          murano_rabbit_login    => $heat_hash['rabbit_user'], # heat_hash is not mistake here
-          murano_rabbit_password => $heat_hash['rabbit_password'],
-          murano_db_password     => $murano_hash['db_password'],
+          murano_rabbit_login    => $::heat_hash['rabbit_user'], # heat_hash is not mistake here
+          murano_rabbit_password => $::heat_hash['rabbit_password'],
+          murano_db_password     => $::murano_hash['db_password'],
         }
 
         class { 'heat' :
           heat_enabled         => true,
           heat_rabbit_host     => $controller_node_address,
-          heat_rabbit_userid   => $heat_hash['rabbit_user'],
-          heat_rabbit_password => $heat_hash['rabbit_password'],
-          heat_db_password     => $heat_hash['db_password'],
+          heat_rabbit_userid   => $::heat_hash['rabbit_user'],
+          heat_rabbit_password => $::heat_hash['rabbit_password'],
+          heat_db_password     => $::heat_hash['db_password'],
         }
 
         Class['heat'] -> Class['murano']

@@ -34,17 +34,17 @@ if $::fuel_settings['nodes'] {
 
   $default_gateway = $node[0]['default_gateway']
 
-  if $::fuel_settings['storage']['glance'] == 'ceph' {
-    $use_ceph=true
-  } else {
-    $use_ceph=false
-  }
-
   $base_syslog_hash     = $::fuel_settings['base_syslog']
   $syslog_hash          = $::fuel_settings['syslog']
 
+  if !$::fuel_settings['storage'] {
+    $storage_hash = {}
+  } else {
+    $storage_hash = $::fuel_settings['storage']
+  }
+
   if !$::fuel_settings['savanna'] {
-    $savanna_hash={}
+    $savanna_hash = {}
   } else {
     $savanna_hash = $::fuel_settings['savanna']
   }
