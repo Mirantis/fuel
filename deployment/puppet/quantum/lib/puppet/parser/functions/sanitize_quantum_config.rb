@@ -296,7 +296,7 @@ class MrntQuantum
       :root_helper => "sudo quantum-rootwrap /etc/quantum/rootwrap.conf",
       :polling_interval => 2,
     }
-    rv[:database][:port] = case rv[:database][:provider].upcase().to_sym()
+    rv[:database][:port] = case rv[:database][:provider].upcase.to_sym
       when :MYSQL then 3306
       when :PGSQL then 5432
       when :SQLITE then nil
@@ -306,12 +306,6 @@ class MrntQuantum
     rv[:L2][:bridge_mappings] = MrntQuantum.get_bridge_mappings(rv[:L2])
     rv[:L2][:phys_bridges] = MrntQuantum.get_phys_bridges(rv[:L2])
     rv[:L2][:network_vlan_ranges] = MrntQuantum.get_network_vlan_ranges(rv[:L2])
-    if ['gre', 'vxlan', 'lisp'].include?(rv[:L2][:segmentation_type])
-      rv[:L2][:enable_tunneling] = true
-    else
-      rv[:L2][:enable_tunneling] = false
-      rv[:L2][:tunnel_id_ranges] = nil
-    end
     return rv
   end
 
@@ -327,6 +321,12 @@ class MrntQuantum
     rv[:keystone][:auth_url] ||= MrntQuantum.get_keystone_auth_url(rv[:keystone])
     rv[:server][:api_url] ||= MrntQuantum.get_quantum_srv_api_url(rv[:server])
     rv[:amqp] ||= MrntQuantum.get_amqp_config(rv[:amqp])
+    if [:gre, :vxlan, :lisp].include? rv[:L2][:segmentation_type].downcase.to_sym
+      rv[:L2][:enable_tunneling] = true
+    else
+      rv[:L2][:enable_tunneling] = false
+      rv[:L2][:tunnel_id_ranges] = nil
+    end
     return rv
   end
 
@@ -345,6 +345,7 @@ class MrntQuantum
         when "Hash"     then cfg_user[k] ? _generate_config(v,cfg_user[k], path.clone.insert(-1, k)) : v
         when "Array"    then cfg_user[k]&&cfg_user[k].empty?() ? v : cfg_user[k]
         when "String"   then cfg_user[k] ? cfg_user[k] : v
+        when "Fixnum"   then cfg_user[k] ? cfg_user[k] : v
         when "NilClass" then cfg_user[k] ? cfg_user[k] : v
         else v
       end

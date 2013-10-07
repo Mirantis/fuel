@@ -238,18 +238,21 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     should run.with_params(cfg,'quantum_settings').and_return(res_cfg)
   end
 
-  it 'should substitute database, username and password to database url' do
-    cfg = Marshal.load(Marshal.dump(@cfg))
-    cfg['quantum_settings']['database']['database'] = 'qq_database'
-    cfg['quantum_settings']['database']['username'] = 'qq_username'
-    cfg['quantum_settings']['database']['passwd'] = 'qq_password'
-    @res_cfg['database']['database'] = 'qq_database'
-    @res_cfg['database']['username'] = 'qq_username'
-    @res_cfg['database']['passwd'] = 'qq_password'
-    @res_cfg['database']['url'] = 'mysql://qq_username:qq_password@192.168.0.254:3306/qq_database'
-    should run.with_params(cfg,'quantum_settings').and_return(@res_cfg)
+  it 'should calculate database url if database properties not given' do
+    @cfg['quantum_settings']['database'] = {}
+    subject.call([@cfg, 'quantum_settings'])['database']['url'].should  == "mysql://quantum:quantum@192.168.0.254:3306/quantum"
   end
-
+  it 'should calculate database url if some database properties given' do
+    @cfg['quantum_settings']['database'] = {
+      'provider' => 'mysql',
+      'database' => 'qq_database',
+      'username' => 'qq_username',
+      'passwd' => 'qq_password',
+      'host' => '5.4.3.2',
+      'port' => 666,
+    }
+    subject.call([@cfg, 'quantum_settings'])['database']['url'].should  == "mysql://qq_username:qq_password@5.4.3.2:666/qq_database"
+  end
 
   it 'should can substitute values in deep level' do
     @cfg['quantum_settings']['amqp']['provider'] = "XXXXXXXXXXxxxx"
@@ -262,6 +265,40 @@ describe 'sanitize_quantum_config' , :type => :puppet_function do
     should run.with_params(@cfg,'quantum_settings').and_return(res_cfg)
   end
 
+  it 'should calculate hostname if amqp host not given' do
+    @cfg['quantum_settings']['amqp'] = {
+          'provider' => "rabbitmq",
+    }
+    subject.call([@cfg, 'quantum_settings'])['amqp'].should  == @res_cfg['amqp']
+  end
+
+  it 'should calculate auth url if auth properties not given' do
+    @cfg['quantum_settings']['keystone'] = {}
+    subject.call([@cfg, 'quantum_settings'])['keystone']['auth_url'].should  == "http://192.168.0.254:35357/v2.0"
+  end
+  it 'should calculate auth url if some auth properties given' do
+    @cfg['quantum_settings']['keystone'] = {
+          'auth_host' => "1.2.3.4",
+          'auth_port' => 666,
+          'auth_region' => 'RegionOne',
+          'auth_protocol' => "https",
+          'auth_api_version' => "v10.0",
+          'admin_tenant_name' => "xxXXxx",
+          'admin_user' => "user_q",
+          'admin_password' => "pass_q",
+          'admin_email' => "test.quantum@localhost",
+    }
+    subject.call([@cfg, 'quantum_settings'])['keystone']['auth_url'].should  == "https://1.2.3.4:666/v10.0"
+  end
+
+  it 'enable_tunneling must be True if segmentation_type is GRE' do
+    @cfg['quantum_settings']['L2']['segmentation_type'] = 'gre'
+    subject.call([@cfg, 'quantum_settings'])['L2']['enable_tunneling'].should  == true
+  end
+  it 'enable_tunneling must be False if segmentation_type is VLAN' do
+    @cfg['quantum_settings']['L2']['segmentation_type'] = 'vlan'
+    subject.call([@cfg, 'quantum_settings'])['L2']['enable_tunneling'].should  == false
+  end
 end
 
 
