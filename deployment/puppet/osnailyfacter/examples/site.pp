@@ -39,10 +39,14 @@ if $::fuel_settings['nodes'] {
     $use_ceph=false
   }
 
+  $base_syslog_hash = $::fuel_settings['base_syslog']
+  $syslog_hash      = $::fuel_settings['syslog']
 
-  $base_syslog_hash     = $::fuel_settings['base_syslog']
-  $syslog_hash          = $::fuel_settings['syslog']
-  $savanna_hash         = $::fuel_settings['savanna']
+  if !$::fuel_settings['savanna'] {
+    $savanna_hash = {}
+  } else {
+    $savanna_hash = $::fuel_settings['savanna']
+  }
 
   $use_quantum = $::fuel_settings['quantum']
   if $use_quantum {
@@ -108,6 +112,7 @@ $cinder_rate_limits = {
 }
 
 ###
+<<<<<<< HEAD
 class node_netconfig (
   $mgmt_ipaddr,
   $mgmt_netmask  = '255.255.255.0',
@@ -132,6 +137,7 @@ class node_netconfig (
     l23network::l3::ifconfig {$fixed_interface: ipaddr=>'none' }
 }
 
+
 class advanced_node_netconfig {
     $sdn = generate_network_config()
     notify {"SDN: ${sdn}": }
@@ -139,8 +145,8 @@ class advanced_node_netconfig {
 
 case $::operatingsystem {
   'redhat' : {
-          $queue_provider = 'qpid'
-          $custom_mysql_setup_class = 'pacemaker_mysql'
+    $queue_provider = 'qpid'
+    $custom_mysql_setup_class = 'pacemaker_mysql'
   }
   default: {
     $queue_provider='rabbitmq'
@@ -151,24 +157,10 @@ case $::operatingsystem {
 class os_common {
   class {"l23network::hosts_file": stage => 'netconfig', nodes => $nodes_hash }
   class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
-  if $::fuel_settings['deployment_source'] == 'cli' {
-
-    if $use_quantum {
-      class {'advanced_node_netconfig':
-        stage => 'netconfig'
-      }
-    } else {
-      class {'::node_netconfig':
-        mgmt_ipaddr    => $internal_address,
-        mgmt_netmask   => $internal_netmask,
-        public_ipaddr  => $public_address,
-        public_netmask => $public_netmask,
-        stage          => 'netconfig',
-        default_gateway => $default_gateway
-      }
-    }
+  if $use_quantum {
+      class {'advanced_node_netconfig': stage => 'netconfig' }
   } else {
-    class {'osnailyfacter::network_setup': stage => 'netconfig'}
+      class {'osnailyfacter::network_setup': stage => 'netconfig'}
   }
 
   class {'openstack::firewall': stage => 'openstack-firewall'}
@@ -284,5 +276,4 @@ node default {
       }
     "rpmcache": { include osnailyfacter::rpmcache }
   }
-
 }

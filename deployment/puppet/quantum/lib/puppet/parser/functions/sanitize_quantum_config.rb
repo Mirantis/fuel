@@ -5,16 +5,13 @@ require 'json'
 class MrntQuantum
   #class method
   def self.sanitize_array(aa)
-    rv = []
-    aa.each do |v|
-      rv.insert(-1,  case v.class.to_s
-          when "Hash"  then sanitize_hash(v)
-          when "Array" then sanitize_array(v)
+    aa.reduce([]) do |rv, v|
+      rv << case v.class
+          when Hash  then sanitize_hash(v)
+          when Array  then sanitize_array(v)
           else v
-        end
-      )
+      end
     end
-    return rv
   end
 
   #class method

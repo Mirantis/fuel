@@ -134,6 +134,7 @@ class openstack::controller (
   $glance_db_user          = 'glance',
   $glance_db_dbname        = 'glance',
   $glance_api_servers      = undef,
+  $glance_image_cache_max_size = '10737418240',
   # Nova
   $nova_db_user            = 'nova',
   $nova_db_dbname          = 'nova',
@@ -191,13 +192,10 @@ class openstack::controller (
   Class['openstack::db::mysql'] -> Class['openstack::keystone']
   Class['openstack::db::mysql'] -> Class['openstack::glance']
   Class['openstack::db::mysql'] -> Class['openstack::nova::controller']
-  if defined(Class['openstack::cinder']) {
-        Class['openstack::db::mysql'] -> Class['openstack::cinder']
-  }
+  Class['openstack::db::mysql'] -> Cinder_config <||>
 
   $rabbit_addresses = inline_template("<%= @rabbit_nodes.map {|x| x + ':5672'}.join ',' %>")
-    $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
-
+  $memcached_addresses =  inline_template("<%= @cache_server_ip.collect {|ip| ip + ':' + @cache_server_port }.join ',' %>")
 
   nova_config {'DEFAULT/memcached_servers':    value => $memcached_addresses;
   }
@@ -292,6 +290,7 @@ class openstack::controller (
     use_syslog                => $use_syslog,
     syslog_log_facility       => $syslog_log_facility_glance,
     syslog_log_level          => $syslog_log_level,
+    glance_image_cache_max_size => $glance_image_cache_max_size,
   }
 
   ######## BEGIN NOVA ###########

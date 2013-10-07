@@ -44,7 +44,7 @@ if !$rabbit_hash['user'] {
 $rabbit_user = $rabbit_hash['user']
 
 if ! $::use_quantum {
-  $floating_ips_range = parsejson($floating_network_range)
+  $floating_ips_range = $::fuel_settings['floating_network_range']
 }
 $floating_hash = {}
 
@@ -92,8 +92,6 @@ if ($cinder) {
 } else {
   $is_cinder_node = false
 }
-
-$quantum_host = $management_vip
 
 ##REFACTORING NEEDED
 
@@ -180,9 +178,9 @@ class compact_controller (
     controller_public_addresses   => $controller_public_addresses,
     controller_internal_addresses => $controller_internal_addresses,
     internal_address              => $internal_address,
-    public_interface              => $::public_int,
     #internal_interface            => $::internal_int,
-    private_interface             => $::fuel_settings['fixed_interface'],
+    public_interface              => $::public_int,
+    private_interface             => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_interface']},
     internal_virtual_ip           => $::fuel_settings['management_vip'],
     public_virtual_ip             => $::fuel_settings['public_vip'],
     primary_controller            => $primary_controller,
@@ -209,6 +207,7 @@ class compact_controller (
     keystone_admin_tenant         => $access_hash[tenant],
     glance_db_password            => $glance_hash[db_password],
     glance_user_password          => $glance_hash[user_password],
+    glance_image_cache_max_size   => $glance_hash[image_cache_max_size],
     nova_db_password              => $nova_hash[db_password],
     nova_user_password            => $nova_hash[user_password],
     rabbit_password               => $rabbit_hash[password],
@@ -425,6 +424,12 @@ class virtual_ips () {
       include keystone::python
       package { 'python-amqp':
         ensure => present
+      }
+      $roles = node_roles($nodes_hash, $::fuel_settings['id'])
+      if member($roles, 'controller') or member($roles, 'primary-controller') {
+        $bind_host = $internal_address
+      } else {
+        $bind_host = false
       }
       class { 'openstack::cinder':
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${::fuel_settings['management_vip']}/cinder?charset=utf8",
