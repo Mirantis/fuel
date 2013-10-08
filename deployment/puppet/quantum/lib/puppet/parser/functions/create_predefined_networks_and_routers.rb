@@ -90,6 +90,7 @@ Puppet.debug("222")
       end
       # create quantum::network::setup resource
 Puppet.debug("333")
+Puppet.debug("net.to_s='#{net.to_s}'  res__quantum_net.to_s='#{res__quantum_net.to_s}'")
       p_res = Puppet::Parser::Resource.new(
         res__quantum_net.to_s,
         net.to_s,
