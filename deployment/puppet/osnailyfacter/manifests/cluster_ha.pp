@@ -5,6 +5,7 @@ class osnailyfacter::cluster_ha {
 if $::use_quantum {
   $novanetwork_params  = {}
   $quantum_config = sanitize_quantum_config($::fuel_settings, 'quantum_settings')
+debug__dump_to_file('/tmp/quantum_config-zz-ready.yaml', $quantum_config)
 } else {
   $quantum_hash = {}
   $quantum_params = {}
@@ -86,8 +87,6 @@ if ($cinder) {
 } else {
   $is_cinder_node = false
 }
-
-#$quantum_host            = $::fuel_settings['management_vip']
 
 ##REFACTORING NEEDED
 
@@ -208,7 +207,7 @@ class compact_controller (
     controller_public_addresses   => $controller_public_addresses,
     controller_internal_addresses => $controller_internal_addresses,
     internal_address              => $internal_address,
-    internal_interface            => $::internal_int,
+    #internal_interface            => $::internal_int,
     public_interface              => $::public_int,
     private_interface             => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_interface']},
     internal_virtual_ip           => $::fuel_settings['management_vip'],
@@ -248,7 +247,7 @@ class compact_controller (
     glance_backend                => $glance_backend,
     swift_proxies                 => $swift_proxies,
     quantum                       => $::use_quantum,
-    #quantum_config                => $quantum_config,
+    quantum_config                => $quantum_config,
     quantum_network_node          => $quantum_network_node,
     quantum_netnode_on_cnt        => $quantum_netnode_on_cnt,
     cinder                        => true,
@@ -447,7 +446,7 @@ class virtual_ips () {
         cinder_db_password     => $cinder_hash[db_password],
         db_host                => $::fuel_settings['management_vip'],
         quantum                => $::use_quantum,
-        #quantum_config         => $quantum_config,
+        quantum_config         => $quantum_config,
         use_syslog             => true,
         syslog_log_level       => $syslog_log_level,
         syslog_log_facility    => $syslog_log_facility_nova,

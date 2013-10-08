@@ -40,11 +40,11 @@ if $::fuel_settings['nodes'] {
     $use_ceph=false
   }
 
-  $base_syslog_hash     = $::fuel_settings['base_syslog']
-  $syslog_hash          = $::fuel_settings['syslog']
+  $base_syslog_hash = $::fuel_settings['base_syslog']
+  $syslog_hash      = $::fuel_settings['syslog']
 
   if !$::fuel_settings['savanna'] {
-    $savanna_hash={}
+    $savanna_hash = {}
   } else {
     $savanna_hash = $::fuel_settings['savanna']
   }
@@ -147,8 +147,8 @@ class advanced_node_netconfig {
 
 case $::operatingsystem {
   'redhat' : {
-          $queue_provider = 'qpid'
-          $custom_mysql_setup_class = 'pacemaker_mysql'
+    $queue_provider = 'qpid'
+    $custom_mysql_setup_class = 'pacemaker_mysql'
   }
   default: {
     $queue_provider='rabbitmq'
