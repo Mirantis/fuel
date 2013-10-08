@@ -101,6 +101,8 @@ class openstack::compute (
   $quantum_user_password         = false,
   $tenant_network_type           = 'gre',
   $segment_range                 = '1:4094',
+  # Ceilometer
+  $ceilometer_user_password       = 'ceilometer_pass',
   # nova compute configuration parameters
   $verbose                       = false,
   $debug               = false,
@@ -263,6 +265,25 @@ class openstack::compute (
     cinder            => $cinder,
     auth_host         => $service_endpoint,
     nova_rate_limits  => $nova_rate_limits,
+  }
+
+  # configure ceilometer compute agent
+
+  class { 'openstack::ceilometer':
+    verbose              => $verbose,
+    debug                => $debug,
+    rabbit_password      => $rabbit_password,
+    rabbit_userid        => $rabbit_user,
+    rabbit_port          => $rabbit_port,
+    rabbit_host          => $rabbit_nodes[0],
+    rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+    queue_provider       => $queue_provider,
+    qpid_password        => $qpid_password,
+    qpid_userid          => $qpid_user,
+    qpid_nodes           => $qpid_nodes,
+    keystone_host        => $service_endpoint,
+    keystone_password    => $ceilometer_user_password,
+    on_compute           => true,
   }
 
   # if the compute node should be configured as a multi-host
