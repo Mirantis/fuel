@@ -285,11 +285,11 @@ class openstack::nova::controller (
         syslog_log_facility  => $syslog_log_facility_quantum,
         syslog_log_level     => $syslog_log_level,
       }
-   }
-      class { 'nova::network::quantum':
-        quantum_config => $quantum_config,
-        quantum_connection_host => $service_endpoint
-      }
+    }
+    class { 'nova::network::quantum':
+      quantum_config => $quantum_config,
+      quantum_connection_host => $service_endpoint
+    }
   }
 
   # Configure nova-api
