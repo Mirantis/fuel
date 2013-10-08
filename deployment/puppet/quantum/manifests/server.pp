@@ -76,6 +76,15 @@ class quantum::server (
   # }
 
   anchor {'quantum-server-config-done':}
+
+  if $::fuel_settings['role'] == 'primary-controller' {
+    Anchor['quantum-server-config-done'] ->
+    class { 'quantum::network::predefined_netwoks':
+      quantum_config => $quantum_config,
+    } -> Anchor['quantum-server-done']
+    Service['quantum-server'] -> Class['quantum::network::predefined_netwoks']
+  }
+
   anchor {'quantum-server-done':}
   Anchor['quantum-server'] -> Anchor['quantum-server-done']
 }

@@ -36,8 +36,7 @@ class MrntQuantumNR
     "/24"
   end
 
-  #classmethod
-  def self.get_default_network_config()
+  def get_default_network_config()
     Marshal.load(Marshal.dump({
       :net => {
         :name         => nil,
@@ -81,12 +80,13 @@ class MrntQuantumNR
       network_config[:subnet][:cidr] = ncfg[:L3][:subnet]
       network_config[:subnet][:gateway] = ncfg[:L3][:gateway]
       network_config[:subnet][:nameservers] = ncfg[:L3][:nameservers]
-      floating_a = ncfg[:L3][:floating].split(/[\:\-]/)
-      if floating_a.size != 2
-        raise(Puppet::ParseError, "You must define floating range for network '#{net}' as pair of IP addresses, not a #{ncfg[:L3][:floating]}")
+      if ncfg[:L3][:floating]
+        floating_a = ncfg[:L3][:floating].split(/[\:\-]/)
+        if floating_a.size != 2
+          raise(Puppet::ParseError, "You must define floating range for network '#{net}' as pair of IP addresses, not a #{ncfg[:L3][:floating]}")
+        end
+        network_config[:subnet][:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
       end
-      network_config[:subnet][:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
-
       # create quantum_net resource
       p_res = Puppet::Parser::Resource.new(
         res__quantum_net.to_s,
@@ -98,7 +98,7 @@ class MrntQuantumNR
       network_config[:net].each do |k,v|
         v && p_res.set_parameter(k,v)
       end
-      compiler.add_resource(@scope, p_res)
+      @scope.compiler.add_resource(@scope, p_res)
       previous = p_res.to_s
       # create quantum_subnet resource
       p_res = Puppet::Parser::Resource.new(
@@ -107,11 +107,11 @@ class MrntQuantumNR
         :scope => @scope,
         :source => res__quantum_subnet
       )
-      previous && p_res.set_parameter(:require, [previous])
+      p_res.set_parameter(:require, [previous])
       network_config[:subnet].each do |k,v|
         v && p_res.set_parameter(k,v)
       end
-      compiler.add_resource(@scope, p_res)
+      @scope.compiler.add_resource(@scope, p_res)
       previous = p_res.to_s
     end
     # endpoints.each do |endpoint_name, endpoint_body|
