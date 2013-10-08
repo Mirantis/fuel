@@ -329,6 +329,7 @@ class openstack::controller (
     multi_host              => $multi_host,
     network_config          => $network_config,
     keystone_host           => $service_endpoint,
+    service_endpoint        => $service_endpoint,
     # Quantum
     quantum                 => $quantum,
     quantum_config          => $quantum_config,

@@ -5,11 +5,12 @@
 
 class nova::network::quantum (
   $quantum_config   = {},
+  $quantum_connection_host,
   $quantum_auth_strategy = 'keystone',
 ) {
 
   if $quantum_connection_host != 'localhost' {
-    nova_config { 'DEFAULT/quantum_connection_host': value => $quantum_config['server']['bind_host'] }
+    nova_config { 'DEFAULT/quantum_connection_host': value => $quantum_connection_host }
   }
 
   nova_config {
