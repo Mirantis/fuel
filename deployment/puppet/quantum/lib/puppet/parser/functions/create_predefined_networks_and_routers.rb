@@ -91,14 +91,12 @@ class MrntQuantumNR
         network_config[:subnet][:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
       end
       # create quantum_net resource
-Puppet::debug("222")
       p_res = Puppet::Parser::Resource.new(
         res__quantum_net,
         network_config[:net][:name],
         :scope => @scope,
         :source => res__quantum_net_type
       )
-Puppet::debug("333")
       previous && p_res.set_parameter(:require, [previous])
       network_config[:net].each do |k,v|
         v && p_res.set_parameter(k,v)
@@ -121,43 +119,7 @@ Puppet::debug("333")
       previous = p_res.to_s
       Puppet::debug("*** Resource '#{previous}' created succefful.")
     end
-    # endpoints.each do |endpoint_name, endpoint_body|
-    #   # create resource
-    #   resource = res_factory[:ifconfig][:resource]
-    #   p_resource = Puppet::Parser::Resource.new(
-    #       res_factory[:ifconfig][:name_of_resource],
-    #       endpoint_name,
-    #       :scope => self,
-    #       :source => resource
-    #   )
-    #   p_resource.set_parameter(:interface, endpoint_name)
-    #   # set ipaddresses
-    #   if endpoint_body[:IP].empty?
-    #     p_resource.set_parameter(:ipaddr, 'none')
-    #   elsif ['none','dhcp'].index(endpoint_body[:IP][0])
-    #     p_resource.set_parameter(:ipaddr, endpoint_body[:IP][0])
-    #   else
-    #     ipaddrs = []
-    #     endpoint_body[:IP].each do |i|
-    #       if i =~ /\/\d+$/
-    #         ipaddrs.insert(-1, i)
-    #       else
-    #         ipaddrs.insert(-1, "#{i}#{default_netmask()}")
-    #       end
-    #     end
-    #     p_resource.set_parameter(:ipaddr, ipaddrs)
-    #   end
-    #   #set another (see L23network::l3::ifconfig DOC) parametres
-    #   endpoint_body[:properties].each do |k,v|
-    #     p_resource.set_parameter(k,v)
-    #   end
-    #   p_resource.set_parameter(:require, [previous]) if previous
-    #   resource.instantiate_resource(self, p_resource)
-    #   compiler.add_resource(self, p_resource)
-    #   transformation_success.insert(-1, "endpoint(#{endpoint_name})")
-    #   previous = p_resource.to_s
-    # end
-    # return transformation_success.join(" -> ")
+
   end
 end
 
