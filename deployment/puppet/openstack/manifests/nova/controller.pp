@@ -36,6 +36,7 @@ class openstack::nova::controller (
   $floating_range            = false,
   $internal_address,
   $admin_address,
+  $service_endpoint          = '127.0.0.1',
   $auto_assign_floating_ip   = false,
   $create_networks           = true,
   $num_networks              = 1,
@@ -286,7 +287,8 @@ class openstack::nova::controller (
       }
    }
       class { 'nova::network::quantum':
-        quantum_config => $quantum_config
+        quantum_config => $quantum_config,
+        quantum_connection_host => $service_endpoint
       }
   }
 
