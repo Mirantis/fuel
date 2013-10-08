@@ -36,11 +36,20 @@ class MrntQuantumNR
     "/24"
   end
 
+  def get_default_router_config()
+    Marshal.load(Marshal.dump({
+      :name    => nil,
+      :tenant  => 'admin',
+      :int_subnets => nil,
+      :ext_net     => nil,
+    }))
+  end
+
   def get_default_network_config()
     Marshal.load(Marshal.dump({
       :net => {
         :name         => nil,
-        :tenant       => nil,
+        :tenant       => 'admin',
         :network_type => nil,
         :physnet      => nil,
         :router_ext   => nil,
@@ -49,7 +58,7 @@ class MrntQuantumNR
       },
       :subnet => {
         :name    => nil,
-        :tenant  => nil,
+        :tenant  => 'admin',
         :network => nil,  # Network id or name this subnet belongs to
         :cidr    => nil,  # CIDR of subnet to create
         :gateway => nil,
@@ -69,16 +78,14 @@ class MrntQuantumNR
     previous = nil
     @quantum_config[:predefined_networks].each do |net, ncfg|
       # config network resources parameters
-      network_config = self.get_default_network_config()
+      network_config = get_default_network_config()
       network_config[:net][:name] = net.to_s
-      network_config[:net][:tenant] = @quantum_config[:keystone][:admin_tenant_name]
       network_config[:net][:network_type] = ncfg[:L2][:network_type]
       network_config[:net][:physnet] = ncfg[:L2][:physnet]
       network_config[:net][:router_ext] = ncfg[:L2][:router_ext]
       network_config[:net][:shared] = ncfg[:shared]
       network_config[:net][:segment_id] = ncfg[:L2][:segment_id]
       network_config[:subnet][:name] = "#{net.to_s}__subnet"
-      network_config[:subnet][:tenant] = @quantum_config[:keystone][:admin_tenant_name]
       network_config[:subnet][:network] = network_config[:net][:name]
       network_config[:subnet][:cidr] = ncfg[:L3][:subnet]
       network_config[:subnet][:gateway] = ncfg[:L3][:gateway]
@@ -119,7 +126,32 @@ class MrntQuantumNR
       previous = p_res.to_s
       Puppet::debug("*** Resource '#{previous}' created succefful.")
     end
-
+    # create pre-defined routers
+    if previous # if no networks -- we don't create any router
+      @quantum_config[:predefined_routers].each do |rou, rcfg|
+        next if rcfg[:virtual]
+        # config router
+        router_config = get_default_router_config()
+        router_config[:name] = rou.to_s
+        rcfg[:tenant] && router_config[:tenant] = rcfg[:tenant]
+        router_config[:ext_net] = rcfg[:external_network]
+        router_config[:int_subnets] = rcfg[:internal_networks]
+        # create resource
+        p_res = Puppet::Parser::Resource.new(
+          res__quantum_router,
+          router_config[:name],
+          :scope => @scope,
+          :source => res__quantum_router_type
+        )
+        p_res.set_parameter(:require, [previous])
+        router_config.each do |k,v|
+          v && p_res.set_parameter(k,v)
+        end
+        @scope.compiler.add_resource(@scope, p_res)
+        previous = p_res.to_s
+        Puppet::debug("*** Resource '#{previous}' created succefful.")
+      end
+    end
   end
 end
 
