@@ -60,60 +60,84 @@ class MrntQuantumNR
   end
 
   def create_resources()
-    res__quantum_net = Puppet::Type.type(:quantum_net)
-    res__quantum_subnet = Puppet::Type.type(:quantum_subnet)
-    res__quantum_router = Puppet::Type.type(:quantum_router)
+Puppet.debug("111")
+    #res__quantum_net = Puppet::Type.type(:quantum_net)
+    res__quantum_net = @scope.find_definition('quantum::network::setup')
+    #res__quantum_subnet = Puppet::Type.type(:quantum_subnet)
+    #res__quantum_router = Puppet::Type.type(:quantum_router)
     previous = nil
+Puppet.debug("222")
     @quantum_config[:predefined_networks].each do |net, ncfg|
       # config network resources parameters
-      network_config = self.get_default_network_config()
-      network_config[:net][:name] = net.to_s
-      network_config[:net][:tenant] = @quantum_config[:keystone][:admin_tenant_name]
-      network_config[:net][:network_type] = ncfg[:L2][:network_type]
-      network_config[:net][:physnet] = ncfg[:L2][:physnet]
-      network_config[:net][:router_ext] = ncfg[:L2][:router_ext]
-      network_config[:net][:shared] = ncfg[:shared]
-      network_config[:net][:segment_id] = ncfg[:L2][:segment_id]
-      network_config[:subnet][:name] = "#{net.to_s}__subnet"
-      network_config[:subnet][:tenant] = @quantum_config[:keystone][:admin_tenant_name]
-      network_config[:subnet][:network] = network_config[:net][:name]
-      network_config[:subnet][:cidr] = ncfg[:L3][:subnet]
-      network_config[:subnet][:gateway] = ncfg[:L3][:gateway]
-      network_config[:subnet][:nameservers] = ncfg[:L3][:nameservers]
+      network_config = {
+        :tenant_name  => @quantum_config[:keystone][:admin_tenant_name],
+        :network_type => ncfg[:L2][:network_type],
+        :physnet      => ncfg[:L2][:physnet],
+        :shared       => ncfg[:shared],
+        :segment_id   => ncfg[:L2][:segment_id],
+        :subnet_name  => "#{net}__subnet",
+        :subnet_cidr  => ncfg[:L3][:subnet],
+        :subnet_gw    => ncfg[:L3][:gateway],
+        :nameservers  => ncfg[:L3][:nameservers],
+        :router_external => ncfg[:L2][:router_ext],
+      }
       if ncfg[:L3][:floating]
-        floating_a = ncfg[:L3][:floating].split(/[\:\-]/)
+        floating_a = ncfg[:L3][:floating].split(/[\:\-\,]/)
         if floating_a.size != 2
           raise(Puppet::ParseError, "You must define floating range for network '#{net}' as pair of IP addresses, not a #{ncfg[:L3][:floating]}")
         end
-        network_config[:subnet][:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
+        network_config[:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
       end
-      # create quantum_net resource
+      # create quantum::network::setup resource
+Puppet.debug("333")
       p_res = Puppet::Parser::Resource.new(
         res__quantum_net.to_s,
-        network_config[:net][:name],
+        net.to_s,
         :scope => @scope,
         :source => res__quantum_net
       )
+Puppet.debug("444")
       previous && p_res.set_parameter(:require, [previous])
-      network_config[:net].each do |k,v|
-        v && p_res.set_parameter(k,v)
+Puppet.debug("555")
+      network_config.each do |k,v|
+        v && p_res.set_parameter(k, v)
       end
+      res__quantum_net.instantiate_resource(@scope, p_res)
       @scope.compiler.add_resource(@scope, p_res)
+Puppet.debug("666")
       previous = p_res.to_s
-      # create quantum_subnet resource
-      p_res = Puppet::Parser::Resource.new(
-        res__quantum_subnet.to_s,
-        network_config[:subnet][:name],
-        :scope => @scope,
-        :source => res__quantum_subnet
-      )
-      p_res.set_parameter(:require, [previous])
-      network_config[:subnet].each do |k,v|
-        v && p_res.set_parameter(k,v)
-      end
-      @scope.compiler.add_resource(@scope, p_res)
-      previous = p_res.to_s
+Puppet.debug("777")
+      # # create quantum_subnet resource
+      # p_res = Puppet::Parser::Resource.new(
+      #   res__quantum_subnet.to_s,
+      #   network_config[:subnet][:name],
+      #   :scope => @scope,
+      #   :source => res__quantum_subnet
+      # )
+      # p_res.set_parameter(:require, [previous])
+      # network_config[:subnet].each do |k,v|
+      #   v && p_res.set_parameter(k,v)
+      # end
+      # @scope.compiler.add_resource(@scope, p_res)
+      # previous = p_res.to_s
     end
+
+
+# define quantum::network::setup (
+#   $tenant_name     = 'admin',
+#   $physnet         = undef,
+#   $network_type    = 'gre',
+#   $segment_id      = undef,
+#   $router_external = 'False',
+#   $subnet_name     = 'subnet1',
+#   $subnet_cidr     = '10.47.27.0/24',
+#   $subnet_gw       = undef,
+#   $alloc_pool      = undef,
+#   $nameservers     = undef,
+#   $shared          = 'False',
+# ) {
+
+
     # endpoints.each do |endpoint_name, endpoint_body|
     #   # create resource
     #   resource = res_factory[:ifconfig][:resource]
