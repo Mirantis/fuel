@@ -41,10 +41,8 @@ class mysql::server (
     Class['mysql::server'] -> Class['mysql::config']
     Class['mysql']         -> Class['mysql::server']
 
-    class{ 'mysql::config':
-      mysql_skip_name_resolve => $mysql_skip_name_resolve,
-    }
-    
+    $config_hash['skip_name_resolve'] = $mysql_skip_name_resolve    
+
     create_resources( 'class', { 'mysql::config' => $config_hash })
 #    exec { "debug-mysql-server-installation" :
 #      command     => "/usr/bin/yum -d 10 -e 10 -y install MySQL-server-5.5.28-6 2>&1 | tee mysql_install.log",

@@ -50,7 +50,7 @@ class mysql::config(
   $use_syslog        = false,
   $custom_setup_class = undef,
   $server_id         = $mysql::params::server_id,
-  $mysql_skip_name_resolve = false,
+  $skip_name_resolve = false,
 ) inherits mysql::params {
 
   if $custom_setup_class != "pacemaker_mysql" {
