@@ -48,14 +48,6 @@ class Puppet::Provider::Quantum < Puppet::Provider
     @quantum_file
   end
 
-  # def self.quantum_hash
-  #   @quantum_hash ||= build_quantum_hash
-  # end
-
-  # def quantum_hash
-  #   self.class.quantum_hash
-  # end
-
   def self.auth_quantum(*args)
     #todo: Rewrite, using ruby-openstack
     begin

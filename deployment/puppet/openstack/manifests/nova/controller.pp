@@ -49,8 +49,6 @@ class openstack::nova::controller (
   $quantum_config            = {},
   $quantum_network_node      = false,
   $quantum_netnode_on_cnt    = false,
-  $segment_range             = '1:4094',
-  $tenant_network_type       = 'gre',
   # Nova
   $nova_db_user              = 'nova',
   $nova_db_dbname            = 'nova',

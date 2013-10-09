@@ -3,31 +3,22 @@ class osnailyfacter::cluster_ha {
   ##PARAMETERS DERIVED FROM YAML FILE
 
   if $::use_quantum {
-    $novanetwork_params  = {}
+    $novanetwork_params = {}
     $quantum_config = sanitize_quantum_config($::fuel_settings, 'quantum_settings')
   } else {
-    $quantum_hash = {}
-    $quantum_params = {}
-    $quantum_config = {}
-    $novanetwork_params  = $::fuel_settings['novanetwork_parameters']
-    $network_size         = $novanetwork_params['network_size']
-    $num_networks         = $novanetwork_params['num_networks']
-    $vlan_start           = $novanetwork_params['vlan_start']
+    $quantum_config     = {}
+    $novanetwork_params = $::fuel_settings['novanetwork_parameters']
+    $network_size       = $novanetwork_params['network_size']
+    $num_networks       = $novanetwork_params['num_networks']
+    $vlan_start         = $novanetwork_params['vlan_start']
   }
 
-  if $cinder_nodes {
-    $cinder_nodes_array   = $::fuel_settings['cinder_nodes']
-  }
-  else {
-    $cinder_nodes_array = []
-  }
+  # All hash assignment from a dimensional hash must be in the local
+  # scope or they will be undefined (don't move to site.pp)
 
-  # All hash assignment from a dimensional hash must be in the local scope or they will
-  #  be undefined (don't move to site.pp)
-
-  #These aren't always present.
+  # These aren't always present.
   if !$::fuel_settings['savanna'] {
-    $savanna_hash={}
+    $savanna_hash = {}
   } else {
     $savanna_hash = $::fuel_settings['savanna']
   }
@@ -90,22 +81,6 @@ class osnailyfacter::cluster_ha {
 
   $vip_keys = keys($vips)
 
-  if ($::fuel_settings['cinder']) {
-    if (member($cinder_nodes_array,'all')) {
-      $is_cinder_node = true
-    } elsif (member($cinder_nodes_array,$::hostname)) {
-      $is_cinder_node = true
-    } elsif (member($cinder_nodes_array,$internal_address)) {
-      $is_cinder_node = true
-    } elsif ($node[0]['role'] =~ /controller/ ) {
-      $is_cinder_node = member($cinder_nodes_array,'controller')
-    } else {
-      $is_cinder_node = member($cinder_nodes_array,$node[0]['role'])
-    }
-  } else {
-    $is_cinder_node = false
-  }
-
   #$quantum_host            = $::fuel_settings['management_vip']
 
   ##REFACTORING NEEDED
@@ -121,7 +96,6 @@ class osnailyfacter::cluster_ha {
   $controller_node_public  = $::fuel_settings['public_vip']
   $controller_node_address = $::fuel_settings['management_vip']
   $mountpoints = filter_hash($mp_hash,'point')
-  $quantum_metadata_proxy_shared_secret = $quantum_config['metadata']['metadata_proxy_shared_secret']
 
   $quantum_gre_bind_addr = $::internal_address
 
