@@ -7,6 +7,9 @@ nice    = 0
 <% if use_syslog -%>
 syslog
 <% end -%>
+<% if skip_name_resolve -%>
+skip-name-resolve
+<% end -%>
 [mysqld]
 user    = mysql
 #pid-file  = <%= pidfile %>
@@ -46,6 +49,9 @@ log-bin=mysql-bin
 relay-log=mysqld-relay-bin
 replicate-ignore-db=mysql
 <% end %>
+<% if skip_name_resolve -%>
+skip-name-resolve
+<% end -%>
 [mysqldump]
 quick
 quote-names
