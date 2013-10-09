@@ -161,8 +161,6 @@ class openstack::controller (
   $quantum_config          = {},
   $quantum_network_node    = false,
   $quantum_netnode_on_cnt  = false,
-  $segment_range           = '1:4094',
-  $tenant_network_type     = 'gre',
   $enabled                 = true,
   $api_bind_address        = '0.0.0.0',
   $service_endpoint        = '127.0.0.1',
@@ -337,8 +335,6 @@ class openstack::controller (
     quantum_config          => $quantum_config,
     quantum_network_node    => $quantum_network_node,
     quantum_netnode_on_cnt  => $quantum_netnode_on_cnt,
-    segment_range           => $segment_range,
-    tenant_network_type     => $tenant_network_type,
     # Nova
     nova_user_password      => $nova_user_password,
     nova_db_password        => $nova_db_password,

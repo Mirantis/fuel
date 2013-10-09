@@ -36,8 +36,6 @@ if $::fuel_settings['nodes'] {
   $base_syslog_hash     = $::fuel_settings['base_syslog']
   $syslog_hash          = $::fuel_settings['syslog']
 
-
-  $use_quantum = $::fuel_settings['quantum']
   if (!empty(filter_nodes($::fuel_settings['nodes'], 'role', 'ceph-osd')) or
     $::fuel_settings['storage']['volumes_ceph'] or
     $::fuel_settings['storage']['images_ceph'] or
@@ -48,7 +46,7 @@ if $::fuel_settings['nodes'] {
     $use_ceph = false
   }
 
-
+  $use_quantum = $::fuel_settings['quantum']
   if $use_quantum {
     prepare_network_config($::fuel_settings['network_scheme'])
     $public_int   = get_network_role_property('ex', 'interface')
@@ -118,8 +116,8 @@ $cinder_rate_limits = {
 
 ###
 class advanced_node_netconfig {
-    $sdn = generate_network_config()
-    notify {"SDN: ${sdn}": }
+  $sdn = generate_network_config()
+  notify {"SDN: ${sdn}": }
 }
 
 case $::operatingsystem {
@@ -137,9 +135,9 @@ class os_common {
   class {"l23network::hosts_file": stage => 'netconfig', nodes => $nodes_hash }
   class {'l23network': use_ovs=>$use_quantum, stage=> 'netconfig'}
   if $use_quantum {
-      class {'advanced_node_netconfig': stage => 'netconfig' }
+    class {'advanced_node_netconfig': stage => 'netconfig' }
   } else {
-      class {'osnailyfacter::network_setup': stage => 'netconfig'}
+    class {'osnailyfacter::network_setup': stage => 'netconfig'}
   }
 
   class {'openstack::firewall': stage => 'openstack-firewall'}
