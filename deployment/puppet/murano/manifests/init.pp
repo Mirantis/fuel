@@ -9,7 +9,7 @@ class murano (
   $murano_heat_auth_url                 = 'http://127.0.0.1:5000/v2.0',
   # rabbit
   $murano_rabbit_host                   = '127.0.0.1',
-  $murano_rabbit_port                   = '5673',
+  $murano_rabbit_port                   = '55572',
   $murano_rabbit_ssl                    = 'False',
   $murano_rabbit_ca_certs               = '',
   $murano_rabbit_login                  = 'murano',
@@ -112,6 +112,13 @@ class murano (
     collect_static_script => '/usr/share/openstack-dashboard/manage.py',
   }
 
-  Class['mysql::server'] -> Class['murano::db::mysql'] -> Class['murano::conductor'] -> Class['murano::api'] -> Class['murano::dashboard']
+  class { 'murano::rabbitmq' :
+    rabbit_user        => $murano_rabbit_login,
+    rabbit_password    => $murano_rabbit_password,
+    rabbit_vhost       => $murano_rabbit_virtual_host,
+    rabbitmq_main_port => $murano_rabbit_port,
+  }
+
+  Class['mysql::server'] -> Class['murano::db::mysql'] -> Class['murano::rabbitmq'] -> Class['murano::conductor'] -> Class['murano::api'] -> Class['murano::dashboard']
 
 }
