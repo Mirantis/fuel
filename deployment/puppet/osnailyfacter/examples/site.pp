@@ -43,9 +43,11 @@ if $::fuel_settings['nodes'] {
     $::fuel_settings['storage']['images_ceph'] or
     $::fuel_settings['storage']['objects_ceph']
   ) {
-    $use_ceph = true
+    $use_ceph     = true
+    $token_format = 'PKI'
   } else {
     $use_ceph = false
+    $token_format = 'UUID'
   }
 
 
