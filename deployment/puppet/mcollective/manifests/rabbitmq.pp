@@ -19,7 +19,8 @@ class mcollective::rabbitmq (
   $stompport       = "61613",
   $management_port = "55672",
   $stomp           = false,
-  $vhost           = "mcollective",) {
+  $vhost           = "mcollective",
+  $disk_free_limit = "1000000000",) {
   
   define access_to_rabbitmq_port ($port, $protocol = 'tcp') {
     $rule = "-p $protocol -m state --state NEW -m $protocol --dport $port -j ACCEPT"
@@ -59,6 +60,7 @@ class mcollective::rabbitmq (
     config_stomp       => true,
     stomp_port         => $stompport,
     node_ip_address    => 'UNSET',
+    disk_free_limit    => $disk_free_limit,
   }
 
   if $stomp {
