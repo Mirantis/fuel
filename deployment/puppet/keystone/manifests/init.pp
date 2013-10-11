@@ -273,8 +273,9 @@ class keystone(
     exec { 'keystone-manage pki_setup':
       path        => '/usr/bin',
       user        => 'keystone',
-      refreshonly => true,
+      creates     => '/etc/keystone/ssl',
     }
+
   }
 
   if $enabled {
