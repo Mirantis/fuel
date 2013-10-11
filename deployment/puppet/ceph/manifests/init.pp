@@ -102,6 +102,8 @@ class ceph (
         Class['ceph::libnss'] ->
         Class[['ceph::keystone', 'ceph::radosgw']] ~>
         Service['ceph']
+
+        Class['::keystone'] -> Class[['ceph::keystone', 'ceph::radosgw']]
       }
     }
 

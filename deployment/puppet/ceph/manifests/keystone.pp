@@ -6,18 +6,16 @@ class ceph::keystone (
   $rgw_port  = $::ceph::rgw_port,
   $use_ssl   = $::ceph::use_ssl,
   $directory = $::ceph::rgw_nss_db_path,
+  $httpd_ssl = $::ceph::params::dir_httpd_ssl,
 ) {
   if ($use_ssl) {
-    exec {'creating OpenSSL certificates':
-      command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | \
-      certutil -d ${directory} -A -n ca -t 'TCu,Cu,Tuw' && openssl x509  \
-      -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | \
-      certutil -A -d ${directory} -n signing_cert -t 'P,P,P'",
-      require => [File[$directory], Package[$::ceph::params::package_libnss]]
-    } ->
     exec {'copy OpenSSL certificates':
       command => "scp -r ${directory}/* ${::ceph::primary_mon}:${directory} && \
                   ssh ${::ceph::primary_mon} '/etc/init.d/radosgw restart'",
+    }
+    exec {"generate SSL certificate on ${name}":
+      command => "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${httpd_ssl}apache.key -out ${httpd_ssl}apache.crt -subj '/C=RU/ST=Russia/L=Saratov/O=Mirantis/OU=CA/CN=localhost'",
+      returns => [0,1],
     }
   }
 
