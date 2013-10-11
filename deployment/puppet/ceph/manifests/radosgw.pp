@@ -9,7 +9,6 @@ define apache::loadmodule () {
 # deploys Ceph radosgw as an Apache FastCGI application
 class ceph::radosgw (
   $keyring_path     = '/etc/ceph/keyring.radosgw.gateway',
-  $httpd_ssl        = $::ceph::params::dir_httpd_ssl,
   $radosgw_auth_key = 'client.radosgw.gateway',
   $rgw_user         = $::ceph::params::user_httpd,
 
@@ -28,15 +27,13 @@ class ceph::radosgw (
   $rgw_dns_name                     = $::ceph::rgw_dns_name,
   $rgw_print_continue               = $::ceph::rgw_print_continue,
   $rgw_nss_db_path                  = $::ceph::rgw_nss_db_path,
-
-  $use_ssl   = $::ceph::use_ssl,
 ) {
 
   $dir_httpd_root = '/var/www/radosgw'
 
   package { [$::ceph::params::package_radosgw,
              $::ceph::params::package_fastcgi,
-             $::ceph::params::package_modssl
+             $::ceph::params::package_modssl,
             ]:
     ensure  => 'latest',
   }
@@ -80,6 +77,7 @@ class ceph::radosgw (
     'client.radosgw.gateway/rgw_data':                         value => $rgw_data;
     'client.radosgw.gateway/rgw_dns_name':                     value => $rgw_dns_name;
     'client.radosgw.gateway/rgw_print_continue':               value => $rgw_print_continue;
+    'client.radosgw.gateway/nss db path':                      value => $rgw_nss_db_path;
   }
 
 # TODO: CentOS conversion
@@ -102,18 +100,9 @@ class ceph::radosgw (
          $::ceph::rgw_data,
          $dir_httpd_root,
         ]:
-    ensure => 'directory',
-    mode   => '0755',
-  }
-
-  if ($use_ssl) {
-    exec {"generate SSL certificate on ${name}":
-      command => "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${httpd_ssl}apache.key -out ${httpd_ssl}apache.crt -subj '/C=RU/ST=Russia/L=Saratov/O=Mirantis/OU=CA/CN=localhost'",
-      returns => [0,1],
-    }
-    ceph_conf{
-      'client.radosgw.gateway/nss db path': value => $rgw_nss_db_path;
-    }
+    ensure  => 'directory',
+    mode    => '0755',
+    recurse => true,
   }
 
   file { "${::ceph::params::dir_httpd_sites}/rgw.conf":
@@ -124,6 +113,22 @@ class ceph::radosgw (
     content => template('ceph/s3gw.fcgi.erb'),
     mode    => '0755',
   }
+
+  file {"${::ceph::params::dir_httpd_sites}/fastcgi.conf":
+    content => template('ceph/fastcgi.conf.erb'),
+    mode    => '0755',
+    }
+
+  # This creates the signing certs used by radosgw to check cert revocation
+  #   status from keystone
+  exec {'create nss db signing certs':
+    command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | \
+       certutil -d ${rgw_nss_db_path} -A -n ca -t 'TCu,Cu,Tuw' && \ 
+       openssl x509 -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | \
+       certutil -A -d ${rgw_nss_db_path} -n signing_cert -t 'P,P,P'",
+    user    => $rgw_user,
+  } ->
+
 
   exec { "ceph-create-radosgw-keyring-on ${name}":
     command => "ceph-authtool --create-keyring ${keyring_path}",
@@ -145,14 +150,18 @@ class ceph::radosgw (
   }
 
   Ceph_conf <||> ->
-  Package[[$::ceph::params::package_httpd,
-           $::ceph::params::package_radosgw,]] ->
+  Package[[$::ceph::params::package_radosgw,
+           $::ceph::params::package_fastcgi,
+           $::ceph::params::package_modssl,]] ->
   File[["${::ceph::params::dir_httpd_sites}/rgw.conf",
-       $::ceph::params::dir_httpd_ssl,
-       "${::ceph::rgw_data}/ceph-radosgw.gateway",
-       $::ceph::rgw_data,
-       $dir_httpd_root,
-       $rgw_log_file,]] ->
+        "${::ceph::params::dir_httpd_sites}/fastcgi.conf",
+        "${dir_httpd_root}/s3gw.fcgi",
+        $::ceph::params::dir_httpd_ssl,
+        "${::ceph::rgw_data}/ceph-radosgw.gateway",
+        $::ceph::rgw_data,
+        $dir_httpd_root,
+        $rgw_log_file,]] ->
+  Exec['create nss db signing certs'] ->
   Exec["ceph-create-radosgw-keyring-on ${name}"] ->
   File[$keyring_path] ->
   Exec["ceph-generate-key-on ${name}"] ->
