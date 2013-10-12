@@ -18,14 +18,17 @@ class ceph::radosgw (
   $rgw_keyring_path                 = $::ceph::rgw_keyring_path,
   $rgw_socket_path                  = $::ceph::rgw_socket_path,
   $rgw_log_file                     = $::ceph::rgw_log_file,
+  $rgw_data                         = $::ceph::rgw_data,
+  $rgw_dns_name                     = $::ceph::rgw_dns_name,
+  $rgw_print_continue               = $::ceph::rgw_print_continue,
+
+  #rgw Keystone settings
+  $rgw_use_keystone                 = $::ceph::rgw_use_keystone,
   $rgw_keystone_url                 = $::ceph::rgw_keystone_url,
   $rgw_keystone_admin_token         = $::ceph::rgw_keystone_admin_token,
   $rgw_keystone_token_cache_size    = $::ceph::rgw_keystone_token_cache_size,
   $rgw_keystone_accepted_roles      = $::ceph::rgw_keystone_accepted_roles,
   $rgw_keystone_revocation_interval = $::ceph::rgw_keystone_revocation_interval,
-  $rgw_data                         = $::ceph::rgw_data,
-  $rgw_dns_name                     = $::ceph::rgw_dns_name,
-  $rgw_print_continue               = $::ceph::rgw_print_continue,
   $rgw_nss_db_path                  = $::ceph::rgw_nss_db_path,
 ) {
 
@@ -69,15 +72,29 @@ class ceph::radosgw (
     'client.radosgw.gateway/rgw_socket_path':                  value => $rgw_socket_path;
     'client.radosgw.gateway/log_file':                         value => $rgw_log_file;
     'client.radosgw.gateway/user':                             value => $rgw_user;
-    'client.radosgw.gateway/rgw_keystone_url':                 value => $rgw_keystone_url;
-    'client.radosgw.gateway/rgw_keystone_admin_token':         value => $rgw_keystone_admin_token;
-    'client.radosgw.gateway/rgw_keystone_accepted_roles':      value => $rgw_keystone_accepted_roles;
-    'client.radosgw.gateway/rgw_keystone_token_cache_size':    value => $rgw_keystone_token_cache_size;
-    'client.radosgw.gateway/rgw_keystone_revocation_interval': value => $rgw_keystone_revocation_interval;
     'client.radosgw.gateway/rgw_data':                         value => $rgw_data;
     'client.radosgw.gateway/rgw_dns_name':                     value => $rgw_dns_name;
     'client.radosgw.gateway/rgw_print_continue':               value => $rgw_print_continue;
     'client.radosgw.gateway/nss db path':                      value => $rgw_nss_db_path;
+  }
+
+  if ($rgw_use_keystone) {
+    ceph_conf {
+      'client.radosgw.gateway/rgw_keystone_url':                 value => $rgw_keystone_url;
+      'client.radosgw.gateway/rgw_keystone_admin_token':         value => $rgw_keystone_admin_token;
+      'client.radosgw.gateway/rgw_keystone_accepted_roles':      value => $rgw_keystone_accepted_roles;
+      'client.radosgw.gateway/rgw_keystone_token_cache_size':    value => $rgw_keystone_token_cache_size;
+      'client.radosgw.gateway/rgw_keystone_revocation_interval': value => $rgw_keystone_revocation_interval;
+    }
+  # This creates the signing certs used by radosgw to check cert revocation
+  #   status from keystone
+    exec {'create nss db signing certs':
+      command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | \
+        certutil -d ${rgw_nss_db_path} -A -n ca -t 'TCu,Cu,Tuw' && \ 
+        openssl x509 -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | \
+        certutil -A -d ${rgw_nss_db_path} -n signing_cert -t 'P,P,P'",
+      user    => $rgw_user,
+    }
   }
 
 # TODO: CentOS conversion
@@ -119,17 +136,6 @@ class ceph::radosgw (
     mode    => '0755',
     }
 
-  # This creates the signing certs used by radosgw to check cert revocation
-  #   status from keystone
-  exec {'create nss db signing certs':
-    command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | \
-       certutil -d ${rgw_nss_db_path} -A -n ca -t 'TCu,Cu,Tuw' && \ 
-       openssl x509 -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | \
-       certutil -A -d ${rgw_nss_db_path} -n signing_cert -t 'P,P,P'",
-    user    => $rgw_user,
-  } ->
-
-
   exec { "ceph-create-radosgw-keyring-on ${name}":
     command => "ceph-authtool --create-keyring ${keyring_path}",
     creates => $keyring_path,
@@ -161,7 +167,6 @@ class ceph::radosgw (
         $::ceph::rgw_data,
         $dir_httpd_root,
         $rgw_log_file,]] ->
-  Exec['create nss db signing certs'] ->
   Exec["ceph-create-radosgw-keyring-on ${name}"] ->
   File[$keyring_path] ->
   Exec["ceph-generate-key-on ${name}"] ->
@@ -169,4 +174,9 @@ class ceph::radosgw (
   Exec["ceph-add-to-ceph-keyring-entries-on ${name}"] ~>
   Service ['httpd'] ~>
   Service['radosgw']
+
+  if ($rgw_use_keystone) {
+      Exec['create nss db signing certs'] ->
+      Exec["ceph-create-radosgw-keyring-on ${name}"]
+  }
 }
