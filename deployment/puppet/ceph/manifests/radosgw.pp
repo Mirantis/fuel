@@ -36,9 +36,15 @@ class ceph::radosgw (
 
   package { [$::ceph::params::package_radosgw,
              $::ceph::params::package_fastcgi,
-             $::ceph::params::package_modssl,
             ]:
     ensure  => 'latest',
+  }
+
+  if ($::osfamily == "RedHat") {
+    package {$::ceph::params::package_modssl:
+      ensure  => 'latest',
+      notify  => Service['httpd']
+    }
   }
 
   service { 'radosgw':
@@ -97,15 +103,17 @@ class ceph::radosgw (
     }
   }
 
-# TODO: CentOS conversion
-#  apache::loadmodule{['rewrite', 'fastcgi', 'ssl']: }
-
-#  file {"${::ceph::params::dir_httpd_conf}/httpd.conf":
-#    ensure  => 'present',
-#    content => "ServerName ${fqdn}",
-#    notify  => Service['httpd'],
-#    require => Package[$::ceph::params::package_httpd],
-#  }
+  if ($::osfamily == 'Debian'){
+    #a2mod is provided by horizon module
+    a2mod { ['rewrite', 'ssl', 'fastcgi']: }
+    
+    File["${::ceph::params::dir_httpd_sites}/rgw.conf"] ->
+    file {'/etc/apache2/sites-enabled/rgw.conf':
+      ensure => link,
+      target => "${::ceph::params::dir_httpd_sites}/rgw.conf",
+      notify => Service['httpd'],
+    }
+  }
 
   file {$rgw_log_file:
     ensure => present,
@@ -157,8 +165,7 @@ class ceph::radosgw (
 
   Ceph_conf <||> ->
   Package[[$::ceph::params::package_radosgw,
-           $::ceph::params::package_fastcgi,
-           $::ceph::params::package_modssl,]] ->
+           $::ceph::params::package_fastcgi,]] ->
   File[["${::ceph::params::dir_httpd_sites}/rgw.conf",
         "${::ceph::params::dir_httpd_sites}/fastcgi.conf",
         "${dir_httpd_root}/s3gw.fcgi",
