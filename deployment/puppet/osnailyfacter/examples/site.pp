@@ -43,9 +43,13 @@ if $::fuel_settings['nodes'] {
     $::fuel_settings['storage']['images_ceph'] or
     $::fuel_settings['storage']['objects_ceph']
   ) {
-    $use_ceph = true
+    $use_ceph     = true
+    $token_format = $::osfamily ? { 'RedHat'=>'UUID', default=>'PKI' }
+    # PKI is needed for CEPH RadosGW < - > Keystone integration which
+    #  doesn't currently work in Python 2.6 distros (RedHat)
   } else {
     $use_ceph = false
+    $token_format = 'UUID'
   }
 
 
