@@ -36,9 +36,15 @@ class ceph::radosgw (
 
   package { [$::ceph::params::package_radosgw,
              $::ceph::params::package_fastcgi,
-             $::ceph::params::package_modssl,
             ]:
     ensure  => 'latest',
+  }
+
+  if ($::osfamily == "RedHat") {
+    package {$::ceph::params::package_modssl:
+      ensure  => 'latest',
+      notify  => Service['httpd']
+    }
   }
 
   service { 'radosgw':
@@ -157,8 +163,7 @@ class ceph::radosgw (
 
   Ceph_conf <||> ->
   Package[[$::ceph::params::package_radosgw,
-           $::ceph::params::package_fastcgi,
-           $::ceph::params::package_modssl,]] ->
+           $::ceph::params::package_fastcgi,]] ->
   File[["${::ceph::params::dir_httpd_sites}/rgw.conf",
         "${::ceph::params::dir_httpd_sites}/fastcgi.conf",
         "${dir_httpd_root}/s3gw.fcgi",
