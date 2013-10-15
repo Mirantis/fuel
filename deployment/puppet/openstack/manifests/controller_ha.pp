@@ -138,6 +138,7 @@ class openstack::controller_ha (
    $use_unicast_corosync    = false,
    $ha_mode                 = true,
    $nameservers             = undef,
+   $token_format            = 'UUID',
  ) {
 
     # haproxy
@@ -278,6 +279,7 @@ class openstack::controller_ha (
       keystone_db_password    => $keystone_db_password,
       keystone_admin_token    => $keystone_admin_token,
       keystone_admin_tenant   => $keystone_admin_tenant,
+      token_format            => $token_format,
       glance_db_password      => $glance_db_password,
       glance_user_password    => $glance_user_password,
       glance_api_servers      => $glance_api_servers,

@@ -21,11 +21,12 @@ class ceph (
       $public_network            = $::fuel_settings['management_network_range'],
 
       # RadosGW settings
-      $rgw_host                         = $::fqdn,
+      $rgw_host                         = $::osfamily ? {'Debian'=> $::hostname, default => $::fqdn},
       $rgw_port                         = '6780',
       $rgw_keyring_path                 = '/etc/ceph/keyring.radosgw.gateway',
       $rgw_socket_path                  = '/tmp/radosgw.sock',
       $rgw_log_file                     = '/var/log/ceph/radosgw.log',
+      $rgw_use_keystone                 = false,
       $rgw_keystone_url                 = "${cluster_node_address}:5000",
       $rgw_keystone_admin_token         = $::fuel_settings['keystone']['admin_token'],
       $rgw_keystone_token_cache_size    = '10',
@@ -102,6 +103,8 @@ class ceph (
         Class['ceph::libnss'] ->
         Class[['ceph::keystone', 'ceph::radosgw']] ~>
         Service['ceph']
+
+        Class['::keystone'] -> Class[['ceph::keystone', 'ceph::radosgw']]
       }
     }
 

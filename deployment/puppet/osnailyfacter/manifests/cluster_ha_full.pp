@@ -223,6 +223,7 @@ class ha_controller (
     keystone_db_password    => $keystone_hash[db_password],
     keystone_admin_token    => $keystone_hash[admin_token],
     keystone_admin_tenant   => $access_hash[tenant],
+    token_format            => $::token_format,
     glance_db_password      => $glance_hash[db_password],
     glance_user_password    => $glance_hash[user_password],
     nova_db_password        => $nova_hash[db_password],

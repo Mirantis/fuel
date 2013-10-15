@@ -30,7 +30,8 @@
 # [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
 #       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
-#
+# [token_format] Format keystone uses for tokens. Optional. Defaults to UUID (PKI is grizzly native mode though).
+#   Supports PKI and UUID.
 # === Example
 #
 # class { 'openstack::keystone':
@@ -53,6 +54,7 @@ class openstack::keystone (
   $nova_user_password,
   $cinder_user_password,
   $public_address,
+  $token_format             = 'UUID',
   $db_type                  = 'mysql',
   $db_user                  = 'keystone',
   $db_name                  = 'keystone',
@@ -175,9 +177,10 @@ class openstack::keystone (
     sql_connection => $sql_conn,
     bind_host	=> $bind_host,
     package_ensure => $package_ensure,
-    use_syslog => $use_syslog,
+    use_syslog          => $use_syslog,
     syslog_log_facility => $syslog_log_facility,
     syslog_log_level    => $syslog_log_level,
+    token_format        => $token_format,
   }
 
   if ($enabled) {

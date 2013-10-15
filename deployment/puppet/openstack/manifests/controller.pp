@@ -50,6 +50,8 @@
 # [syslog_log_facility] Facility for syslog, if used. Optional. Note: duplicating conf option
 #       wouldn't have been used, but more powerfull rsyslog features managed via conf template instead
 # [syslog_log_level] logging level for non verbose and non debug mode. Optional.
+# [token_format] Format keystone uses for tokens. Optional. Defaults to UUID (PKI is grizzly native mode though).
+#   Supports PKI and UUID.
 #
 # === Examples
 #
@@ -130,6 +132,7 @@ class openstack::controller (
   $keystone_db_user        = 'keystone',
   $keystone_db_dbname      = 'keystone',
   $keystone_admin_tenant   = 'admin',
+  $token_format            = 'UUID',
   # Glance
   $glance_db_user          = 'glance',
   $glance_db_dbname        = 'glance',
@@ -269,6 +272,7 @@ class openstack::controller (
     use_syslog            => $use_syslog,
     syslog_log_facility   => $syslog_log_facility_keystone,
     syslog_log_level      => $syslog_log_level,
+    token_format          => $token_format,
   }
 
 
