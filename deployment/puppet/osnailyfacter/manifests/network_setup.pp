@@ -22,7 +22,21 @@ define check_base_interfaces (
         ipaddr        => 'none',
       }
     }
+    # OS dependent constants
+    case $::osfamily {
+      /(?i)debian/: {
+        $if_files_dir = '/etc/network/interfaces.d'
+      }
+      /(?i)redhat/: {
+        $if_files_dir = '/etc/sysconfig/network-scripts'
+      }
+      default: {
+        fail("Unsupported OS: ${::osfamily}/${::operatingsystem}")
+      }
+    }
+    File["${if_files_dir}/ifcfg-${b_iface[0]}"] ->
     L23network::L3::Ifconfig<| title == $b_iface[0] |> ->
+    File["${if_files_dir}/ifcfg-${interface}"] ->
     L23network::L3::Ifconfig<| title == $interface |>
   }
 }
