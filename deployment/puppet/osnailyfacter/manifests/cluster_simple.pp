@@ -134,6 +134,7 @@ class osnailyfacter::cluster_simple {
       use_rgw              => $storage_hash['objects_ceph'],
       use_ssl              => false,
       glance_backend       => $glance_backend,
+      rgw_use_keystone     => $::token_format ? { 'PKI'=>true, default=>false },
     }
   }
 

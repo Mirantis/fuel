@@ -44,14 +44,18 @@ if $::fuel_settings['nodes'] {
     $::fuel_settings['storage']['objects_ceph']
   ) {
     $use_ceph     = true
-    $token_format = $::osfamily ? { 'RedHat'=>'UUID', default=>'PKI' }
-    # PKI is needed for CEPH RadosGW < - > Keystone integration which
-    #  doesn't currently work in Python 2.6 distros (RedHat)
   } else {
     $use_ceph = false
-    $token_format = 'UUID'
+
   }
 
+  # token_format sets the token type for keystone.
+  #  Accepted token formats are UUID or PKI.
+  # PKI is needed for CEPH RadosGW <---> Keystone integration which
+  #  doesn't currently work in Python 2.6 distros (RedHat)
+  # Setting token format 'PKI' in a HA cluster will require you to manually
+  #  manage the PKI certs or you will have auth failures.
+  $token_format = 'UUID'
 
   if $use_quantum {
     prepare_network_config($::fuel_settings['network_scheme'])

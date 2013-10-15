@@ -26,7 +26,7 @@ class ceph (
       $rgw_keyring_path                 = '/etc/ceph/keyring.radosgw.gateway',
       $rgw_socket_path                  = '/tmp/radosgw.sock',
       $rgw_log_file                     = '/var/log/ceph/radosgw.log',
-      $rgw_use_keystone                 = $::token_format ? { 'PKI'=>true, default=>false },
+      $rgw_use_keystone                 = false,
       $rgw_keystone_url                 = "${cluster_node_address}:5000",
       $rgw_keystone_admin_token         = $::fuel_settings['keystone']['admin_token'],
       $rgw_keystone_token_cache_size    = '10',

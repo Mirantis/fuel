@@ -153,11 +153,12 @@ class osnailyfacter::cluster_ha {
       use_rgw              => $storage_hash['objects_ceph'],
       use_ssl              => false,
       glance_backend       => $glance_backend,
+      rgw_use_keystone     => $::token_format ? { 'PKI'=>true, default=>false },
     }
   }
 
-  # Use Swift if it isn't replaced by Ceph for BOTH images and objects
-  if !($storage_hash['images_ceph'] and $storage_hash['objects_ceph']) {
+  # Use Swift if it isn't replaced by Ceph for objects
+  if !($storage_hash['objects_ceph'] and $::ceph::rgw_use_keystone) {
     $use_swift = true
   } else {
     $use_swift = false
