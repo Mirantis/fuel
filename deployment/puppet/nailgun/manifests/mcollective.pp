@@ -4,12 +4,14 @@ class nailgun::mcollective(
   $mco_password = "marionette",
   $mco_vhost = "mcollective",
   $mco_host = "localhost",
+  $disk_free_limit = 100000000,
   ){
 
   class { "mcollective::rabbitmq":
     user => $mco_user,
     password => $mco_password,
     stomp => false,
+    disk_free_limit => $disk_free_limit,
   }
 
   class { "mcollective::client":
