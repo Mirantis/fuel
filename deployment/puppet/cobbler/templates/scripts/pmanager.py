@@ -68,7 +68,15 @@ class PManager(object):
         fstype = self._gettabfstype(vol)
         if fstype == "swap":
             return ""
+        elif fstype in ("ext3", "ext4"):
+            return "--fstype=%s --bytes-per-inode=4194304" % fstype
         return "--fstype=%s" % fstype
+
+    def _getmkfs(self, fstype):
+        if fstype in ("ext3, ext4"):
+            return "mkfs.%s -i 4194304" % fstype
+        return "mkfs.%s" % fstype
+
 
     def _getlabel(self, label):
         if not label:
@@ -192,8 +200,9 @@ class PManager(object):
                 else:
                     if part["mount"] != "swap":
                         disk_label = self._getlabel(part.get('disk_label'))
-                        self.post("mkfs.{0} -f $(readlink -f /dev/{1})"
-                                  "{2} {3}".format(tabfstype, disk["id"],
+                        self.post("{0} -f $(readlink -f /dev/{1})"
+                                  "{2} {3}".format(
+                                    self._getmkfs(tabfstype), disk["id"],
                                                    pcount, disk_label))
                         if part["mount"] != "none":
                             self.post("mkdir -p /mnt/sysimage{0}".format(
@@ -249,8 +258,8 @@ class PManager(object):
                 self.post("mdadm --create /dev/md{0} --run --level=1 "
                             "--raid-devices={1} {2}".format(self.raid_count,
                             len(phys[mount]), ' '.join(phys[mount])))
-                self.post("mkfs.{0} -f {1} /dev/md{2}".format(
-                          fstype, self._getlabel(label), self.raid_count))
+                self.post("{0} -f {1} /dev/md{2}".format(
+                          self._getmkfs(fstype), self._getlabel(label), self.raid_count))
                 self.post("mdadm --detail --scan | grep '\/dev\/md{0}'"
                           ">> /mnt/sysimage/etc/mdadm.conf".format(
                           self.raid_count))
@@ -311,8 +320,8 @@ class PManager(object):
                     self.post("lvcreate --size {0} --name {1} {2}".format(
                         size, lv["name"], vg["id"]))
                     if lv["mount"] != "swap":
-                        self.post("mkfs.{0} /dev/mapper/{1}-{2}".format(
-                            tabfstype, vg["id"], lv["name"]))
+                        self.post("{0} /dev/mapper/{1}-{2}".format(
+                            self._getmkfs(tabfstype), vg["id"], lv["name"]))
                         self.post("mkdir -p /mnt/sysimage{0}"
                                   "".format(lv["mount"]))
                     """
@@ -432,6 +441,11 @@ class PreseedPManager(object):
         # XFS will refuse to format a partition if the
         # disk label is > 12 characters.
         return " -L {0} ".format(label[:12])
+
+    def _getmkfs(self, fstype):
+        if fstype in ("ext3, ext4"):
+            return "mkfs.%s -i 4194304" % fstype
+        return "mkfs.%s" % fstype
 
     """ Please do not remove this commented piece of code. It might be useful for future.
     This method can be used to count partitions on msdos table.
@@ -598,9 +612,12 @@ class PreseedPManager(object):
 
                 if not part.get("file_system", "xfs") in ("swap", None, "none"):
                     disk_label = self._getlabel(part.get("disk_label"))
-                    self.late("mkfs.{0} -f $(readlink -f /dev/{1})"
-                              "{2} {3}".format(part.get("file_system", "xfs"),
-                                           disk["id"], pcount, disk_label))
+                    self.late("{0} -f $(readlink -f /dev/{1})"
+                              "{2} {3}".format(
+                                self._getmkfs(part.get("file_system", "xfs")),
+                                disk["id"],
+                                pcount,
+                                disk_label))
                 if not part["mount"] in (None, "none", "swap"):
                     self.late("mkdir -p /target{0}".format(part["mount"]))
                 if not part["mount"] in (None, "none"):
@@ -696,8 +713,8 @@ class PreseedPManager(object):
                 tabmount = lv["mount"] if lv["mount"] != "swap" else "none"
                 if ((not lv.get("file_system", "xfs") in ("swap", None, "none")) and
                     (not lv["mount"] in ("swap", "/"))):
-                    self.late("mkfs.{0} /dev/mapper/{1}-{2}".format(
-                        lv.get("file_system", "xfs"),
+                    self.late("{0} /dev/mapper/{1}-{2}".format(
+                        self._getmkfs(lv.get("file_system", "xfs")),
                         vg["id"].replace("-", "--"), lv["name"].replace("-", "--")))
                 if not lv["mount"] in (None, "none", "swap", "/"):
                     self.late("mkdir -p /target{0}".format(lv["mount"]))
