@@ -149,7 +149,11 @@ class osnailyfacter::cluster_ha {
 
     class {'ceph':
       primary_mon                      => $primary_mon,
-      cluster_node_address             => $controller_node_public,
+      rgw_keystone_url                 => "${::fuel_settings['management_vip']}:5000",
+      # TODO: fix this with a propper vip in HA
+      rgw_pub_ip                       => $controllers[0]['public_address'],
+      rgw_adm_ip                       => $controllers[0]['public_address'],
+      rgw_int_ip                       => $controllers[0]['public_address'],
       use_rgw                          => $storage_hash['objects_ceph'],
       glance_backend                   => $glance_backend,
     }
