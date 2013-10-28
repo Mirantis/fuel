@@ -118,8 +118,16 @@ $cinder_rate_limits = {
 
 ###
 class advanced_node_netconfig {
+  if $::adv_netconfig_done == 'true' { # facts always in strings
+    $sdn = "*** Already configured for this node."
+  } else {
     $sdn = generate_network_config()
-    notify {"SDN: ${sdn}": }
+    make_fingerprint{"$::adv_netconfig_filepath":
+      ensure   => present
+    }
+    L23network::L3::Ifconfig<||> -> Make_fingerprint<| title == "$::adv_netconfig_filepath" |>
+  }
+  notify {"SDN: ${sdn}": }
 }
 
 case $::operatingsystem {
