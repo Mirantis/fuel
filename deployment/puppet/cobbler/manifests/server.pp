@@ -175,4 +175,11 @@ class cobbler::server {
     mode    => 0644,
   }
 
+  exec { "/var/lib/tftpboot/undionly.kpxe":
+    command => "cp /usr/share/gpxe/undionly.kpxe /var/lib/tftpboot/undionly.kpxe",
+    unless  => "test -e /var/lib/tftpboot/undionly.kpxe",
+    require => [
+      Package[$cobbler::packages::cobbler_additional_packages],
+      Package[$cobbler::packages::cobbler_package],]
+  }
 }
