@@ -80,10 +80,8 @@ class ceilometer::api (
   }
 
   ceilometer_config {
-    'DEFAULT/metering_api_host':   value => $bind_host;
-    'DEFAULT/metering_api_port':   value => $bind_port;
-    #(H) 'api/host':   value => $bind_host;
-    #(H) 'api/port':   value => $bind_port;
+    'api/host':   value => $bind_host;
+    'api/port':   value => $bind_port;
   }
 
   # endpoint encryption
