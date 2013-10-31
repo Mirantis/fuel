@@ -77,6 +77,11 @@ class PManager(object):
         # disk label is > 12 characters.
         return " -L {0} ".format(label[:12])
 
+    def _pseparator(self, devname):
+        if re.search(ur"cciss", devname):
+            return "p"
+        return ""
+
     def _parttype(self, n):
         return "primary"
 
@@ -190,23 +195,27 @@ class PManager(object):
                 if size > 0 and size <= 16777216 and part["mount"] != "none":
                     self.kick("partition {0} "
                               "--onpart=$(readlink -f /dev/{2})"
-                              "{3}".format(part["mount"], size,
-                                           disk["id"], pcount))
+                              "{3}{4}".format(part["mount"], size,
+                                    disk["id"],
+                                    self._pseparator(disk["id"]),
+                                    pcount))
                 else:
                     if part["mount"] != "swap":
                         disk_label = self._getlabel(part.get('disk_label'))
                         self.post("mkfs.{0} -f $(readlink -f /dev/{1})"
-                                  "{2} {3}".format(tabfstype, disk["id"],
-                                                   pcount, disk_label))
+                                  "{2}{3} {4}".format(tabfstype, disk["id"],
+                                    self._pseparator(disk["id"]),
+                                    pcount, disk_label))
                         if part["mount"] != "none":
                             self.post("mkdir -p /mnt/sysimage{0}".format(
                                 part["mount"]))
 
                     self.post("echo 'UUID=$(blkid -s UUID -o value "
-                              "$(readlink -f /dev/{0}){1}) "
-                              "{2} {3} defaults 0 0'"
+                              "$(readlink -f /dev/{0}){1}{2}) "
+                              "{3} {4} defaults 0 0'"
                               " >> /mnt/sysimage/etc/fstab".format(
-                                  disk["id"], pcount, tabmount, tabfstype))
+                                  disk["id"], self._pseparator(disk["id"]),
+                                  pcount, tabmount, tabfstype))
 
     def raids(self, volume_filter=None):
         if not volume_filter:
@@ -223,8 +232,8 @@ class PManager(object):
                 pcount = self.pcount(disk["id"], 1)
                 if not phys.get(raid["mount"]):
                     phys[raid["mount"]] = []
-                phys[raid["mount"]].append("$(readlink -f /dev/{0}){1}".
-                    format(disk["id"], pcount))
+                phys[raid["mount"]].append("$(readlink -f /dev/{0}){1}{2}".
+                    format(disk["id"], self._pseparator(disk["id"]), pcount))
                 rname = "raid.{0:03d}".format(self.rcount(1))
                 begin_size = self.psize(disk["id"])
                 end_size = self.psize(disk["id"], raid["size"] * self.factor)
@@ -233,8 +242,9 @@ class PManager(object):
                              disk["id"], self._parttype(pcount),
                              begin_size, end_size, self.unit))
                 self.kick("partition {0} "
-                          "--onpart=$(readlink -f /dev/{2}){3}"
-                          "".format(rname, raid["size"], disk["id"], pcount))
+                          "--onpart=$(readlink -f /dev/{2}){3}{4}"
+                          "".format(rname, raid["size"], disk["id"],
+                            self._pseparator(disk["id"]), pcount))
 
                 if not raids.get(raid["mount"]):
                     raids[raid["mount"]] = []
@@ -284,8 +294,9 @@ class PManager(object):
                              disk["id"], self._parttype(pcount),
                              begin_size, end_size, self.unit))
                 self.kick("partition {0} "
-                          "--onpart=$(readlink -f /dev/{2}){3}"
-                          "".format(pvname, pv["size"], disk["id"], pcount))
+                          "--onpart=$(readlink -f /dev/{2}){3}{4}"
+                          "".format(pvname, pv["size"], disk["id"],
+                            self._pseparator(disk["id"]), pcount))
 
                 if not pvs.get(pv["vg"]):
                     pvs[pv["vg"]] = []
@@ -436,22 +447,10 @@ class PreseedPManager(object):
         # disk label is > 12 characters.
         return " -L {0} ".format(label[:12])
 
-    """ Please do not remove this commented piece of code. It might be useful for future.
-    This method can be used to count partitions on msdos table.
-    """
-    # def pcount(self, disk_id, increment=0):
-    #     if ((self._pcount.get(disk_id, 0) == 0 and increment == 1) or
-    #         (self._pcount.get(disk_id, 0) >= 5)):
-    #         self._pcount[disk_id] = self._pcount.get(disk_id, 0) + increment
-    #     elif self._pcount.get(disk_id, 0) == 1:
-    #         self._pcount[disk_id] = self._pcount.get(disk_id, 0) + increment + 3
-    #     return self._pcount.get(disk_id, 0)
-
-    # def _parttype(self, n):
-    #     if n == 1:
-    #         return "primary"
-    #     else:
-    #         return "logical"
+    def _pseparator(self, devname):
+        if re.search(ur"cciss", devname):
+            return "p"
+        return ""
 
     def _parttype(self, n):
         return "primary"
@@ -586,16 +585,7 @@ class PreseedPManager(object):
                              self.psize("/dev/%s" % disk["id"]),
                              self.psize("/dev/%s" % disk["id"], part["size"] * self.factor),
                              self.unit))
-                """ Please do not remove this commented piece of code. It might be useful for future.
-                This can be used for msdos table.
-                """
-                # if pcount == 1:
-                #     self.late("parted -a none -s $(readlink -f /dev/{0}) unit {1} "
-                #               "mkpart extended {2} {3}".format(
-                #                 disk["id"],
-                #                 self.unit,
-                #                 end_size,
-                #                 disk["size"]))
+
                 self.late("sleep 3")
                 self.late("hdparm -z $(readlink -f /dev/{0})".format(disk["id"]))
 
@@ -606,17 +596,20 @@ class PreseedPManager(object):
                 if not part.get("file_system", "xfs") in ("swap", None, "none"):
                     disk_label = self._getlabel(part.get("disk_label"))
                     self.late("mkfs.{0} -f $(readlink -f /dev/{1})"
-                              "{2} {3}".format(part.get("file_system", "xfs"),
-                                           disk["id"], pcount, disk_label))
+                              "{2}{3} {4}".format(part.get("file_system", "xfs"),
+                                           disk["id"],
+                                           self._pseparator(disk["id"]),
+                                           pcount, disk_label))
                 if not part["mount"] in (None, "none", "swap"):
                     self.late("mkdir -p /target{0}".format(part["mount"]))
                 if not part["mount"] in (None, "none"):
                     self.late("echo 'UUID=$(blkid -s UUID -o value "
-                              "$(readlink -f /dev/{0}){1}) "
-                              "{2} {3} {4} 0 0'"
+                              "$(readlink -f /dev/{0}){1}{2}) "
+                              "{3} {4} {5} 0 0'"
                               " >> /target/etc/fstab"
                               "".format(
-                                  disk["id"], pcount, tabmount,
+                                  disk["id"], self._pseparator(disk["id"]),
+                                  pcount, tabmount,
                                   part.get("file_system", "xfs"),
                                   ("defaults" if part["mount"] != "swap"
                                    else "sw" )))
@@ -659,24 +652,15 @@ class PreseedPManager(object):
                              end_size,
                              self.unit))
 
-                """ Please do not remove this commented piece of code. It might be useful for future.
-                This can be used for msdos table.
-                """
-                # if pcount == 1:
-                #     self.late("parted -a none -s $(readlink -f /dev/{0}) unit {1} "
-                #               "mkpart extended {2} {3}".format(
-                #                 disk["id"],
-                #                 self.unit,
-                #                 end_size,
-                #                 disk["size"]))
-
                 self.late("sleep 3")
                 self.late("hdparm -z $(readlink -f /dev/{0})".format(disk["id"]))
-                pvlist.append("pvcreate -ff $(readlink -f /dev/{0}){1}".format(disk["id"], pcount))
+                pvlist.append("pvcreate -ff $(readlink -f /dev/{0}){1}{2}".format(
+                    disk["id"], self._pseparator(disk["id"]), pcount))
                 if not devices_dict.get(pv["vg"]):
                     devices_dict[pv["vg"]] = []
                 devices_dict[pv["vg"]].append(
-                    "$(readlink -f /dev/{0}){1}".format(disk["id"], pcount))
+                    "$(readlink -f /dev/{0}){1}{2}".format(disk["id"],
+                        self._pseparator(disk["id"]), pcount))
 
         self.log_lvm("before additional cleaning", False)
         self.erase_lvm_metadata(False)
@@ -756,17 +740,6 @@ class PreseedPManager(object):
 
     def expose_disks(self):
         return "$(readlink -f {0})".format(self.disks[0])
-
-    """
-    Please do not remove this commented piece of code. It can be useful for future.
-    """
-    # def expose_bootdevs(self):
-    #     line = (
-    #         "(hd$(($(devlen=$(readlink -f {0} | wc -c); "
-    #         "devletter=$(readlink -f {0} | cut -c $(($devlen - 1))); "
-    #         "printf '%d' \"'$devletter\") - 97)), 0)".format(self.disks[0])
-    #     )
-    #     return "\"{0}\"".format(line)
 
 
 def pm(data):
