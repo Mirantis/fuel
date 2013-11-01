@@ -452,6 +452,7 @@ class openstack::controller (
     class { 'openstack::ceilometer':
       verbose              => $verbose,
       debug                => $debug,
+      use_syslog           => $use_syslog,
       db_type              => $db_type,
       db_host              => $db_host,
       db_user              => $ceilometer_db_user,

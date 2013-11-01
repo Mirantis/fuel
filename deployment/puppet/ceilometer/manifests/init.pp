@@ -30,6 +30,9 @@ class ceilometer(
   $package_ensure      = 'present',
   $verbose             = 'False',
   $debug               = 'False',
+  $use_syslog          = false,
+  $syslog_log_facility = "SYSLOG",
+  $syslog_log_level    = 'WARNING',
   $queue_provider      = 'rabbitmq',
   $rabbit_host         = '127.0.0.1',
   $rabbit_nodes        = false,
@@ -138,19 +141,48 @@ class ceilometer(
   }
 
   ceilometer_config {
-    'DEFAULT/metering_secret'        : value => $metering_secret;
-    #(H) 'publisher_rpc/metering_secret'  : value => $metering_secret;
+    'publisher_rpc/metering_secret'  : value => $metering_secret;
     'DEFAULT/debug'                  : value => $debug;
     'DEFAULT/verbose'                : value => $verbose;
-    'DEFAULT/log_dir'                : value => $::ceilometer::params::log_dir;
-    # Fix a bad default value in ceilometer.
-    # Fixed in https: //review.openstack.org/#/c/18487/
-    'DEFAULT/glance_control_exchange': value => 'glance';
-    # Add glance-notifications topic.
-    # Fixed in glance https://github.com/openstack/glance/commit/2e0734e077ae
-    # Fix will be included in Grizzly
-    'DEFAULT/notification_topics'    :
-      value => 'notifications,glance_notifications';
   }
+
+  if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
+    ceilometer_config {
+      'DEFAULT/log_config': value => "/etc/ceilometer/logging.conf";
+      'DEFAULT/log_file':   ensure=> absent;
+      'DEFAULT/log_dir':    ensure=> absent;
+      'DEFAULT/use_stderr': ensure=> absent;
+      'DEFAULT/use_syslog': value => true;
+      'DEFAULT/syslog_log_facility': value => $syslog_log_facility;
+    }
+    file { "ceilometer-logging.conf":
+      content => template('ceilometer/logging.conf.erb'),
+      path => "/etc/ceilometer/logging.conf",
+    }
+  }
+  else {
+    ceilometer_config {
+      'DEFAULT/log_config': ensure=> absent;
+      'DEFAULT/use_syslog': ensure=> absent;
+      'DEFAULT/syslog_log_facility': ensure=> absent;
+      'DEFAULT/use_stderr': ensure=> absent;
+      'DEFAULT/log_dir': value => $::ceilometer::params::log_dir;
+      'DEFAULT/logging_context_format_string':
+       value => '%(asctime)s %(levelname)s %(name)s [%(request_id)s %(user_id)s %(project_id)s] %(instance)s %(message)s';
+      'DEFAULT/logging_default_format_string':
+       value => '%(asctime)s %(levelname)s %(name)s [-] %(instance)s %(message)s';
+    }
+    # might be used for stdout logging instead, if configured
+    file { "ceilometer-logging.conf":
+      content => template('ceilometer/logging.conf-nosyslog.erb'),
+      path => "/etc/ceilometer/logging.conf",
+    }
+  }
+
+  # We must notify services to apply new logging rules
+  File['ceilometer-logging.conf'] ~> Service<| title == "$::ceilometer::params::api_service_name" |>
+  File['ceilometer-logging.conf'] ~> Service<| title == "$::ceilometer::params::collector_service_name" |>
+  File['ceilometer-logging.conf'] ~> Service<| title == "$::ceilometer::params::agent_central_service_name" |>
+  File['ceilometer-logging.conf'] ~> Service<| title == "$::ceilometer::params::agent_compute_service_name" |>
 
 }

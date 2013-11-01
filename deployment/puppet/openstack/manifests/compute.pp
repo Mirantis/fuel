@@ -257,6 +257,7 @@ class openstack::compute (
     class { 'openstack::ceilometer':
       verbose              => $verbose,
       debug                => $debug,
+      use_syslog           => $use_syslog,
       rabbit_password      => $rabbit_password,
       rabbit_userid        => $rabbit_user,
       rabbit_port          => $rabbit_port,

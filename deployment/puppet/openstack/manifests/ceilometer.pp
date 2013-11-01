@@ -9,6 +9,7 @@ class openstack::ceilometer (
   $keystone_password   = 'ceilometer_pass',
   $metering_secret     = 'ceilometer',
   $verbose             = 'False',
+  $use_syslog          = 'False',
   $debug               = 'False',
   $db_type             = 'mysql',
   $db_host             = 'localhost',
@@ -50,6 +51,7 @@ class openstack::ceilometer (
     metering_secret => $metering_secret,
     verbose         => $verbose,
     debug           => $debug,
+    use_syslog      => $use_syslog,
   }
 
   class { '::ceilometer::client': }
