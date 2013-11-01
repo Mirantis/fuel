@@ -88,8 +88,10 @@ class openstack::controller (
   $nova_db_password        = 'nova_pass',
   $nova_user_password      = 'nova_pass',
   # Required Ceilometer
+  $ceilometer              = false,
   $ceilometer_db_password  = 'ceilometer_pass',
   $ceilometer_user_password = 'ceilometer_pass',
+  $ceilometer_metering_secret = 'ceilometer',
   # Required Horizon
   $secret_key              = 'dummy_secret_key',
   # not sure if this works correctly
@@ -197,7 +199,9 @@ class openstack::controller (
 
   # Ensure things are run in order
   Class['openstack::db::mysql'] -> Class['openstack::keystone']
-  Class['openstack::db::mysql'] -> Class['openstack::ceilometer']
+  if ($ceilometer) {
+    Class['openstack::db::mysql'] -> Class['openstack::ceilometer']
+  }
   Class['openstack::db::mysql'] -> Class['openstack::glance']
   Class['openstack::db::mysql'] -> Class['openstack::nova::controller']
   Class['openstack::db::mysql'] -> Cinder_config <||>
@@ -227,6 +231,7 @@ class openstack::controller (
       nova_db_user           => $nova_db_user,
       nova_db_password       => $nova_db_password,
       nova_db_dbname         => $nova_db_dbname,
+      ceilometer             => $ceilometer,
       ceilometer_db_user     => $ceilometer_db_user,
       ceilometer_db_password => $ceilometer_db_password,
       ceilometer_db_dbname   => $ceilometer_db_dbname,
@@ -443,26 +448,29 @@ class openstack::controller (
 
   ######## Ceilometer ########
 
-  class { 'openstack::ceilometer':
-    verbose              => $verbose,
-    debug                => $debug,
-    db_type              => $db_type,
-    db_host              => $db_host,
-    db_user              => $ceilometer_db_user,
-    db_password          => $ceilometer_db_password,
-    db_dbname            => $ceilometer_db_dbname,
-    rabbit_password      => $rabbit_password,
-    rabbit_userid        => $rabbit_user,
-    rabbit_port          => $rabbit_port,
-    rabbit_host          => $rabbit_nodes[0],
-    rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-    queue_provider       => $queue_provider,
-    qpid_password        => $qpid_password,
-    qpid_userid          => $qpid_user,
-    qpid_nodes           => $qpid_nodes,
-    keystone_host        => $internal_address,
-    keystone_password    => $ceilometer_user_password,
-    on_controller        => true,
+  if ($ceilometer) {
+    class { 'openstack::ceilometer':
+      verbose              => $verbose,
+      debug                => $debug,
+      db_type              => $db_type,
+      db_host              => $db_host,
+      db_user              => $ceilometer_db_user,
+      db_password          => $ceilometer_db_password,
+      db_dbname            => $ceilometer_db_dbname,
+      metering_secret      => $ceilometer_metering_secret,
+      rabbit_password      => $rabbit_password,
+      rabbit_userid        => $rabbit_user,
+      rabbit_port          => $rabbit_port,
+      rabbit_host          => $rabbit_nodes[0],
+      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      queue_provider       => $queue_provider,
+      qpid_password        => $qpid_password,
+      qpid_userid          => $qpid_user,
+      qpid_nodes           => $qpid_nodes,
+      keystone_host        => $internal_address,
+      keystone_password    => $ceilometer_user_password,
+      on_controller        => true,
+    }
   }
 
   ######## Horizon ########
