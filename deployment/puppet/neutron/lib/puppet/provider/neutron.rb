@@ -57,14 +57,6 @@ class Puppet::Provider::Neutron < Puppet::Provider
     @neutron_file
   end
 
-  # def self.neutron_hash
-  #   @neutron_hash ||= build_neutron_hash
-  # end
-
-  # def neutron_hash
-  #   self.class.neutron_hash
-  # end
-
   def self.auth_neutron(*args)
     #todo: Rewrite, using ruby-openstack
     q = neutron_credentials
