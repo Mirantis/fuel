@@ -97,6 +97,8 @@ class openstack::compute (
   # Quantum
   $quantum                       = false,
   $quantum_config                = {},
+  # Ceilometer
+  $ceilometer_user_password      = 'ceilometer_pass',
   # nova compute configuration parameters
   $verbose                       = false,
   $debug               = false,
@@ -246,6 +248,25 @@ class openstack::compute (
     group   => 'nova',
     mode    => '0600',
     content => "Host *\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null\n",
+  }
+
+  # configure ceilometer compute agent
+
+  class { 'openstack::ceilometer':
+    verbose              => $verbose,
+    debug                => $debug,
+    rabbit_password      => $rabbit_password,
+    rabbit_userid        => $rabbit_user,
+    rabbit_port          => $rabbit_port,
+    rabbit_host          => $rabbit_nodes[0],
+    rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+    queue_provider       => $queue_provider,
+    qpid_password        => $qpid_password,
+    qpid_userid          => $qpid_user,
+    qpid_nodes           => $qpid_nodes,
+    keystone_host        => $service_endpoint,
+    keystone_password    => $ceilometer_user_password,
+    on_compute           => true,
   }
 
   # if the compute node should be configured as a multi-host
