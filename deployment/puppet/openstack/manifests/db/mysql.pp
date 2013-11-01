@@ -54,6 +54,7 @@ class openstack::db::mysql (
     $nova_db_dbname          = 'nova',
     $allowed_hosts           = false,
     # Ceilometer
+    $ceilometer              = false,
     $ceilometer_db_user      = 'ceilometer',
     $ceilometer_db_dbname    = 'ceilometer',
     # Cinder
@@ -132,11 +133,13 @@ class openstack::db::mysql (
     }
 
     # Create the Ceilometer db
-    class { 'ceilometer::db::mysql':
-      user          => $ceilometer_db_user,
-      password      => $ceilometer_db_password,
-      dbname        => $ceilometer_db_dbname,
-      allowed_hosts => $allowed_hosts,
+    if ($ceilometer) {
+      class { 'ceilometer::db::mysql':
+        user          => $ceilometer_db_user,
+        password      => $ceilometer_db_password,
+        dbname        => $ceilometer_db_dbname,
+        allowed_hosts => $allowed_hosts,
+      }
     }
 
     # create cinder db

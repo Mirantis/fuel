@@ -126,7 +126,9 @@ class openstack::compute (
   $nova_rate_limits              = undef,
   $cinder_rate_limits            = undef,
   $create_networks               = false,
-  $state_path                    = '/var/lib/nova'
+  $state_path                    = '/var/lib/nova',
+  $ceilometer                    = false,
+  $ceilometer_metering_secret    = "ceilometer",
 ) {
 
   #
@@ -251,22 +253,24 @@ class openstack::compute (
   }
 
   # configure ceilometer compute agent
-
-  class { 'openstack::ceilometer':
-    verbose              => $verbose,
-    debug                => $debug,
-    rabbit_password      => $rabbit_password,
-    rabbit_userid        => $rabbit_user,
-    rabbit_port          => $rabbit_port,
-    rabbit_host          => $rabbit_nodes[0],
-    rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
-    queue_provider       => $queue_provider,
-    qpid_password        => $qpid_password,
-    qpid_userid          => $qpid_user,
-    qpid_nodes           => $qpid_nodes,
-    keystone_host        => $service_endpoint,
-    keystone_password    => $ceilometer_user_password,
-    on_compute           => true,
+  if ($ceilometer) {
+    class { 'openstack::ceilometer':
+      verbose              => $verbose,
+      debug                => $debug,
+      rabbit_password      => $rabbit_password,
+      rabbit_userid        => $rabbit_user,
+      rabbit_port          => $rabbit_port,
+      rabbit_host          => $rabbit_nodes[0],
+      rabbit_ha_virtual_ip => $rabbit_ha_virtual_ip,
+      queue_provider       => $queue_provider,
+      qpid_password        => $qpid_password,
+      qpid_userid          => $qpid_user,
+      qpid_nodes           => $qpid_nodes,
+      keystone_host        => $service_endpoint,
+      keystone_password    => $ceilometer_user_password,
+      on_compute           => true,
+      metering_secret      => $ceilometer_metering_secret,
+    }
   }
 
   # if the compute node should be configured as a multi-host

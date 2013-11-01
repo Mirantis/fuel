@@ -40,6 +40,18 @@ class osnailyfacter::cluster_simple {
     $heat_hash = $::fuel_settings['heat']
   }
 
+
+  if !$::fuel_settings['ceilometer'] {
+    $ceilometer_hash = {
+      enabled => false,
+      db_password => 'ceilometer',
+      user_password => 'ceilometer',
+      metering_secret => 'ceilometer',
+    }
+  } else {
+    $ceilometer_hash = $::fuel_settings['ceilometer']
+  }
+
   if $::fuel_settings['role'] == 'controller' {
     package { 'cirros-testvm':
       ensure => "present"
@@ -169,6 +181,10 @@ class osnailyfacter::cluster_simple {
         nova_db_password        => $nova_hash[db_password],
         nova_user_password      => $nova_hash[user_password],
         nova_rate_limits        => $nova_rate_limits,
+        ceilometer              => $ceilometer_hash[enabled],
+        ceilometer_db_password  => $ceilometer_hash[db_password],
+        ceilometer_user_password => $ceilometer_hash[user_password],
+        ceilometer_metering_secret => $ceilometer_hash[metering_secret],
         queue_provider          => $::queue_provider,
         rabbit_password         => $rabbit_hash[password],
         rabbit_user             => $rabbit_hash[user],
@@ -319,6 +335,8 @@ class osnailyfacter::cluster_simple {
         multi_host             => $multi_host,
         sql_connection         => $sql_connection,
         nova_user_password     => $nova_hash[user_password],
+        ceilometer              => $ceilometer_hash[enabled],
+        ceilometer_user_password => $ceilometer_hash[user_password],
         queue_provider         => $::queue_provider,
         rabbit_nodes           => [$controller_node_address],
         rabbit_password        => $rabbit_hash[password],
