@@ -146,7 +146,9 @@ class ceilometer(
     'DEFAULT/verbose'                : value => $verbose;
   }
 
+  # Configure logging
   if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
+    File['ceilometer-logging.conf'] -> Ceilometer_config['DEFAULT/log_config']
     ceilometer_config {
       'DEFAULT/log_config': value => "/etc/ceilometer/logging.conf";
       'DEFAULT/log_file':   ensure=> absent;
