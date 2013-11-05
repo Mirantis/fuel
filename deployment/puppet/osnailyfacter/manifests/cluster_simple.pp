@@ -336,6 +336,7 @@ class osnailyfacter::cluster_simple {
         sql_connection         => $sql_connection,
         nova_user_password     => $nova_hash[user_password],
         ceilometer              => $ceilometer_hash[enabled],
+        ceilometer_metering_secret => $ceilometer_hash[metering_secret],
         ceilometer_user_password => $ceilometer_hash[user_password],
         queue_provider         => $::queue_provider,
         rabbit_nodes           => [$controller_node_address],
