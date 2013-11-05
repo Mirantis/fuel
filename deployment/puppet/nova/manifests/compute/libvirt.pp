@@ -8,17 +8,6 @@ class nova::compute::libvirt (
 
   if $::osfamily == 'RedHat' {
 
-#    yumrepo {'CentOS-Base':
-#      name     => 'updates',
-#      priority => 10,
-#      before   => [Package['libvirt']]
-#    }->
-    
-
-#    package { 'qemu':
-#      ensure => present,
-#    }
- 
     exec { 'symlink-qemu-kvm': 
       command => "/bin/ln -sf /usr/libexec/qemu-kvm /usr/bin/qemu-system-x86_64",
     } 
@@ -49,6 +38,23 @@ class nova::compute::libvirt (
       hasrestart => false,
     }
 
+  }
+ 
+  if $::operatingsystem == 'Ubuntu' {
+
+    package { 'cpufrequtils':
+      ensure => present;
+    }
+    file { '/etc/default/cpufrequtils':
+      content => "GOVERNOR=\"performance\" \n",
+      require => Package['cpufrequtils'],
+      notify => Service['cpufrequtils'],
+    }
+    service { 'cpufrequtils':
+      name       => 'cpufrequtils',
+      enable     => true,
+      ensure     => true,
+    }
   }
 
   Service['libvirt'] -> Service['nova-compute']
