@@ -42,6 +42,12 @@ class osnailyfacter::cluster_ha {
     $heat_hash = $::fuel_settings['heat']
   }
 
+  if $::fuel_settings['role'] == 'primary-controller' {
+    package { 'cirros-testvm':
+      ensure => "present"
+    }
+  }
+
   $storage_hash         = $::fuel_settings['storage']
   $nova_hash            = $::fuel_settings['nova']
   $mysql_hash           = $::fuel_settings['mysql']
@@ -113,7 +119,7 @@ class osnailyfacter::cluster_ha {
   $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
   $controller_storage_addresses = nodes_to_hash($controllers,'name','storage_address')
   $controller_hostnames = keys($controller_internal_addresses)
-  $controller_nodes = sort(values($controller_internal_addresses))
+  $controller_nodes = ipsort(values($controller_internal_addresses))
   $controller_node_public  = $::fuel_settings['public_vip']
   $controller_node_address = $::fuel_settings['management_vip']
   $mountpoints = filter_hash($mp_hash,'point')
@@ -142,16 +148,15 @@ class osnailyfacter::cluster_ha {
     $primary_mon    = $controllers[0]['name']
 
     class {'ceph':
-      primary_mon          => $primary_mon,
-      cluster_node_address => $controller_node_public,
-      use_rgw              => $storage_hash['objects_ceph'],
-      use_ssl              => false,
-      glance_backend       => $glance_backend,
+      primary_mon                      => $primary_mon,
+      cluster_node_address             => $controller_node_public,
+      use_rgw                          => $storage_hash['objects_ceph'],
+      glance_backend                   => $glance_backend,
     }
   }
 
-  #Test to determine if swift should be enabled
-  if ($storage_hash['objects_swift'] or !$storage_hash['images_ceph']) {
+  # Use Swift if it isn't replaced by Ceph for BOTH images and objects
+  if !($storage_hash['images_ceph'] and $storage_hash['objects_ceph']) {
     $use_swift = true
   } else {
     $use_swift = false
@@ -172,6 +177,8 @@ class osnailyfacter::cluster_ha {
     } else {
       $primary_proxy = false
     }
+  } elsif ($storage_hash['objects_ceph']) {
+    $rgw_balancers = $controller_storage_addresses
   }
 
 
@@ -179,9 +186,7 @@ class osnailyfacter::cluster_ha {
     'vlan_start'     => $vlan_start,
   }
 
-  if !$::fuel_settings['verbose'] {
-    $verbose = false
-  }
+  $verbose = true
 
   if !$::fuel_settings['debug'] {
     $debug = false
@@ -248,6 +253,7 @@ class osnailyfacter::cluster_ha {
       export_resources              => false,
       glance_backend                => $glance_backend,
       swift_proxies                 => $swift_proxies,
+      rgw_balancers                 => $rgw_balancers,
       quantum                       => $::use_quantum,
       quantum_config                => $quantum_config,
       quantum_network_node          => $::use_quantum,
@@ -331,13 +337,11 @@ class osnailyfacter::cluster_ha {
           debug                   => $debug ? { 'true' => true, true => true, default=> false },
           verbose                 => $verbose ? { 'true' => true, true => true, default=> false },
         }
-        if ($storage_hash['objects_swift'] or !$storage_hash['images_ceph']) {
-          class { 'swift::keystone::auth':
-            password         => $swift_hash[user_password],
-            public_address   => $::fuel_settings['public_vip'],
-            internal_address => $::fuel_settings['management_vip'],
-            admin_address    => $::fuel_settings['management_vip'],
-          }
+        class { 'swift::keystone::auth':
+          password         => $swift_hash[user_password],
+          public_address   => $::fuel_settings['public_vip'],
+          internal_address => $::fuel_settings['management_vip'],
+          admin_address    => $::fuel_settings['management_vip'],
         }
       }
       #TODO: PUT this configuration stanza into nova class
@@ -345,19 +349,6 @@ class osnailyfacter::cluster_ha {
       nova_config { 'DEFAULT/use_cow_images':            value => $::fuel_settings['use_cow_images'] }
       nova_config { 'DEFAULT/compute_scheduler_driver':  value => $::fuel_settings['compute_scheduler_driver'] }
 
-      #TODO: fix this so it dosn't break ceph
-      if !($::use_ceph) {
-        if $::hostname == $::fuel_settings['last_controller'] {
-          class { 'openstack::img::cirros':
-            os_username => shellescape($access_hash[user]),
-            os_password => shellescape($access_hash[password]),
-            os_tenant_name => shellescape($access_hash[tenant]),
-            os_auth_url => "http://${::fuel_settings['management_vip']}:5000/v2.0/",
-            img_name    => "TestVM",
-            stage          => 'glance-image',
-          }
-        }
-      }
       if ! $::use_quantum {
         nova_floating_range{ $floating_ips_range:
           ensure          => 'present',
@@ -378,31 +369,54 @@ class osnailyfacter::cluster_ha {
 
       if $savanna_hash['enabled'] {
         class { 'savanna' :
-          savanna_enabled       => true,
-          savanna_db_password   => $savanna_hash['db_password'],
-          savanna_db_host       => $controller_node_address,
-          savanna_keystone_host => $controller_node_address,
-          use_neutron           => $::use_quantum,
-          use_floating_ips      => $::fuel_settings['auto_assign_floating_ip'],
+          savanna_api_host          => $controller_node_address,
+          
+          savanna_db_password       => $savanna_hash['db_password'],
+          savanna_db_host           => $controller_node_address,
+          
+          savanna_keystone_host     => $controller_node_address,
+          savanna_keystone_user     => 'admin',
+          savanna_keystone_password => 'admin',
+          savanna_keystone_tenant   => 'admin',
+          
+          use_neutron               => $::use_quantum,
         }
       }
 
       if $murano_hash['enabled'] {
 
         class { 'murano' :
-          murano_enabled         => true,
-          murano_rabbit_host     => $controller_node_address,
-          murano_rabbit_login    => $heat_hash['rabbit_user'], # heat_hash is not mistake here
-          murano_rabbit_password => $heat_hash['rabbit_password'],
-          murano_db_password     => $murano_hash['db_password'],
+          murano_api_host          => $controller_node_address,
+
+          murano_rabbit_host       => $controller_node_public,
+          murano_rabbit_login      => 'murano',
+          murano_rabbit_password   => $heat_hash['rabbit_password'],
+          
+          murano_db_host           => $controller_node_address,
+          murano_db_password       => $murano_hash['db_password'],
+          
+          murano_keystone_host     => $controller_node_address,
+          murano_keystone_user     => 'admin',
+          murano_keystone_password => 'admin',
+          murano_keystone_tenant   => 'admin',
         }
 
         class { 'heat' :
-          heat_enabled         => true,
-          heat_rabbit_host     => $controller_node_address,
-          heat_rabbit_userid   => $heat_hash['rabbit_user'],
-          heat_rabbit_password => $heat_hash['rabbit_password'],
-          heat_db_password     => $heat_hash['db_password'],
+          pacemaker              => true,
+          external_ip            => $controller_node_public,
+          
+          heat_keystone_host     => $controller_node_address,
+          heat_keystone_user     => 'heat',
+          heat_keystone_password => 'heat',
+          heat_keystone_tenant   => 'services',
+          
+          heat_rabbit_host       => $controller_node_address,
+          heat_rabbit_login      => $rabbit_hash['user'],
+          heat_rabbit_password   => $rabbit_hash['password'],
+          heat_rabbit_port       => '5672',
+          
+          heat_db_host           => $controller_node_address,
+          heat_db_password       => $heat_hash['db_password'],
         }
 
         Class['heat'] -> Class['murano']
@@ -418,7 +432,7 @@ class osnailyfacter::cluster_ha {
 
       class { 'openstack::compute':
         public_interface       => $::public_int,
-        private_interface      => $::fuel_settings['fixed_interface'],
+        private_interface      => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_interface'] },
         internal_address       => $internal_address,
         libvirt_type           => $::fuel_settings['libvirt_type'],
         fixed_range            => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_network_range']},
@@ -483,7 +497,7 @@ class osnailyfacter::cluster_ha {
       package { 'python-amqp':
         ensure => present
       }
-      $roles = node_roles($nodes_hash, $::fuel_settings['id'])
+      $roles = node_roles($nodes_hash, $::fuel_settings['uid'])
       if member($roles, 'controller') or member($roles, 'primary-controller') {
         $bind_host = $internal_address
       } else {
@@ -492,6 +506,7 @@ class osnailyfacter::cluster_ha {
       class { 'openstack::cinder':
         sql_connection       => "mysql://cinder:${cinder_hash[db_password]}@${::fuel_settings['management_vip']}/cinder?charset=utf8",
         glance_api_servers   => "${::fuel_settings['management_vip']}:9292",
+        bind_host            => $bind_host,
         queue_provider       => $::queue_provider,
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_hash[user],
@@ -507,8 +522,8 @@ class osnailyfacter::cluster_ha {
         cinder_user_password => $cinder_hash[user_password],
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
-        debug                => $debug ? { 'true' => true, true => true, default=> false },
-        verbose              => $verbose ? { 'true' => true, true => true, default=> false },
+        debug                => $debug ? { 'true' => true, true => true, default => false },
+        verbose              => $verbose ? { 'true' => true, true => true, default => false },
         use_syslog           => true,
       }
 #      class { "::rsyslog::client":

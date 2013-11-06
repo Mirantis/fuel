@@ -64,6 +64,7 @@ class MrntQuantumNR
         :gateway => nil,
         :alloc_pool  => nil,  # Allocation pool IP addresses
         :nameservers => nil,  # DNS name servers used by hosts
+        :enable_dhcp => false,
       },
     }))
   end
@@ -76,37 +77,59 @@ class MrntQuantumNR
     res__quantum_router = 'quantum_router'
     res__quantum_router_type = Puppet::Type.type(res__quantum_router.downcase.to_sym)
     previous = nil
+    segment_id = @quantum_config[:L2][:enable_tunneling]  ?  @quantum_config[:L2][:tunnel_id_ranges].split(':')[0].to_i  :  0
     @quantum_config[:predefined_networks].each do |net, ncfg|
+      Puppet::debug("-*- processing net '#{net}': #{ncfg.inspect}")
       # config network resources parameters
       network_config = get_default_network_config()
       network_config[:net][:name] = net.to_s
       network_config[:net][:network_type] = ncfg[:L2][:network_type]
-      network_config[:net][:physnet] = ncfg[:L2][:physnet]
       network_config[:net][:router_ext] = ncfg[:L2][:router_ext]
       network_config[:net][:shared] = ncfg[:shared]
-      network_config[:net][:segment_id] = ncfg[:L2][:segment_id]
       network_config[:subnet][:name] = "#{net.to_s}__subnet"
       network_config[:subnet][:network] = network_config[:net][:name]
       network_config[:subnet][:cidr] = ncfg[:L3][:subnet]
       network_config[:subnet][:gateway] = ncfg[:L3][:gateway]
-      network_config[:subnet][:nameservers] = ncfg[:L3][:nameservers]
+      network_config[:subnet][:nameservers] = ncfg[:L3][:nameservers]  ?  ncfg[:L3][:nameservers].join(' ')  :  nil
+      network_config[:subnet][:enable_dhcp] = ncfg[:L3][:enable_dhcp]  ?  "True"  :  "False"
       if ncfg[:L3][:floating]
         floating_a = ncfg[:L3][:floating].split(/[\:\-]/)
         if floating_a.size != 2
           raise(Puppet::ParseError, "You must define floating range for network '#{net}' as pair of IP addresses, not a #{ncfg[:L3][:floating]}")
         end
         network_config[:subnet][:alloc_pool] = "start=#{floating_a[0]},end=#{floating_a[1]}"
+        network_config[:subnet][:nameservers] = nil
+        network_config[:subnet][:enable_dhcp] = "False"
       end
+      network_config[:net][:physnet] = ncfg[:L2][:physnet]
+      if network_config[:net][:network_type].downcase == 'gre'
+        # Get first free segment_id for GRE
+        network_config[:net][:segment_id] = ncfg[:L2][:segment_id]  ?  ncfg[:L2][:segment_id]  :  segment_id
+        segment_id += 1
+        network_config[:net][:physnet] = nil # do not pass this parameter in this segmentation type
+      elsif network_config[:net][:network_type].downcase == 'vlan' && ncfg[:L2][:physnet]
+        # Calculate segment_id for VLAN mode from personal physnet settings
+        _physnet = ncfg[:L2][:physnet].to_sym
+        _segment_id_range = @quantum_config[:L2][:phys_nets][_physnet][:vlan_range] || "4094:xxx"
+        _segment_id = _segment_id_range.split(/[:\-]/)[0].to_i
+        network_config[:net][:segment_id] = _segment_id
+      elsif network_config[:net][:network_type].downcase == 'vlan'
+        # vlan without physnet
+        raise(Puppet::ParseError, "Unrecognized segmentation ID or VLAN range for net '#{net}', binding to '#{ncfg[:L2][:physnet]}'")
+      #else # another network types -- do nothing...
+      end
+      Puppet::debug("-*- using segment_id='#{network_config[:net][:segment_id]}' for net '#{net}'")
       # create quantum_net resource
       p_res = Puppet::Parser::Resource.new(
         res__quantum_net,
-        network_config[:net][:name],
+        network_config[:net][:name].to_s,
         :scope => @scope,
         :source => res__quantum_net_type
       )
+      p_res.set_parameter(:ensure, :present)
       previous && p_res.set_parameter(:require, [previous])
       network_config[:net].each do |k,v|
-        v && p_res.set_parameter(k,v)
+        v && p_res.set_parameter(k.to_sym, v)
       end
       @scope.compiler.add_resource(@scope, p_res)
       previous = p_res.to_s
@@ -114,13 +137,14 @@ class MrntQuantumNR
       # create quantum_subnet resource
       p_res = Puppet::Parser::Resource.new(
         res__quantum_subnet,
-        network_config[:subnet][:name],
+        network_config[:subnet][:name].to_s,
         :scope => @scope,
         :source => res__quantum_subnet_type
       )
+      p_res.set_parameter(:ensure, :present)
       p_res.set_parameter(:require, [previous])
       network_config[:subnet].each do |k,v|
-        v && p_res.set_parameter(k,v)
+        v && p_res.set_parameter(k.to_sym, v)
       end
       @scope.compiler.add_resource(@scope, p_res)
       previous = p_res.to_s
@@ -134,18 +158,20 @@ class MrntQuantumNR
         router_config = get_default_router_config()
         router_config[:name] = rou.to_s
         rcfg[:tenant] && router_config[:tenant] = rcfg[:tenant]
-        router_config[:ext_net] = rcfg[:external_network]
-        router_config[:int_subnets] = rcfg[:internal_networks]
+        router_config[:ext_net] = rcfg[:external_network] #"rcfg[:external_network]__subnet"
+        #todo: realize
+        router_config[:int_subnets] = rcfg[:internal_networks].map{|x| "#{x}__subnet"}
         # create resource
         p_res = Puppet::Parser::Resource.new(
           res__quantum_router,
-          router_config[:name],
+          router_config[:name].to_s,
           :scope => @scope,
           :source => res__quantum_router_type
         )
+        p_res.set_parameter(:ensure, :present)
         p_res.set_parameter(:require, [previous])
         router_config.each do |k,v|
-          v && p_res.set_parameter(k,v)
+          v && p_res.set_parameter(k.to_sym, v)
         end
         @scope.compiler.add_resource(@scope, p_res)
         previous = p_res.to_s

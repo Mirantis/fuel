@@ -66,7 +66,11 @@ class nailgun(
     gem_source => $gem_source,
   }
 
-  class { "nailgun::iptables": }
+  firewall { '002 accept related established rules':
+    proto   => 'all',
+    state   => ['RELATED', 'ESTABLISHED'],
+    action  => 'accept',
+  } -> class { "nailgun::iptables": }
 
   file { ["/etc/nginx/conf.d/default.conf",
           "/etc/nginx/conf.d/virtual.conf",
@@ -93,7 +97,7 @@ class nailgun(
     proto          => 'udp',
     # use date-rfc3339 timestamps
     show_timezone  => true,
-    virtual        => true,
+    virtual        => str2bool($::is_virtual),
   }
 
   class { "nailgun::user":

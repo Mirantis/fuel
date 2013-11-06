@@ -3,18 +3,29 @@
 
 class murano::rabbitmq(
   $rabbitmq_config_path  = '/etc/rabbitmq/rabbitmq-murano.config',
-  $init_script_path      = '/etc/init.d/rabbitmq-server-murano',
-  $firewall_rule_name    = '003 murano rabbitmq',
+  $init_script_name      = 'rabbitmq-server-murano',
+  $firewall_rule_name    = '203 murano-rabbitmq',
   $rabbit_user           = 'murano',
   $rabbit_password       = 'murano',
   $rabbit_vhost          = '/',
-  $rabbitmq_main_port    = '5673',
+  $rabbitmq_main_port    = '55572',
   $rabbitmq_cluster_port = '41056',
   $rabbitmq_node_name    = 'murano@localhost',
+  $rabbitmq_service_name = 'rabbitmq-server-murano',
 ){
 
-  if $::osfamily != 'RedHat' {
-    fail("OS ${::osfamily} is not supported yet!")
+  case $::osfamily {
+    'RedHat': {
+      $init_install_cmd = "chkconfig --add '/etc/init.d/${init_script_name}'"
+      $init_script_file = 'rabbitmq-init-centos.erb'
+    }
+    'Debian': {
+      $init_install_cmd = "update-rc.d '${init_script_name}' defaults"
+      $init_script_file = 'rabbitmq-init-ubuntu.erb'
+    }
+    default: {
+      fail("Unsupported osfamily: ${::osfamily}")
+    }
   }
 
   file { 'rabbitmq_config' :
@@ -26,16 +37,15 @@ class murano::rabbitmq(
   }
 
   file { 'init_script' :
-    path    => $init_script_path,
+    path    => "/etc/init.d/${init_script_name}",
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    content => template('murano/rabbitmq-init-centos.erb'),
+    content => template("murano/${init_script_file}"),
   }
 
-  # chkconfig is idempotent by itself
   exec { 'install_init_script' :
-    command => "chkconfig --add '${init_script_path}'",
+    command => $init_install_cmd,
     path    => [ '/bin', '/sbin', '/usr/bin', '/usr/sbin' ],
   }
 
@@ -62,13 +72,13 @@ class murano::rabbitmq(
 
   exec { 'remove_murano_guest' :
     command => "rabbitmqctl -n '${rabbitmq_node_name}' delete_user guest",
-    onlyif  => "rabbitmqctl -n '${rabbitmq_node_name}' list_users | grep -qE '^guest\s*\['",
+    onlyif  => "rabbitmqctl -n '${rabbitmq_node_name}' list_users | grep -qE '^guest\\s*'\\[",
     path    => [ '/bin', '/sbin', '/usr/bin', '/usr/sbin' ],
   }
 
   exec { 'create_murano_user' :
     command => "rabbitmqctl -n '${rabbitmq_node_name}' add_user '${rabbit_user}' '${rabbit_password}'",
-    unless  => "rabbitmqctl -n '${rabbitmq_node_name}' list_users | grep -qE '^${rabbit_user}\\s*\['",
+    unless  => "rabbitmqctl -n '${rabbitmq_node_name}' list_users | grep -qE '^${rabbit_user}\\s*\\['",
     path    => [ '/bin', '/sbin', '/usr/bin', '/usr/sbin' ],
   }
 

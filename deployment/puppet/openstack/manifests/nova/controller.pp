@@ -31,6 +31,7 @@ class openstack::nova::controller (
   # Nova Required
   $nova_user_password,
   $nova_db_password,
+  primary_controller         = false,
   # Network
   $fixed_range               = '10.0.0.0/24',
   $floating_range            = false,
@@ -275,7 +276,8 @@ class openstack::nova::controller (
     # Set up Quantum
 
     class { 'quantum::server':
-      quantum_config => $quantum_config
+      quantum_config     => $quantum_config,
+      primary_controller => $primary_controller
     }
     if $quantum and !$quantum_network_node {
       class { '::quantum':
@@ -285,6 +287,7 @@ class openstack::nova::controller (
         use_syslog           => $use_syslog,
         syslog_log_facility  => $syslog_log_facility_quantum,
         syslog_log_level     => $syslog_log_level,
+        server_ha_mode       => $ha_mode,
       }
     }
     class { 'nova::network::quantum':

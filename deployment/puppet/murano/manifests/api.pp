@@ -1,5 +1,5 @@
 class murano::api (
-    $enabled                        = true,
+    $pacemaker                      = false,
     $verbose                        = 'True',
     $debug                          = 'True',
     $api_paste_inipipeline          = 'authtoken context apiv1app',
@@ -28,6 +28,7 @@ class murano::api (
     $api_rabbit_login               = 'murano',
     $api_rabbit_password            = 'murano',
     $api_rabbit_virtual_host        = '/',
+    $firewall_rule_name             = '202 murano-api',
 
     $murano_db_password             = 'murano',
     $murano_db_name                 = 'murano',
@@ -44,19 +45,12 @@ class murano::api (
     name   => $::murano::params::murano_api_package_name,
   }
 
-  if $enabled {
-    $service_ensure = 'running'
-  } else {
-    $service_ensure = 'stopped'
-  }
-
   service { 'murano_api':
-    ensure     => $service_ensure,
+    ensure     => 'running',
     name       => $::murano::params::murano_api_service_name,
-    enable     => $enabled,
+    enable     => true,
     hasstatus  => true,
     hasrestart => true,
-    require    => Package['murano_api'],
   }
 
   murano_api_config {
@@ -92,6 +86,12 @@ class murano::api (
     'filter:authtoken/admin_user'           : value => $api_paste_admin_user;
     'filter:authtoken/admin_password'       : value => $api_paste_admin_password;
     'filter:authtoken/signing_dir'          : value => $api_paste_signing_dir;
+  }
+  
+  firewall { $firewall_rule_name :
+    dport   => [ $api_bind_port ],
+    proto   => 'tcp',
+    action  => 'accept',
   }
 
   Murano_api_config<||> ~> Service['murano_api']

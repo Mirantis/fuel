@@ -72,22 +72,21 @@ class quantum::plugins::ovs (
     'AGENT/root_helper':            value => $quantum_config['root_helper'];
   }
 
-  case $quantum_config['L2']['segmentation_type'] {
-    'gre': {
+  if $quantum_config['L2']['enable_tunneling'] {
       quantum_plugin_ovs {
-        'OVS/tunnel_bridge':     value => $quantum_config['L2']['tunnel_bridge'];
-        'OVS/tunnel_id_ranges':  value => $quantum_config['L2']['tunnel_id_ranges'];
+        'OVS/tunnel_bridge':        value => $quantum_config['L2']['tunnel_bridge'];
+        'OVS/tunnel_id_ranges':     value => $quantum_config['L2']['tunnel_id_ranges'];
+        'OVS/network_vlan_ranges':  value => join(keys($quantum_config['L2']['phys_nets']), ','); # do not belive OS documentation!!!
+        'OVS/bridge_mappings':      value => $quantum_config['L2']['bridge_mappings'];
+        #todo: remove ext_net from mappings. Affect NEutron
       }
-    }
-    'vlan': {
+  } else {
       quantum_plugin_ovs {
         'OVS/network_vlan_ranges':  value => $quantum_config['L2']['network_vlan_ranges'];
         'OVS/bridge_mappings':      value => $quantum_config['L2']['bridge_mappings'];
+        'OVS/tunnel_bridge':        ensure  => absent;
+        'OVS/tunnel_id_ranges':     ensure  => absent;
       }
-    }
-    default: {
-      fail("Unsupported segmentation type: ${quantum_config['L2']['segmentation_type']}")
-    }
   }
 
   File['/etc/quantum/plugin.ini'] ->

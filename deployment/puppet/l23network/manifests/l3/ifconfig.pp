@@ -92,7 +92,7 @@ define l23network::l3::ifconfig (
     $dhcp_nowait     = false,
     $ifname_order_prefix = false,
     $check_by_ping   = 'gateway',
-    $check_by_ping_timeout = 120,
+    $check_by_ping_timeout = 30,
     #todo: label => "XXX", # -- "ip addr add..... label XXX"
 ){
   include ::l23network::params
@@ -243,7 +243,7 @@ define l23network::l3::ifconfig (
         $def_gateway = undef
       }
     }
-    if $::osfamily == 'RedHat' and $def_gateway and !defined(L23network::L3::Defaultroute[$def_gateway]) {
+    if ($::osfamily == 'RedHat' or $::osfamily == 'Debian') and $def_gateway and !defined(L23network::L3::Defaultroute[$def_gateway]) {
       l23network::l3::defaultroute { $def_gateway: }
     }
   } else {
@@ -291,7 +291,13 @@ define l23network::l3::ifconfig (
   l3_if_downup {"$interface":
     check_by_ping => $check_by_ping,
     check_by_ping_timeout => $check_by_ping_timeout,
+    #require       => File["$interface_file"], ## do not enable it!!! It affect requirements interface from interface in some cases.
     subscribe     => File["$interface_file"],
     refreshonly   => true,
   }
+
+  # Ensure default route will be put in the right order
+  # if defined(L23network::L3::Defaultroute[$def_gateway]) {
+  #   L3_if_downup <||> -> Defaultroute[$def_gateway]
+  # }
 }

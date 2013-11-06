@@ -41,6 +41,12 @@ class osnailyfacter::cluster_simple {
     $heat_hash = $::fuel_settings['heat']
   }
 
+  if $::fuel_settings['role'] == 'controller' {
+    package { 'cirros-testvm':
+      ensure => "present"
+    }
+  }
+
 
   $storage_hash         = $::fuel_settings['storage']
   $nova_hash            = $::fuel_settings['nova']
@@ -92,9 +98,7 @@ class osnailyfacter::cluster_simple {
   $multi_host = true
   Exec { logoutput => true }
 
-  if !$::fuel_settings['verbose'] {
-   $verbose = false
-  }
+  $verbose = true
 
   if !$::fuel_settings['debug'] {
    $debug = false
@@ -123,11 +127,10 @@ class osnailyfacter::cluster_simple {
     $primary_mons   = $controller
     $primary_mon    = $controller[0]['name']
     class {'ceph':
-      primary_mon          => $primary_mon,
-      cluster_node_address => $controller_node_public,
-      use_rgw              => $storage_hash['objects_ceph'],
-      use_ssl              => false,
-      glance_backend       => $glance_backend,
+      primary_mon                      => $primary_mon,
+      cluster_node_address             => $controller_node_public,
+      use_rgw                          => $storage_hash['objects_ceph'],
+      glance_backend                   => $glance_backend,
     }
   }
 
@@ -192,6 +195,7 @@ class osnailyfacter::cluster_simple {
         cinder_rate_limits      => $cinder_rate_limits,
         horizon_use_ssl         => $horizon_use_ssl,
         nameservers             => $::dns_nameservers,
+        primary_controller      => true,
         mysql_skip_name_resolve => true,
       }
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $::fuel_settings['start_guests_on_host_boot'] }
@@ -220,31 +224,6 @@ class osnailyfacter::cluster_simple {
         controller_node      => $controller_node_address,
       }
 
-
-      # glance_image is currently broken in fuel
-
-      # glance_image {'testvm':
-      #   ensure           => present,
-      #   name             => "Cirros testvm",
-      #   is_public        => 'yes',
-      #   container_format => 'ovf',
-      #   disk_format      => 'raw',
-      #   source           => '/opt/vm/cirros-0.3.0-x86_64-disk.img',
-      #   require          => Class[glance::api],
-      # }
-
-      #TODO: fix this so it dosn't break ceph
-      if !($::use_ceph) {
-        class { 'openstack::img::cirros':
-          os_username    => shellescape($access_hash[user]),
-          os_password    => shellescape($access_hash[password]),
-          os_tenant_name => shellescape($access_hash[tenant]),
-          img_name       => "TestVM",
-          stage          => 'glance-image',
-        }
-        Class[glance::api] -> Class[openstack::img::cirros]
-      }
-
       if !$::use_quantum {
         $floating_ips_range = $::fuel_settings['floating_network_range']
         if $floating_ips_range {
@@ -269,31 +248,54 @@ class osnailyfacter::cluster_simple {
 
       if $savanna_hash['enabled'] {
         class { 'savanna' :
-          savanna_enabled       => true,
-          savanna_db_password   => $savanna_hash['db_password'],
-          savanna_db_host       => $controller_node_address,
-          savanna_keystone_host => $controller_node_address,
-          use_neutron           => $::use_quantum,
-          use_floating_ips      => $::fuel_settings['auto_assign_floating_ip'],
+          savanna_api_host          => $controller_node_address,
+
+          savanna_db_password       => $savanna_hash['db_password'],
+          savanna_db_host           => $controller_node_address,
+
+          savanna_keystone_host     => $controller_node_address,
+          savanna_keystone_user     => 'admin',
+          savanna_keystone_password => 'admin',
+          savanna_keystone_tenant   => 'admin',
+
+          use_neutron               => $::use_quantum,
         }
       }
 
       if $murano_hash['enabled'] {
 
         class { 'murano' :
-          murano_enabled         => true,
-          murano_rabbit_host     => $controller_node_address,
-          murano_rabbit_login    => $heat_hash['rabbit_user'], # heat_hash is not mistake here
-          murano_rabbit_password => $heat_hash['rabbit_password'],
-          murano_db_password     => $murano_hash['db_password'],
+          murano_api_host          => $controller_node_address,
+
+          murano_rabbit_host       => $controller_node_public,
+          murano_rabbit_login      => 'murano',
+          murano_rabbit_password   => $heat_hash['rabbit_password'],
+
+          murano_db_host           => $controller_node_address,
+          murano_db_password       => $murano_hash['db_password'],
+
+          murano_keystone_host     => $controller_node_address,
+          murano_keystone_user     => 'admin',
+          murano_keystone_password => 'admin',
+          murano_keystone_tenant   => 'admin',
         }
 
         class { 'heat' :
-          heat_enabled         => true,
-          heat_rabbit_host     => $controller_node_address,
-          heat_rabbit_userid   => $heat_hash['rabbit_user'],
-          heat_rabbit_password => $heat_hash['rabbit_password'],
-          heat_db_password     => $heat_hash['db_password'],
+          pacemaker              => false,
+          external_ip            => $controller_node_public,
+
+          heat_keystone_host     => $controller_node_address,
+          heat_keystone_user     => 'heat',
+          heat_keystone_password => 'heat',
+          heat_keystone_tenant   => 'services',
+
+          heat_rabbit_host       => $controller_node_address,
+          heat_rabbit_login      => $rabbit_hash['user'],
+          heat_rabbit_password   => $rabbit_hash['password'],
+          heat_rabbit_port       => '5672',
+
+          heat_db_host           => $controller_node_address,
+          heat_db_password       => $heat_hash['db_password'],
         }
 
         Class['heat'] -> Class['murano']
@@ -309,7 +311,7 @@ class osnailyfacter::cluster_simple {
 
       class { 'openstack::compute':
         public_interface       => $::public_int,
-        private_interface      => $::fuel_settings['fixed_interface'],
+        private_interface      => $::use_quantum ? { true=>false, default=>$::fuel_settings['fixed_interface'] },
         internal_address       => $internal_address,
         libvirt_type           => $::fuel_settings['libvirt_type'],
         fixed_range            => $::fuel_settings['fixed_network_range'],
@@ -366,7 +368,7 @@ class osnailyfacter::cluster_simple {
       package { 'python-amqp':
         ensure => present
       }
-      $roles = node_roles($nodes_hash, $::fuel_settings['id'])
+      $roles = node_roles($nodes_hash, $::fuel_settings['uid'])
       if member($roles, 'controller') or member($roles, 'primary-controller') {
         $bind_host = '0.0.0.0'
       } else {
@@ -378,6 +380,7 @@ class osnailyfacter::cluster_simple {
         queue_provider       => $::queue_provider,
         rabbit_password      => $rabbit_hash[password],
         rabbit_host          => false,
+        bind_host            => $bind_host,
         rabbit_nodes         => [$controller_node_address],
         qpid_password        => $rabbit_hash[password],
         qpid_user            => $rabbit_hash[user],
@@ -385,14 +388,13 @@ class osnailyfacter::cluster_simple {
         volume_group         => 'cinder',
         manage_volumes       => $manage_volumes,
         enabled              => true,
-        bind_host            => $bind_host,
         auth_host            => $controller_node_address,
         iscsi_bind_host      => $cinder_iscsi_bind_addr,
         cinder_user_password => $cinder_hash[user_password],
         syslog_log_facility  => $syslog_log_facility_cinder,
         syslog_log_level     => $syslog_log_level,
-        debug                => $debug ? { 'true' => true, true => true, default=> false },
-        verbose              => $verbose ? { 'true' => true, true => true, default=> false },
+        debug                => $debug ? { 'true' => true, true => true, default => false },
+        verbose              => $verbose ? { 'true' => true, true => true, default => false },
         use_syslog           => true,
       }
     } #CINDER ENDS

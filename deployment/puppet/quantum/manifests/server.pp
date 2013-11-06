@@ -1,6 +1,7 @@
 #
 class quantum::server (
   $quantum_config     = {},
+  $primary_controller = false,
 ) {
   include 'quantum::params'
 
@@ -13,10 +14,10 @@ class quantum::server (
 
   if $::operatingsystem == 'Ubuntu' {
     if $service_provider == 'pacemaker' {
-       file { "/etc/init/quantum-metadata-agent.override":
-         replace => "no",
-         ensure  => "present",
-         content => "manual",
+       file { '/etc/init/quantum-metadata-agent.override':
+         replace => 'no',
+         ensure  => 'present',
+         content => 'manual',
          mode    => 644,
          before  => Package['quantum-server'],
        }
@@ -38,13 +39,14 @@ class quantum::server (
   Package[$server_package] -> Quantum_api_config<||>
 
   if defined(Anchor['quantum-plugin-ovs']) {
-    Package["$server_package"] -> Anchor['quantum-plugin-ovs']
+    Package[$server_package] -> Anchor['quantum-plugin-ovs']
   }
 
   Quantum_config<||> ~> Service['quantum-server']
   Quantum_api_config<||> ~> Service['quantum-server']
 
   quantum_api_config {
+    'filter:authtoken/auth_url':          value => $quantum_config['keystone']['auth_url'];
     'filter:authtoken/auth_host':         value => $quantum_config['keystone']['auth_host'];
     'filter:authtoken/auth_port':         value => $quantum_config['keystone']['auth_port'];
     'filter:authtoken/admin_tenant_name': value => $quantum_config['keystone']['admin_tenant_name'];
@@ -77,16 +79,20 @@ class quantum::server (
 
   anchor {'quantum-server-config-done':}
 
-  if $::fuel_settings['role'] == 'primary-controller' {
+  if $primary_controller {
     Anchor['quantum-server-config-done'] ->
     class { 'quantum::network::predefined_netwoks':
       quantum_config => $quantum_config,
     } -> Anchor['quantum-server-done']
-    Service['quantum-server'] -> Class['quantum::network::predefined_netwoks']
+
+    Service['quantum-server'] ->
+    Class['quantum::network::predefined_netwoks']
   }
 
   anchor {'quantum-server-done':}
-  Anchor['quantum-server'] -> Anchor['quantum-server-done']
+
+  Anchor['quantum-server'] ->
+  Anchor['quantum-server-done']
 }
 
 # vim: set ts=2 sw=2 et :

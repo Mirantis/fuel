@@ -1,7 +1,8 @@
 class heat::api_cfn (
-  $enabled            = true,
+  $pacemaker          = false,
   $keystone_host      = '127.0.0.1',
   $keystone_port      = '35357',
+  $keystone_service_port = '5000',
   $keystone_protocol  = 'http',
   $keystone_user      = 'heat',
   $keystone_tenant    = 'services',
@@ -19,10 +20,12 @@ class heat::api_cfn (
   $rabbit_password    = '',
   $rabbit_virtualhost = '/',
   $rabbit_port        = '5672',
+  $rabbit_queue_host  = 'heat',
   $log_file           = '/var/log/heat/api-cloudwatch.log',
   $rpc_backend        = 'heat.openstack.common.rpc.impl_kombu',
   $use_stderr         = 'False',
   $use_syslog         = 'False',
+  $firewall_rule_name = '205 heat-api-cfn',
 
 ) {
 
@@ -33,12 +36,6 @@ class heat::api_cfn (
   package { 'heat-api-cfn':
     ensure => installed,
     name   => $::heat::params::api_cfn_package_name,
-  }
-
-  if $enabled {
-    $service_ensure = 'running'
-  } else {
-    $service_ensure = 'stopped'
   }
 
   if $rabbit_hosts {
@@ -58,9 +55,9 @@ class heat::api_cfn (
   }
 
   service { 'heat-api-cfn':
-    ensure     => $service_ensure,
+    ensure     => 'running',
     name       => $::heat::params::api_cfn_service_name,
-    enable     => $enabled,
+    enable     => true,
     hasstatus  => true,
     hasrestart => true,
   }
@@ -69,6 +66,7 @@ class heat::api_cfn (
     'DEFAULT/rabbit_userid'                : value => $rabbit_userid;
     'DEFAULT/rabbit_password'              : value => $rabbit_password;
     'DEFAULT/rabbit_virtualhost'           : value => $rabbit_virtualhost;
+    'DEFAULT/host'                         : value => $rabbit_queue_host;
     'DEFAULT/debug'                        : value => $debug;
     'DEFAULT/verbose'                      : value => $verbose;
     'DEFAULT/log_dir'                      : value => $::heat::params::log_dir;
@@ -88,9 +86,32 @@ class heat::api_cfn (
     'keystone_authtoken/admin_password'    : value => $keystone_password;
     'keystone_authtoken/auth_uri'          : value => "${keystone_protocol}${keystone_host}:5000/v2";
   }
+  
+  heat_api_cfn_paste_ini {
+    'filter:authtoken/paste.filter_factory' : value => "heat.common.auth_token:filter_factory";
+    'filter:authtoken/service_protocol'     : value => $keystone_protocol;
+    'filter:authtoken/service_host'         : value => $keystone_host;
+    'filter:authtoken/service_port'         : value => $keystone_service_port;
+    'filter:authtoken/auth_host'            : value => $keystone_host;
+    'filter:authtoken/auth_port'            : value => $keystone_port;
+    'filter:authtoken/auth_protocol'        : value => $keystone_protocol;
+    'filter:authtoken/auth_uri'             : value => "${keystone_protocol}://${keystone_host}:${keystone_port}/v2.0";
+    'filter:authtoken/admin_tenant_name'    : value => $keystone_tenant;
+    'filter:authtoken/admin_user'           : value => $keystone_user;
+    'filter:authtoken/admin_password'       : value => $keystone_password;
+  }
 
-  Package['heat-common'] -> Package['heat-api-cfn'] -> Heat_api_cfn_config<||> ~> Service['heat-api-cfn']
+  firewall { $firewall_rule_name :
+    dport   => [ $bind_port ],
+    proto   => 'tcp',
+    action  => 'accept',
+  }
+
+  Package['heat-common'] -> Package['heat-api-cfn'] -> Heat_api_cfn_config<||> -> Heat_api_cfn_paste_ini<||>
+  Heat_api_cfn_config<||> ~> Service['heat-api-cfn']
+  Heat_api_cfn_paste_ini<||> ~> Service['heat-api-cfn']
   Package['heat-api-cfn'] ~> Service['heat-api-cfn']
   Class['heat::db'] -> Service['heat-api-cfn']
+  Exec['heat_db_sync'] -> Service['heat-api-cfn'] 
 
 }

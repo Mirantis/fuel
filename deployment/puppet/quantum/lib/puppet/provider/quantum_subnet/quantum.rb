@@ -10,6 +10,7 @@ Puppet::Type.type(:quantum_subnet).provide(
 
   optional_commands :quantum  => 'quantum'
   optional_commands :keystone => 'keystone'
+  optional_commands :sleep => 'sleep'
 
   # I need to setup caching and what-not to make this lookup performance not suck
   def self.instances
@@ -17,8 +18,24 @@ Puppet::Type.type(:quantum_subnet).provide(
     return [] if network_list.chomp.empty?
 
     network_list.split("\n")[3..-2].collect do |net|
-      new(:name => net.split[3])
+      new(
+        :name   => net.split[3],
+        :ensure => :present
+      )
     end
+  end
+
+  def self.prefetch(resources)
+    instances.each do |i|
+      res = resources[i.name.to_s]
+      if ! res.nil?
+        res.provider = i
+      end
+    end
+  end
+
+  def exists?
+    @property_hash[:ensure] == :present
   end
 
   def self.tenant_id
@@ -33,7 +50,7 @@ Puppet::Type.type(:quantum_subnet).provide(
   def create
     # tenant_subnet_id=$(get_id quantum subnet-create --tenant_id $tenant_id --ip_version 4 $tenant_net_id $fixed_range --gateway $network_gateway)
     # quantum subnet-create --tenant-id $tenant --name subnet01 net01 192.168.101.0/24
-    # quantum subnet-create --tenant-id $tenant --name pub_subnet01 --gateway 10.0.1.254 public01 10.0.1.0/24 --enable_dhcp False 
+    # quantum subnet-create --tenant-id $tenant --name pub_subnet01 --gateway 10.0.1.254 public01 10.0.1.0/24 --enable_dhcp False
 
 # --allocation-pool start=$pool_floating_start,end=$pool_floating_end
 # --dns_nameservers list=true 8.8.8.8
@@ -58,6 +75,8 @@ Puppet::Type.type(:quantum_subnet).provide(
       end
     end
 
+    check_quantum_api_availability(120)
+
     auth_quantum('subnet-create',
       '--tenant-id', tenant_id[@resource[:tenant]],
       '--name', @resource[:name],
@@ -68,28 +87,16 @@ Puppet::Type.type(:quantum_subnet).provide(
     )
   end
 
-  def exists?
-    begin
-      network_list = auth_quantum("subnet-list")
-      return network_list.split("\n")[3..-2].detect do |net|
-        # n =~ /^(\S+)\s+(#{@resource[:network].split('/').first})/
-        net.split[3] == @resource[:name]
-      end
-    rescue
-      return false
-    end
-  end
-
   def destroy
     auth_quantum("subnet-delete", @resource[:name])
   end
 
-  private 
+  private
     def self.get_id(subnet_info)
       # ruby 1.8.x specific
       subnet_info.grep(/ id /).to_s.split[3]
     end
-    
+
     def self.get_tenants_id
       # notice("*** GET_TENANT_ID")
       list_keystone_tenants

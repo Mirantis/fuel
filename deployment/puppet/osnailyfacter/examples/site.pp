@@ -79,7 +79,7 @@ if $::fuel_settings['nodes'] {
 # Verbose would have set INFO level messages
 # In case of non debug and non verbose - WARNING, default level would have set.
 # Note: if syslog on, this default level may be configured (for syslog) with syslog_log_level option.
-$verbose = $::fuel_settings['verbose']
+$verbose = true
 $debug = $::fuel_settings['debug']
 
 ### Storage Settings ###
@@ -178,7 +178,7 @@ class os_common {
       # remote servers to send logs to
       rservers       => $rservers,
       # should be true, if client is running at virtual node
-      virtual        => true,
+      virtual        => str2bool($::is_virtual),
       # facilities
       syslog_log_facility_glance   => $syslog_log_facility_glance,
       syslog_log_facility_cinder   => $syslog_log_facility_cinder,
@@ -242,7 +242,7 @@ node default {
       class {'os_common':}
       }
     "multinode": {
-      include osnailyfacter::cluster_simple
+      include "osnailyfacter::cluster_simple"
       class {'os_common':}
       }
     /^(ha|ha_compact)$/: {

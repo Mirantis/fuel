@@ -1,8 +1,9 @@
 class murano::dashboard (
-  $enabled               = true,
   $settings_py           = '/usr/share/openstack-dashboard/openstack_dashboard/settings.py',
   $modify_config         = '/usr/bin/modify-horizon-config.sh',
-  $collect_static_script = '/usr/share/openstack-dashboard/manage.py'
+  $collect_static_script = '/usr/share/openstack-dashboard/manage.py',
+  $murano_url_string     = $::murano::params::default_url_string,
+  $local_settings        = $::murano::params::local_settings_path,
 ) {
 
   include murano::params
@@ -10,12 +11,14 @@ class murano::dashboard (
   $dashboard_deps = $::murano::params::murano_dashboard_deps
   $package_name   = $::murano::params::murano_dashboard_package_name
 
-  if $enabled {
-    $service_ensure = 'running'
-    $package_ensure = 'installed'
-  } else {
-    $service_ensure = 'stopped'
-    $package_ensure = 'absent'
+  File_line {
+    ensure => 'present',
+  }
+
+  file_line{ 'murano_url' :
+    path    => $local_settings,
+    line    => $murano_url_string,
+    require => File[$local_settings],
   }
 
   file { $modify_config :
@@ -29,12 +32,20 @@ class murano::dashboard (
     command => "${modify_config} install ${settings_py}",
   }
 
+  if $::osfamily == 'RedHat' {
+    $apache_user = 'apache'
+  } else {
+    $apache_user = 'www-data'
+  }
+
   exec { 'collect_static':
     command => "${collect_static_script} collectstatic --noinput",
+    user    => $apache_user,
+    group   => $apache_user,
   }
 
   package { 'murano_dashboard':
-    ensure => $package_ensure,
+    ensure => present,
     name   => $package_name,
   }
 
@@ -42,7 +53,8 @@ class murano::dashboard (
     ensure => installed,
   }
 
-  Package[$dashboard_deps] -> Package['murano_dashboard'] -> File[$modify_config] -> Exec['fix_horizon_config'] -> Exec['collect_static'] ~> Service <| title == 'httpd' |>
+  Package[$dashboard_deps] -> Package['murano_dashboard'] -> File[$modify_config] -> Exec['fix_horizon_config'] -> Exec['collect_static'] -> Service <| title == 'httpd' |>
   Package['murano_dashboard'] ~> Service <| title == 'httpd' |>
+  Exec['fix_horizon_config'] ~> Service <| title == 'httpd' |>
 
 }

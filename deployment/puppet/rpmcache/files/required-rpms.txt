@@ -53,8 +53,11 @@ libXinerama
 libXrandr
 libXrender
 libXxf86vm
+libguestfs-tools-c
+libselinux-ruby
 libpng
 librelp
+libqb
 libthai
 libtiff
 lokkit
@@ -64,6 +67,7 @@ memcached
 mesa-libGL
 mesa-libGLU
 mlocate
+mod_fastcgi
 mpfr
 mysql
 mysql-libs
@@ -79,6 +83,7 @@ openssl-devel
 openssl098e
 openstack-cinder
 openstack-dashboard
+openstack-heat
 openstack-glance
 openstack-keystone
 openstack-nova
@@ -97,17 +102,18 @@ openvswitch-controller
 pacemaker
 pango
 patch
+pciutils
 policycoreutils
 postgresql
 postgresql-devel
 postgresql-libs
 postgresql-server
-puppet
 python-amqp
 python-anyjson
 python-argparse
 python-cinder
 python-devel
+python-heatclient
 python-keystone
 python-novaclient
 python-oslo-config
@@ -140,6 +146,7 @@ screen
 subscription-manager
 system-config-firewall-base
 tk
+tmux
 unixODBC
 unzip
 usermode
