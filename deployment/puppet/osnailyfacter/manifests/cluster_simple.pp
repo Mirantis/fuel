@@ -192,11 +192,11 @@ class osnailyfacter::cluster_simple {
         syslog_log_facility_quantum => $syslog_log_facility_quantum,
         syslog_log_facility_nova    => $syslog_log_facility_nova,
         syslog_log_facility_keystone=> $syslog_log_facility_keystone,
-        cinder_rate_limits      => $cinder_rate_limits,
-        horizon_use_ssl         => $horizon_use_ssl,
-        nameservers             => $::dns_nameservers,
-        primary_controller      => true,
-        mysql_skip_name_resolve => true,
+        cinder_rate_limits          => $cinder_rate_limits,
+        horizon_use_ssl             => $horizon_use_ssl,
+        nameservers                 => $::dns_nameservers,
+        primary_controller          => true,
+        mysql_skip_name_resolve     => true,
       }
       nova_config { 'DEFAULT/start_guests_on_host_boot': value => $::fuel_settings['start_guests_on_host_boot'] }
       nova_config { 'DEFAULT/use_cow_images': value => $::fuel_settings['use_cow_images'] }
