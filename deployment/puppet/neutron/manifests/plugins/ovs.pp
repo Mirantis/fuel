@@ -42,8 +42,9 @@ class neutron::plugins::ovs (
   }
   package { 'neutron-plugin-ovs':
     name    => $::neutron::params::ovs_server_package,
-  } -> Neutron_plugin_ovs <||>
+  } 
 
+  Package['neutron-plugin-ovs'] ->
   File['/etc/neutron'] ->
   file {'/etc/neutron/plugins':
     ensure  => directory,
@@ -53,10 +54,16 @@ class neutron::plugins::ovs (
     ensure  => directory,
     mode    => '0755',
   } ->
+  file {'/etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini':
+    ensure  => present,
+    mode    => '0644',
+  } ->
   file { '/etc/neutron/plugin.ini':
     ensure  => link,
     target  => '/etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini',
-  }
+  } -> 
+  Neutron_plugin_ovs <||>
+
   neutron_plugin_ovs {
     'DATABASE/sql_connection':      value => $neutron_config['database']['url'];
     'DATABASE/sql_max_retries':     value => $neutron_config['database']['reconnects'];
