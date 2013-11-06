@@ -245,6 +245,12 @@ class horizon(
   File[$::horizon::params::local_settings_path, $::horizon::params::logdir] ~> Service['httpd']
   Package[$::horizon::params::http_service, $::horizon::params::http_modwsgi] -> Service['httpd']
 
+  exec {"refresh horizon static":
+    path    => ['/bin','/sbin','/usr/sbin','/usr/bin'],
+    command => "su $wsgi_user -s '/bin/bash' -c 'cd /usr/share/openstack-dashboard && python manage.py compress --force'",
+    require => [Package['dashboard']]
+  }
+
   if $cache_server_ip =~ /^127\.0\.0\.1/ {
     Class['memcached'] -> Class['horizon']
   }
