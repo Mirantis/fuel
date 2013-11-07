@@ -39,7 +39,7 @@ Puppet::Type.newtype(:l3_if_downup) do
     end
 
     newparam(:sleep_time) do
-      defaultto(3)
+      defaultto(20)
     end
 
     newparam(:check_by_ping) do
