@@ -232,30 +232,17 @@ quantum_ovs_agent_monitor() {
 }
 
 clean_up() {
-	
-	ocf_log info "cleaning up integration bridge"
-	ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_segmentation_bridge}
+	ocf_log info "Cleaning OVS topology..."
+	mkdir -p /var/run/neutron-ovs-cleanup
+	chown neutron:neutron /var/run/neutron-ovs-cleanup
+	mkdir -p /var/lock/neutron-ovs-cleanup
+	chown neutron:root /var/lock/neutron-ovs-cleanup
+	/usr/bin/neutron-ovs-cleanup --config-file=/etc/neutron/plugins/openvswitch/ovs_neutron_plugin.ini --log-file=/var/log/neutron/neutron-ovs-cleanup.log
 	rc=$?
 	if [ $rc -ne 0 ]; then
-        ocf_log err "Could not clean up segmentation bridge ${OCF_RESKEY_segmentation_bridge}"
-        exit $OCF_ERR_GENERIC
-    fi
-    ocf_log info "cleaning up segmentation bridge"
-	ovs-vsctl -- --if-exists del-br ${OCF_RESKEY_integration_bridge}
-	rc=$?
-	if [ $rc -ne 0 ]; then
-        ocf_log err "Could not clean up integration bridge ${OCF_RESKEY_integration_bridge}"
-        exit $OCF_ERR_GENERIC
-    fi
-    ocf_log info "recreating integration bridge"
-	ovs-vsctl -- --may-exist add-br ${OCF_RESKEY_integration_bridge}
-	rc=$?
-	if [ $rc -ne 0 ]; then
-        ocf_log err "Could not start up integration bridge ${OCF_RESKEY_integration_bridge}"
-        exit $OCF_ERR_GENERIC
-    fi
-    	            
-
+        	ocf_log err "OpenVSwitch cleanup has some problems, please check the service."
+		exit $OCF_ERR_GENERIC
+	fi
 }
 
 quantum_ovs_agent_start() {
