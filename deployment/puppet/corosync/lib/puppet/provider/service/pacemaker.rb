@@ -238,6 +238,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   def start
     get_service_hash
     enable
+    return if status == :running 
     crm('resource', 'start', get_service_name)
     debug("Starting countdown for resource start")
     debug("Start timeout is #{@service[:start_timeout]}")
@@ -253,6 +254,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   def stop
     get_service_hash
     enable
+    return if status == :stopped 
     crm('resource', 'stop', get_service_name)
     debug("Starting countdown for resource stop")
     debug("Stop timeout is #{@service[:stop_timeout]}")
