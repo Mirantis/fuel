@@ -200,6 +200,7 @@ class neutron::agents::ovs (
       ensure     => stopped,# !!! Warning !!!
       hasstatus  => false,  # !!! 'stopped' is not mistake
       hasrestart => false,  # !!! cleanup is simple script running once at OS boot
+      provider   => ::quantum::params::service_provider,
     }
     Service['neutron-ovs-agent'] ->       # it's not mistate!
       Service['neutron-ovs-cleanup'] ->   # cleanup service after agent.
