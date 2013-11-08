@@ -92,13 +92,16 @@ cs_property { 'start-failure-is-fatal':
   ensure => present,
   value  => "false",
 } -> Anchor['corosync-done']
+cs_rsc_defaults { 'target-role':
+  ensure => present,
+  value  => 'stopped',
+} -> Anchor['corosync-done']
 #
 #cs_property { 'placement-strategy':
 #  cib => 'shadow',
 #  ensure => absent,
 #  value  => 'default',
 #}
-
 
 anchor {'corosync-done':}
 }
