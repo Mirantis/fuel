@@ -76,6 +76,10 @@ class openstack::ceilometer (
       auth_host     => $keystone_host,
       auth_password => $keystone_password,
     }
+
+    class { '::ceilometer::alarm::evaluator': }
+
+    class { '::ceilometer::alarm::notifier': }
   }
 
   if ($on_compute) {
