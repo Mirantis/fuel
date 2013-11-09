@@ -217,7 +217,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
          config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks] and
          config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks].is_a?(Array) and
          config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks].size() > 0
-            trans[:vlan_splinters] = true
+            trans[:vlan_splinters] = config_hash[:interfaces][trans[:name].to_sym][:L2][:vlan_splinters]  ?  true : false
             _trunks = [0] + trans[:trunks] + config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks]  # zero for pass untagged traffic
             _trunks.uniq!()
             trans[:trunks] = _trunks
