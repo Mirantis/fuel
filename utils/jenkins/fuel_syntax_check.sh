@@ -3,7 +3,7 @@
 #      We want to parse for all environments.
 #      Is this being done, contrary to puppet report?
 #TODO: Even with --ignoreimport, some may be pulling in others,
-#      meaning we're checking multiple times.
+#      meaning we're checking multiple times!
 
 #all_files=`find -name "*.pp" -o -name "*.erb" -o -name "*.sh" -o -name "*.rb"`
 
