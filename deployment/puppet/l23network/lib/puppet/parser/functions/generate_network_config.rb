@@ -118,6 +118,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
     end
 
     config_hash = L23network::Scheme.get()
+    Puppet.debug "debug@generate_network_config: hostname=#{$hostname};config_hash=#{config_hash.inspect}"
     if config_hash.nil?
       raise(Puppet::ParseError, "get_network_role_property(...): You must call prepare_network_config(...) first!")
     end
@@ -141,6 +142,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
         res_factory[k][:type_of_resource] = :type
       end
     end
+    Puppet.debug "debug@generate_network_config: hostname=#{$hostname};res_factory=#{res_factory.inspect}"
 
     # collect interfaces and endpoints
     endpoints = {}
@@ -176,6 +178,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
         end
       end
     end
+    Puppet.debug "debug@generate_network_config: hostname=#{$hostname};endpoints=#{endpoints.inspect}"
 
     # execute transformations
     # todo: if provider="lnx" execute transformations for LNX bridges
@@ -207,7 +210,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
       born_ports.insert(-1, trans[:name].to_sym()) if action != :patch
       previous = p_resource.to_s
     end
-
+    Puppet.debug "debug@generate_network_config: hostname=#{$hostname};p_resource=#{p_resource.inspect}"
     # check for all in endpoints are in interfaces or born by transformation
     config_hash[:endpoints].each do |e_name, e_properties|
       if not born_ports.index(e_name.to_sym())
@@ -250,6 +253,7 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
       resource.instantiate_resource(self, p_resource)
       compiler.add_resource(self, p_resource)
       transformation_success.insert(-1, "endpoint(#{endpoint_name})")
+      Puppet.debug "debug@generate_network_config: hostname=#{$hostname};p_resource=#{p_resource.inspect}"
       previous = p_resource.to_s
     end
 
