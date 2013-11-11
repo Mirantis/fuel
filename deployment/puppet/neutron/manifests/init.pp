@@ -137,51 +137,56 @@ class neutron (
   # quantum-ovs/metadata/l3/dhcp/-agents:
   # 	daemon --user quantum --pidfile $pidfile "$exec --config-file /etc/$proj/$proj.conf --config-file $config &>>/var/log/$proj/$plugin.log & echo \$! > $pidfile"
 
+# implements https://bugs.launchpad.net/fuel/+bug/1249999 for neutron-server and its agents
   neutron_config {
       'DEFAULT/log_file':   ensure=> absent;
       'DEFAULT/logfile':    ensure=> absent;
-  }
-  if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
-    neutron_config {
-        'DEFAULT/log_dir':    ensure=> absent;
-        'DEFAULT/logdir':     ensure=> absent;
-        'DEFAULT/log_config':   value => "/etc/neutron/logging.conf";
-        'DEFAULT/use_stderr': ensure=> absent;
-        'DEFAULT/use_syslog': value=> true;
-        'DEFAULT/syslog_log_facility': value=> $syslog_log_facility;
-    }
-    file { "neutron-logging.conf":
-      content => template('neutron/logging.conf.erb'),
-      path  => "/etc/neutron/logging.conf",
-      owner => "root",
-      group => "neutron",
-      mode  => 640,
-    }
-  } else {
-    neutron_config {
-    # logging for agents grabbing from stderr. It's workarround for bug in neutron-logging
+      'DEFAULT/log_dir':    ensure=> absent;
+      'DEFAULT/logdir':     ensure=> absent;
       'DEFAULT/use_syslog': ensure=> absent;
-      'DEFAULT/syslog_log_facility': ensure=> absent;
-      'DEFAULT/log_config': ensure=> absent;
-      # FIXME stderr should not be used unless neutron+agents init & OCF scripts would be fixed to redirect its output to stderr!
-      #'DEFAULT/use_stderr': value => true;
-      'DEFAULT/use_stderr': ensure=> absent;
-      'DEFAULT/log_dir': value => $log_dir;
-    }
-    file { "neutron-logging.conf":
-      content => template('neutron/logging.conf-nosyslog.erb'),
-      path  => "/etc/neutron/logging.conf",
-      owner => "root",
-      group => "neutron",
-      mode  => 640,
-    }
+      'DEFAULT/use_stderr': value=> true;
   }
-  # We must setup logging before start services under pacemaker
-  File['neutron-logging.conf'] -> Service<| title == "$::neutron::params::server_service" |>
-  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-ovs-agent' |>
-  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-l3' |>
-  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-dhcp-agent' |>
-  File <| title=='/etc/neutron' |> -> File <| title=='neutron-logging.conf' |>
+#  if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
+#    neutron_config {
+#        'DEFAULT/log_dir':    ensure=> absent;
+#        'DEFAULT/logdir':     ensure=> absent;
+#        'DEFAULT/log_config':   value => "/etc/neutron/logging.conf";
+#        'DEFAULT/use_stderr': ensure=> absent;
+#        'DEFAULT/use_syslog': value=> true;
+#        'DEFAULT/syslog_log_facility': value=> $syslog_log_facility;
+#    }
+#    file { "neutron-logging.conf":
+#      content => template('neutron/logging.conf.erb'),
+#      path  => "/etc/neutron/logging.conf",
+#      owner => "root",
+#      group => "neutron",
+#      mode  => 640,
+#    }
+#  } else {
+#    neutron_config {
+#    # logging for agents grabbing from stderr. It's workarround for bug in neutron-logging
+#      'DEFAULT/use_syslog': ensure=> absent;
+#      'DEFAULT/syslog_log_facility': ensure=> absent;
+#      'DEFAULT/log_config': ensure=> absent;
+#      # FIXME stderr should not be used unless neutron+agents init & OCF scripts would be fixed to redirect its output to stderr!
+#      #'DEFAULT/use_stderr': value => true;
+#      'DEFAULT/use_stderr': ensure=> absent;
+#      'DEFAULT/log_dir': value => $log_dir;
+#    }
+#    file { "neutron-logging.conf":
+#      content => template('neutron/logging.conf-nosyslog.erb'),
+#      path  => "/etc/neutron/logging.conf",
+#      owner => "root",
+#      group => "neutron",
+#      mode  => 640,
+#    }
+#  }
+#  # We must setup logging before start services under pacemaker
+#  File['neutron-logging.conf'] -> Service<| title == "$::neutron::params::server_service" |>
+#  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-ovs-agent' |>
+#  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-l3' |>
+#  File['neutron-logging.conf'] -> Anchor<| title == 'neutron-dhcp-agent' |>
+#  File <| title=='/etc/neutron' |> -> File <| title=='neutron-logging.conf' |>
 
   if defined(Anchor['neutron-server-config-done']) {
     $endpoint_neutron_main_configuration = 'neutron-server-config-done'
