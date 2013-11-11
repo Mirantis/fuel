@@ -140,12 +140,12 @@ class neutron (
 
 # implements https://bugs.launchpad.net/fuel/+bug/1249999 for neutron-server and its agents
   neutron_config {
-      'DEFAULT/log_file':   ensure=> absent;
-      'DEFAULT/logfile':    ensure=> absent;
-      'DEFAULT/log_dir':    ensure=> absent;
-      'DEFAULT/logdir':     ensure=> absent;
-      'DEFAULT/use_syslog': ensure=> absent;
-      'DEFAULT/use_stderr': value=> true;
+      'DEFAULT/log_dir':       ensure => absent;
+      'DEFAULT/log_file':      ensure => absent;
+      'DEFAULT/log_config':    ensure => absent;
+      'DEFAULT/use_syslog':     value => false;
+      'DEFAULT/use_stderr':     value => true;
+      'DEFAULT/publish_errors': value => false;
   }
 
   if defined(Anchor['neutron-server-config-done']) {

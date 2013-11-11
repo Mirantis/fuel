@@ -47,6 +47,11 @@ class neutron::agents::l3 (
   neutron_l3_agent_config {
     'DEFAULT/debug':          value => $debug;
     'DEFAULT/verbose':        value => $verbose;
+    'DEFAULT/log_dir':       ensure => absent;
+    'DEFAULT/log_file':      ensure => absent;
+    'DEFAULT/log_config':    ensure => absent;
+    'DEFAULT/use_syslog':    ensure => absent;
+    'DEFAULT/use_stderr':    ensure => absent;
     'DEFAULT/root_helper':    value => $neutron_config['root_helper'];
     'DEFAULT/auth_url':       value => $neutron_config['keystone']['auth_url'];
     'DEFAULT/admin_user':     value => $neutron_config['keystone']['admin_user'];

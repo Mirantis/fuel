@@ -103,7 +103,7 @@ if $virtual { include rsyslog::checksum_udp514 }
 }
 #TODO implement neutron-ML2 agent's logging
 ::rsyslog::imfile { "50-neutron-ovs-agent" :
-    file_name     => "/var/log/neutron/openvswitch-agent.log",
+    file_name     => "/var/log/neutron/ovs-agent.log",
     file_tag      => "neutron-agent-ovs",
     file_facility => $syslog_log_facility_quantum,
     file_severity => "INFO",
@@ -125,36 +125,6 @@ if $virtual { include rsyslog::checksum_udp514 }
 }
 ::rsyslog::imfile { "50-neutron-metadata-agent" :
     file_name     => "/var/log/neutron/metadata-agent.log",
-    file_tag      => "neutron-agent-metadata",
-    file_facility => $syslog_log_facility_quantum,
-    file_severity => "INFO",
-    notify  => Class["rsyslog::service"],
-}
-# FIXME Workaround for PRD-1416
-# (remove after PRD-1416 resolved)
-::rsyslog::imfile { "50-ha-neutron-ovs-agent" :
-    file_name     => "/var/log/neutron/neutron-openvswitch-agent.log",
-    file_tag      => "neutron-agent-ovs",
-    file_facility => $syslog_log_facility_quantum,
-    file_severity => "INFO",
-    notify  => Class["rsyslog::service"],
-}
-::rsyslog::imfile { "50-ha-neutron-l3-agent" :
-    file_name     => "/var/log/neutron/neutron-l3-agent.log",
-    file_tag      => "neutron-agent-l3",
-    file_facility => $syslog_log_facility_quantum,
-    file_severity => "INFO",
-    notify  => Class["rsyslog::service"],
-}
-::rsyslog::imfile { "50-ha-neutron-dhcp-agent" :
-    file_name     => "/var/log/neutron/neutron-dhcp-agent.log",
-    file_tag      => "neutron-agent-dhcp",
-    file_facility => $syslog_log_facility_quantum,
-    file_severity => "INFO",
-    notify  => Class["rsyslog::service"],
-}
-::rsyslog::imfile { "50-ha-neutron-metadata-agent" :
-    file_name     => "/var/log/neutron/neutron-metadata-agent.log",
     file_tag      => "neutron-agent-metadata",
     file_facility => $syslog_log_facility_quantum,
     file_severity => "INFO",

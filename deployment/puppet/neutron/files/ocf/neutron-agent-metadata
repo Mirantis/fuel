@@ -35,6 +35,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 OCF_RESKEY_binary_default="neutron-metadata-agent"
 OCF_RESKEY_config_default="/etc/neutron/neutron.conf"
 OCF_RESKEY_agent_config_default="/etc/neutron/metadata_agent.ini"
+OCF_RESKEY_log_file_default="/var/log/neutron/metadata-agent.log"
 OCF_RESKEY_user_default="neutron"
 OCF_RESKEY_pid_default="$HA_RSCTMP/$OCF_RESOURCE_INSTANCE.pid"
 
@@ -43,6 +44,7 @@ OCF_RESKEY_pid_default="$HA_RSCTMP/$OCF_RESOURCE_INSTANCE.pid"
 : ${OCF_RESKEY_agent_config=${OCF_RESKEY_agent_config_default}}
 : ${OCF_RESKEY_user=${OCF_RESKEY_user_default}}
 : ${OCF_RESKEY_pid=${OCF_RESKEY_pid_default}}
+: ${OCF_RESKEY_log_file=${OCF_RESKEY_log_file_default}}
 
 #######################################################################
 
@@ -117,6 +119,14 @@ The pid file to use for this Quantum Metadata Agent service (neutron-metadata-ag
 <content type="string" default="${OCF_RESKEY_pid_default}" />
 </parameter>
 
+<parameter name="log_file" unique="0" required="0">
+<longdesc lang="en">
+The log file to use for this OpenStack Metadata Service (neutron-metadata-agent) instance
+</longdesc>
+<shortdesc lang="en">OpenStack Metadata Service (neutron-metadata-agent) log file</shortdesc>
+<content type="string" default="${OCF_RESKEY_log_file_default}" />
+</parameter>
+
 </parameters>
 
 <actions>
@@ -171,13 +181,13 @@ neutron_metadata_agent_status() {
 
         if [ $? -eq 0 ]
         then
-        	ocf_log warn "OpenStack Quantum Metadata Agent (neutron-metadata-agent) was run, but no pid file found."
-        	ocf_log warn "Will use $pid as PID of process (neutron-metadata-agent)"
-        	ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
-        	echo $pid > $OCF_RESKEY_pid
-    	else
-    		return $OCF_NOT_RUNNING
-    	fi
+            ocf_log warn "OpenStack Quantum Metadata Agent (neutron-metadata-agent) was run, but no pid file found."
+            ocf_log warn "Will use $pid as PID of process (neutron-metadata-agent)"
+            ocf_log warn "Writing $pid into $OCF_RESKEY_pid"
+            echo $pid > $OCF_RESKEY_pid
+        else
+            return $OCF_NOT_RUNNING
+        fi
     else
         pid=`cat $OCF_RESKEY_pid`
     fi
@@ -199,7 +209,7 @@ neutron_metadata_agent_monitor() {
 }
 
 clean_up() {
-	ocf_log info "cleaning up neutron-metadata-agent. nothing to do."
+    ocf_log info "cleaning up neutron-metadata-agent. nothing to do."
 }
 
 neutron_metadata_agent_start() {
@@ -216,8 +226,8 @@ neutron_metadata_agent_start() {
     # run the actual neutron-metadata-agent daemon. Don't use ocf_run as we're sending the tool's output
     # straight to /dev/null anyway and using ocf_run would break stdout-redirection here.
     su ${OCF_RESKEY_user} -s /bin/sh -c "${OCF_RESKEY_binary} --config-file=$OCF_RESKEY_config \
-       --config-file=$OCF_RESKEY_agent_config $OCF_RESKEY_additional_parameters"' >> \
-	/dev/null 2>&1 & echo $!' > $OCF_RESKEY_pid
+       --config-file=$OCF_RESKEY_agent_config $OCF_RESKEY_additional_parameters \
+       >> ${OCF_RESKEY_log_file}"' 2>&1 & echo $!' > $OCF_RESKEY_pid
 
     # Spin waiting for the server to come up.
     # Let the CRM/LRM time us out if required

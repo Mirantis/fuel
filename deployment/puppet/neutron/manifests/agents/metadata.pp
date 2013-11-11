@@ -22,6 +22,12 @@ class neutron::agents::metadata (
 
   neutron_metadata_agent_config {
     'DEFAULT/debug':              value => $debug;
+    'DEFAULT/verbose':            value => $verbose;
+    'DEFAULT/log_dir':           ensure => absent;
+    'DEFAULT/log_file':          ensure => absent;
+    'DEFAULT/log_config':        ensure => absent;
+    'DEFAULT/use_syslog':        ensure => absent;
+    'DEFAULT/use_stderr':        ensure => absent;
     'DEFAULT/auth_region':        value => $neutron_config['keystone']['auth_region'];
     'DEFAULT/auth_url':           value => $neutron_config['keystone']['auth_url'];
     'DEFAULT/admin_user':         value => $neutron_config['keystone']['admin_user'];

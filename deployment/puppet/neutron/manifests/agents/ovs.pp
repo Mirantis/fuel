@@ -17,9 +17,11 @@ class neutron::agents::ovs (
 
   }
 
-  if defined(Anchor['neutron-server-done']) {
-    Anchor['neutron-server-done'] -> Anchor['neutron-ovs-agent']
-  }
+  # if defined(Anchor['neutron-server-done']) {
+  #   Anchor['neutron-server-done'] -> Anchor['neutron-ovs-agent']
+  # }
+  Service<| title=='neutron-server' |> -> Anchor['neutron-ovs-agent']
+
 
   anchor {'neutron-ovs-agent': }
 
