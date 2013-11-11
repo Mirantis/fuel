@@ -209,8 +209,8 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
       transformation_success.insert(-1, "#{t[:action].strip()}(#{trans[:name]})")
       born_ports.insert(-1, trans[:name].to_sym()) if action != :patch
       previous = p_resource.to_s
+      Puppet.debug "debug@generate_network_config: hostname=#{$hostname};p_resource=#{p_resource.inspect}"
     end
-    Puppet.debug "debug@generate_network_config: hostname=#{$hostname};p_resource=#{p_resource.inspect}"
     # check for all in endpoints are in interfaces or born by transformation
     config_hash[:endpoints].each do |e_name, e_properties|
       if not born_ports.index(e_name.to_sym())
