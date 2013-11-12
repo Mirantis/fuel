@@ -87,7 +87,6 @@ class neutron::agents::metadata (
     ::corosync::cleanup { $res_name: }
     ::Corosync::Cleanup["$res_name"] -> Service[$res_name]
 
-    File<| title=='neutron-logging.conf' |> ->
     cs_resource { "$res_name":
       ensure          => present,
       cib             => $cib_name,

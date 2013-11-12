@@ -102,7 +102,6 @@ class neutron::agents::ovs (
     }
     File['neutron-ovs-agent-ocf'] -> Cs_resource["p_${::neutron::params::ovs_agent_service}"]
 
-    File<| title=='neutron-logging.conf' |> ->
     cs_resource { "p_${::neutron::params::ovs_agent_service}":
       ensure          => present,
       cib             => 'ovs',
@@ -205,7 +204,7 @@ class neutron::agents::ovs (
         require    => Package['neutron-ovs-cleanup'],
       }
     }
-    default: { 
+    default: {
       service { 'neutron-ovs-cleanup':
         name       => 'neutron-ovs-cleanup',
         enable     => true,
