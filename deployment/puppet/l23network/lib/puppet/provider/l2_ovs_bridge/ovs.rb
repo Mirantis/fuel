@@ -24,6 +24,8 @@ Puppet::Type.type(:l2_ovs_bridge).provide(:ovs) do
     vsctl('add-br', @resource[:bridge])
     notice("bridge '#{@resource[:bridge]}' created.")
     external_ids = @resource[:external_ids] if @resource[:external_ids]
+    in_band = @resource[:in_band] if @resource[:in_band]
+    fail_mode = @resource[:fail_mode] if @resource[:fail_mode]
   end
 
   def destroy
@@ -48,5 +50,21 @@ Puppet::Type.type(:l2_ovs_bridge).provide(:ovs) do
         vsctl("br-set-external-id", @resource[:bridge], k, v)
       end
     end
+  end
+
+  def in_band
+    vsctl("get", "Bridge", @resource[:bridge], "other_config:disable-in-band").tr('"','').strip
+  end
+
+  def in_band=(value)
+    vsctl("set", "Bridge", @resource[:bridge], "other_config:disable-in-band=#{value}")
+  end
+
+  def fail_mode
+    vsctl("get", "Bridge", @resource[:bridge], "fail-mode").strip
+  end
+
+  def fail_mode=(value)
+    vsctl("set", "Bridge", @resource[:bridge], "fail-mode=#{value}")
   end
 end
