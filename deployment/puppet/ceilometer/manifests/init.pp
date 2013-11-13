@@ -31,7 +31,7 @@ class ceilometer(
   $verbose             = 'False',
   $debug               = 'False',
   $use_syslog          = false,
-  $syslog_log_facility = "SYSLOG",
+  $syslog_log_facility = 'SYSLOG',
   $syslog_log_level    = 'WARNING',
   $queue_provider      = 'rabbitmq',
   $rabbit_host         = '127.0.0.1',
@@ -92,8 +92,8 @@ class ceilometer(
   case $queue_provider {
     'rabbitmq': {
       ceilometer_config {
-        'DEFAULT/rabbit_userid': value => $rabbit_userid;
-        'DEFAULT/rabbit_password': value => $rabbit_password;
+        'DEFAULT/rabbit_userid'      : value => $rabbit_userid;
+        'DEFAULT/rabbit_password'    : value => $rabbit_password;
         'DEFAULT/rabbit_virtual_host': value => $rabbit_virtual_host;
         'DEFAULT/rpc_backend':
           value => 'ceilometer.openstack.common.rpc.impl_kombu';
@@ -110,9 +110,9 @@ class ceilometer(
       } else {
         ceilometer_config {
           'DEFAULT/rabbit_ha_queues': value => false;
-          'DEFAULT/rabbit_host': value => $rabbit_host;
-          'DEFAULT/rabbit_port': value => $rabbit_port;
-          'DEFAULT/rabbit_hosts': value => "${rabbit_host}:${rabbit_port}"
+          'DEFAULT/rabbit_host'     : value => $rabbit_host;
+          'DEFAULT/rabbit_port'     : value => $rabbit_port;
+          'DEFAULT/rabbit_hosts'    : value => "${rabbit_host}:${rabbit_port}"
         }
       }
     }
@@ -134,7 +134,7 @@ class ceilometer(
       } else {
         ceilometer_config {
           'DEFAULT/qpid_hostname': value => $qpid_host;
-          'DEFAULT/qpid_port': value => $qpid_port;
+          'DEFAULT/qpid_port'    : value => $qpid_port;
         }
       }
     }
@@ -150,16 +150,16 @@ class ceilometer(
   if $use_syslog and !$debug =~ /(?i)(true|yes)/ {
     File['ceilometer-logging.conf'] -> Ceilometer_config['DEFAULT/log_config']
     ceilometer_config {
-      'DEFAULT/log_config': value => "/etc/ceilometer/logging.conf";
-      'DEFAULT/log_file':   ensure=> absent;
-      'DEFAULT/log_dir':    ensure=> absent;
-      'DEFAULT/use_stderr': ensure=> absent;
-      'DEFAULT/use_syslog': value => true;
+      'DEFAULT/log_config'         : value => '/etc/ceilometer/logging.conf';
+      'DEFAULT/log_file'           : ensure => absent;
+      'DEFAULT/log_dir'            : ensure => absent;
+      'DEFAULT/use_stderr'         : ensure => absent;
+      'DEFAULT/use_syslog'         : value => true;
       'DEFAULT/syslog_log_facility': value => $syslog_log_facility;
     }
-    file { "ceilometer-logging.conf":
+    file { 'ceilometer-logging.conf':
       content => template('ceilometer/logging.conf.erb'),
-      path => "/etc/ceilometer/logging.conf",
+      path    => '/etc/ceilometer/logging.conf',
     }
   }
   else {
@@ -175,9 +175,9 @@ class ceilometer(
        value => '%(asctime)s %(levelname)s %(name)s [-] %(instance)s %(message)s';
     }
     # might be used for stdout logging instead, if configured
-    file { "ceilometer-logging.conf":
+    file { 'ceilometer-logging.conf':
       content => template('ceilometer/logging.conf-nosyslog.erb'),
-      path => "/etc/ceilometer/logging.conf",
+      path    => '/etc/ceilometer/logging.conf',
     }
   }
 

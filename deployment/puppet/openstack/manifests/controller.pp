@@ -470,6 +470,8 @@ class openstack::controller (
       qpid_nodes           => $qpid_nodes,
       keystone_host        => $internal_address,
       keystone_password    => $ceilometer_user_password,
+      bind_host            => $api_bind_address,
+      ha_mode              => $ha_mode,
       on_controller        => true,
     }
   }

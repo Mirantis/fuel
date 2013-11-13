@@ -30,13 +30,15 @@ class ceilometer::agent::central (
   $auth_tenant_name = 'services',
   $auth_tenant_id   = '',
   $enabled          = true,
+  $ha_mode          = false,
 ) {
 
   include ceilometer::params
 
   Ceilometer_config<||> ~> Service['ceilometer-agent-central']
-
+  Package['ceilometer-common'] -> Service['ceilometer-agent-central']
   Package['ceilometer-agent-central'] -> Service['ceilometer-agent-central']
+
   package { 'ceilometer-agent-central':
     ensure => installed,
     name   => $::ceilometer::params::agent_central_package_name,
@@ -46,15 +48,6 @@ class ceilometer::agent::central (
     $service_ensure = 'running'
   } else {
     $service_ensure = 'stopped'
-  }
-
-  Package['ceilometer-common'] -> Service['ceilometer-agent-central']
-  service { 'ceilometer-agent-central':
-    ensure     => $service_ensure,
-    name       => $::ceilometer::params::agent_central_service_name,
-    enable     => $enabled,
-    hasstatus  => true,
-    hasrestart => true,
   }
 
   ceilometer_config {
@@ -69,5 +62,78 @@ class ceilometer::agent::central (
     ceilometer_config {
       'DEFAULT/os_tenant_id'        : value => $auth_tenant_id;
     }
+  }
+
+  if $ha_mode {
+
+    $res_name = "p_${::ceilometer::params::agent_central_service_name}"
+    $cib_name = "${::ceilometer::params::agent_central_service_name}"
+
+    Package['pacemaker'] -> File['ceilometer-agent-central-ocf']
+    file {'ceilometer-agent-central-ocf':
+      path=>'/usr/lib/ocf/resource.d/mirantis/ceilometer-agent-central',
+      mode => 755,
+      owner => root,
+      group => root,
+      source => 'puppet:///modules/ceilometer/ocf/ceilometer-agent-central',
+    }
+
+    File['ceilometer-agent-central-ocf'] -> Cs_resource[$res_name]
+    cs_resource { $res_name:
+      ensure          => present,
+      cib             => $cib_name,
+      primitive_class => 'ocf',
+      provided_by     => 'mirantis',
+      primitive_type  => 'ceilometer-agent-central',
+      metadata        => { 'target-role' => 'stopped' },
+      parameters      => { 'user' => 'ceilometer' },
+      operations      => {
+        'monitor'  => {
+          'interval' => '20',
+          'timeout'  => '30'
+        }
+        ,
+        'start'    => {
+          'timeout' => '360'
+        }
+        ,
+        'stop'     => {
+          'timeout' => '360'
+        }
+      },
+    }
+
+    cs_shadow { $res_name: cib => $cib_name }
+    cs_commit { $res_name: cib => $cib_name }
+
+    ::corosync::cleanup{ $res_name: }
+
+    service { 'ceilometer-agent-central':
+      ensure     => $service_ensure,
+      name       => $res_name,
+      enable     => $enabled,
+      hasstatus  => true,
+      hasrestart => true,
+      provider   => "pacemaker",
+    }
+
+    Cs_commit[$res_name] -> ::Corosync::Cleanup[$res_name]
+    Cs_commit[$res_name] ~> ::Corosync::Cleanup[$res_name]
+
+    Cs_shadow[$res_name] ->
+      Cs_resource[$res_name] ->
+        Cs_commit[$res_name] ->
+          Service['ceilometer-agent-central']
+
+  } else {
+
+    service { 'ceilometer-agent-central':
+      ensure     => $service_ensure,
+      name       => $::ceilometer::params::agent_central_service_name,
+      enable     => $enabled,
+      hasstatus  => true,
+      hasrestart => true,
+    }
+
   }
 }

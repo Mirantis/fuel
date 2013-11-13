@@ -28,8 +28,11 @@ class openstack::ceilometer (
   $qpid_userid         = 'guest',
   $qpid_password       = 'qpid_pw',
   $keystone_host       = '127.0.0.1',
+  $bind_host           = '0.0.0.0',
+  $bind_port           = '8777',
   $on_controller       = false,
   $on_compute          = false,
+  $ha_mode             = false,
 ) {
 
   # Add the base ceilometer class & parameters
@@ -68,6 +71,8 @@ class openstack::ceilometer (
     class { '::ceilometer::api':
       keystone_host     => $keystone_host,
       keystone_password => $keystone_password,
+      bind_host         => $bind_host,
+      bind_port         => $bind_port,
     }
 
     class { '::ceilometer::collector': }
@@ -75,11 +80,12 @@ class openstack::ceilometer (
     class { '::ceilometer::agent::central':
       auth_host     => $keystone_host,
       auth_password => $keystone_password,
+      ha_mode       => $ha_mode,
     }
 
-    class { '::ceilometer::alarm::evaluator': }
+    #class { '::ceilometer::alarm::evaluator': }
 
-    class { '::ceilometer::alarm::notifier': }
+    #class { '::ceilometer::alarm::notifier': }
   }
 
   if ($on_compute) {
