@@ -133,13 +133,13 @@ class horizon(
   $log_group = $::osfamily ? { 'Debian'=>'horizon', default=>$wsgi_group}
   file { $horizon::params::logdir:
     ensure  => directory,
-    mode    => '0751',
+    mode    => '0750',
     owner   => $log_user,
     group   => $log_group,
   } ->
   file { "${horizon::params::logdir}/horizon.log":
     ensure  => present,
-    mode    => '0650',
+    mode    => '0640',
     owner   => $log_user,
     group   => $log_group,
   }
