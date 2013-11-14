@@ -211,6 +211,18 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
 
       Puppet.debug "stage6@generate_network_config:p_resource: #{p_resource.inspect}"
 
+      # setup trunks and vlan_splinters for phys.NIC
+      if (action == :port) and config_hash[:interfaces][trans[:name].to_sym] and
+         config_hash[:interfaces][trans[:name].to_sym][:L2] and
+         config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks] and
+         config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks].is_a?(Array) and
+         config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks].size() > 0
+            trans[:vlan_splinters] = config_hash[:interfaces][trans[:name].to_sym][:L2][:vlan_splinters]  ?  true : false
+            _trunks = [0] + trans[:trunks] + config_hash[:interfaces][trans[:name].to_sym][:L2][:trunks]  # zero for pass untagged traffic
+            _trunks.uniq!()
+            trans[:trunks] = _trunks
+      end
+
       trans.select{|k,v| k != :action}.each do |k,v|
         p_resource.set_parameter(k,v)
       end
