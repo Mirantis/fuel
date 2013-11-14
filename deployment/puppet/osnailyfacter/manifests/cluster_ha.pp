@@ -177,6 +177,8 @@ class osnailyfacter::cluster_ha {
     } else {
       $primary_proxy = false
     }
+  } elsif ($storage_hash['objects_ceph']) {
+    $rgw_balancers = $controller_storage_addresses
   }
 
 
@@ -251,6 +253,7 @@ class osnailyfacter::cluster_ha {
       export_resources              => false,
       glance_backend                => $glance_backend,
       swift_proxies                 => $swift_proxies,
+      rgw_balancers                 => $rgw_balancers,
       quantum                       => $::use_quantum,
       quantum_config                => $quantum_config,
       quantum_network_node          => $::use_quantum,
@@ -354,6 +357,7 @@ class osnailyfacter::cluster_ha {
           auth_method     => 'password',
           auth_url        => "http://${::fuel_settings['management_vip']}:5000/v2.0/",
           authtenant_name => $access_hash[tenant],
+          api_retries     => 10,
         }
         Class[nova::api] -> Nova_floating_range <| |>
       }
