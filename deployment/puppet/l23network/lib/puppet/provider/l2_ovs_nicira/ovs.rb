@@ -15,7 +15,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
   def generate_cert
     if not File.exists? @cert_path
       old_dir = Dir.pwd
-      Dir.chdir "/etc/openvswitch"
+      Dir.chdir @cert_dir
       vspki("init --force")
       vspki("req+sign ovsclient controller")
       vsctl("-- --bootstrap set-ssl #{@cert_path} #{@privkey_path} #{@cacert_path}")

@@ -16,9 +16,6 @@ Puppet::Type.newtype(:l2_ovs_nicira) do
     newparam(:display_name, :namevar => true) do
     end
 
-    newparam(:client_certificate) do
-    end
-
     newparam(:transport_zone_uuid) do
     end
 
