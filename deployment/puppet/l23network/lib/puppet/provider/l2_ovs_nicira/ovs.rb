@@ -42,7 +42,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
     return conn, cookie
   end
 
-  def get_uuid(display_name)
+  def get_uuid
     resp, data = @conn.get('/ws.v1/transport-node', { 'Cookie' => @cookie })
     nodes = JSON.load(data)['results']
     nodes.each { |node|
@@ -56,7 +56,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
 
   def exists?
     @conn, @cookie = login
-    query_result = get_uuid(@resource[:name])
+    query_result = get_uuid
     if query_result != nil
       return true
     end
@@ -87,7 +87,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
   end
 
   def destroy
-    uuid = get_uuid(@resource[:name])
+    uuid = get_uuid
     if uuid != nil
       @conn.delete("/ws.v1/transport-node/#{uuid}", { 'Cookie' => @cookie})
     end
