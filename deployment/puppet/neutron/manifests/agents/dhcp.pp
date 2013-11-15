@@ -132,30 +132,38 @@ class neutron::agents::dhcp (
     Cs_commit['dhcp'] -> ::Corosync::Cleanup["p_${::neutron::params::dhcp_agent_service}"]
     Cs_commit['dhcp'] ~> ::Corosync::Cleanup["p_${::neutron::params::dhcp_agent_service}"]
     ::Corosync::Cleanup["p_${::neutron::params::dhcp_agent_service}"] -> Service['neutron-dhcp-service']
-    Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-ovs']
-    Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-ovs']
+
+    if ! $neutron_settings['nicira']['enabled'] {
+
+      Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-ovs']
+      Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-ovs']
+    }
+
     Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-metadata']
     Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-metadata']
 
     cs_shadow { 'dhcp': cib => 'dhcp' }
     cs_commit { 'dhcp': cib => 'dhcp' }
 
-    cs_colocation { 'dhcp-with-ovs':
-      ensure     => present,
-      cib        => 'dhcp',
-      primitives => [
-        "p_${::neutron::params::dhcp_agent_service}",
-        "clone_p_${::neutron::params::ovs_agent_service}"
-      ],
-      score      => 'INFINITY',
-    } ->
-    cs_order { 'dhcp-after-ovs':
-      ensure => present,
-      cib    => 'dhcp',
-      first  => "clone_p_${::neutron::params::ovs_agent_service}",
-      second => "p_${::neutron::params::dhcp_agent_service}",
-      score  => 'INFINITY',
-    } -> Service['neutron-dhcp-service']
+    if ! $neutron_settings['nicira']['enabled'] {
+
+      cs_colocation { 'dhcp-with-ovs':
+        ensure     => present,
+        cib        => 'dhcp',
+        primitives => [
+          "p_${::neutron::params::dhcp_agent_service}",
+          "clone_p_${::neutron::params::ovs_agent_service}"
+        ],
+        score      => 'INFINITY',
+      } ->
+      cs_order { 'dhcp-after-ovs':
+        ensure => present,
+        cib    => 'dhcp',
+        first  => "clone_p_${::neutron::params::ovs_agent_service}",
+        second => "p_${::neutron::params::dhcp_agent_service}",
+        score  => 'INFINITY',
+      } -> Service['neutron-dhcp-service']
+    }
 
     cs_colocation { 'dhcp-with-metadata':
       ensure     => present,

@@ -322,17 +322,25 @@ class openstack::compute (
       syslog_log_facility  => $syslog_log_facility_quantum,
     }
 
-    #todo: Quantum plugin and database connection not need on compute.
-    class { 'neutron::plugins::ovs':
-      neutron_config  => $quantum_config
-    }
+    if ! $quantum_config['nicira']['enabled'] {
+      #todo: Quantum plugin and database connection not need on compute.
+      class { 'neutron::plugins::ovs':
+        neutron_config  => $quantum_config
+      }
 
-    class { 'neutron::agents::ovs':
-      neutron_config   => $quantum_config,
-      # bridge_uplinks   => ["br-prv:${private_interface}"],
-      # bridge_mappings  => ['physnet2:br-prv'],
-      # enable_tunneling => $enable_tunneling,
-      # local_ip         => $internal_address,
+      class { 'neutron::agents::ovs':
+        neutron_config   => $quantum_config,
+        # bridge_uplinks   => ["br-prv:${private_interface}"],
+        # bridge_mappings  => ['physnet2:br-prv'],
+        # enable_tunneling => $enable_tunneling,
+        # local_ip         => $internal_address,
+      }
+    } else {
+      class {'neutron::plugins::nicira':
+        neutron_config => $quantum_config,
+        ip_address     => $::ipaddress_br-ex,  
+        on_compute     => true,
+      }
     }
 
 

@@ -32,35 +32,58 @@ class openstack::neutron_router (
       server_ha_mode       => $ha_mode,
     }
     #todo: add neutron::server here (into IF)
-    class { '::neutron::plugins::ovs':
-      neutron_config      => $neutron_config,
-      #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
-    }
-
-    if $neutron_network_node {
-      class { '::neutron::agents::ovs':
-        service_provider => $service_provider,
-        neutron_config   => $neutron_config,      }
-      # neutron metadata agent starts only under pacemaker
-      # and co-located with l3-agent
-      class {'::neutron::agents::metadata':
-        verbose          => $verbose,
-        debug            => $debug,
-        service_provider => $service_provider,
-        neutron_config   => $neutron_config,
+    if ! $neutron_config['nicira']['enabled'] {
+      class { '::neutron::plugins::ovs':
+        neutron_config      => $neutron_config,
+        #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
       }
-      class { '::neutron::agents::dhcp':
-        neutron_config   => $neutron_config,
-        verbose          => $verbose,
-        debug            => $debug,
-        service_provider => $service_provider,
-      }
-      class { '::neutron::agents::l3':
-        neutron_config   => $neutron_config,
-        verbose          => $verbose,
-        debug            => $debug,
-        service_provider => $service_provider,
 
+      if $neutron_network_node {
+        class { '::neutron::agents::ovs':
+          service_provider => $service_provider,
+          neutron_config   => $neutron_config,      }
+        # neutron metadata agent starts only under pacemaker
+        # and co-located with l3-agent
+        class {'::neutron::agents::metadata':
+          verbose          => $verbose,
+          debug            => $debug,
+          service_provider => $service_provider,
+          neutron_config   => $neutron_config,
+        }
+        class { '::neutron::agents::dhcp':
+          neutron_config   => $neutron_config,
+          verbose          => $verbose,
+          debug            => $debug,
+          service_provider => $service_provider,
+        }
+        class { '::neutron::agents::l3':
+          neutron_config   => $neutron_config,
+          verbose          => $verbose,
+          debug            => $debug,
+          service_provider => $service_provider,
+
+        }
+      }
+    } else {
+      class { '::neutron::plugins::nicira':
+        neutron_config => $neutron_config,
+        $ip_address    => $::ipaddress_br-ex,
+      } 
+
+      if $neutron_network_node {
+        class { '::neutron::agents::dhcp':
+          neutron_config   => $neutron_config,
+          verbose          => $verbose,
+          debug            => $debug,
+          service_provider => $service_provider,
+        }
+    
+        class {'::neutron::agents::metadata':
+          verbose          => $verbose,
+          debug            => $debug,
+          service_provider => $service_provider,
+          neutron_config   => $neutron_config,
+        }
       }
     }
 
