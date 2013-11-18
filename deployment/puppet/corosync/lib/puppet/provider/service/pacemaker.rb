@@ -57,27 +57,24 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     @service[:provider] = cib_resource.attributes['provider']
     @service[:type] = cib_resource.attributes['type']
     @service[:metadata] = {}
-    if !cib_resource.elements['meta_attributes'].nil?
+    if cib_resource.elements['meta_attributes']
       cib_resource.elements['meta_attributes'].each_element do |m|
         @service[:metadata][m.attributes['name'].to_sym] = m.attributes['value']
       end
     end
     if @service[:class] == 'ocf'
       stdin, stdout, stderr =  Open3.popen3("/bin/bash -c 'OCF_ROOT=/usr/lib/ocf /usr/lib/ocf/resource.d/#{@service[:provider]}/#{@service[:type]} meta-data'")
-      metadata = REXML::Document.new(stdout)
-      default_start_timeout = XPath.match(metadata, "//actions/action[@name=\'start\']").first.attributes['timeout'].to_i
-      default_stop_timeout = XPath.match(metadata, "//actions/action[@name=\'stop\']").first.attributes['timeout'].to_i
+      metadata_xml = stdout.read.chomp
+      if metadata_xml
+        metadata = REXML::Document.new(metadata_xml)
+        default_start_timeout = XPath.match(metadata, "//actions/action[@name=\'start\']").first.attributes['timeout'].to_i
+        default_stop_timeout = XPath.match(metadata, "//actions/action[@name=\'stop\']").first.attributes['timeout'].to_i
+      end
     end
     op_start=XPath.match(REXML::Document.new(cib_resource.to_s),"//operations/op[@name='start']").first
     op_stop=XPath.match(REXML::Document.new(cib_resource.to_s),"//operations/op[@name='stop']").first
-    @service[:start_timeout] =  default_start_timeout
-    @service[:stop_timeout] =  default_stop_timeout
-    if !op_start.nil?
-      @service[:start_timeout] = op_start.attributes['timeout'].to_i
-    end
-    if !op_stop.nil?
-      @service[:stop_timeout] = op_stop.attributes['timeout'].to_i
-    end
+    @service[:start_timeout] = op_start ? op_start.attributes['timeout'].to_i : default_start_timeout
+    @service[:stop_timeout] = op_stop ? op_stop.attributes['timeout'].to_i : default_stop_timeout
   end
 
   def get_service_name
