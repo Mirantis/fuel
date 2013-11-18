@@ -3,6 +3,9 @@ class osnailyfacter::cluster_simple {
   if $::use_quantum {
     $novanetwork_params  = {}
     $quantum_config = sanitize_neutron_config($::fuel_settings, 'quantum_settings')
+    if $::fuel_settings['nsx_plugin']['nicira'] {
+      $quantum_config['nicira'] = $::fuel_settings['nsx_plugin']
+    }
     debug__dump_to_file('/tmp/neutron_cfg.yaml', $quantum_config)
   } else {
     $quantum_config = {}

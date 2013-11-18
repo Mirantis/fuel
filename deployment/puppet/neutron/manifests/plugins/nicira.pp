@@ -4,7 +4,7 @@ class neutron::plugins::nicira (
   $on_compute = false;
 )
 {
-  if ! on_compute {
+  if ! $on_compute {
     Anchor<| title=='neutron-server-config-done' |> ->
       Anchor['neutron-plugin-nicira']
 
@@ -14,7 +14,7 @@ class neutron::plugins::nicira (
   }
   anchor {'neutron-plugin-nicira':}
 
-  if ! on_compute {
+  if ! $on_compute {
     Quantum_plugin_ovs<||> ~> Service<| title == 'neutron-server' |>
   }
   $br_int = $neutron_config['L2']['integration_bridge']
@@ -36,7 +36,7 @@ class neutron::plugins::nicira (
     integration_bridge => $br_int,
   }
 
-  if ! on_compute {
+  if ! $on_compute {
     if ! defined(File['/etc/neutron']) {
       file {'/etc/neutron':
         ensure  => directory,
