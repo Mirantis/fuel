@@ -8,9 +8,9 @@ define apache::loadmodule () {
 
 # deploys Ceph radosgw as an Apache FastCGI application
 class ceph::radosgw (
-  $keyring_path     = '/etc/ceph/keyring.radosgw.gateway',
-  $radosgw_auth_key = 'client.radosgw.gateway',
-  $rgw_user         = $::ceph::params::user_httpd,
+  $rgw_id   = 'radosgw.gateway',
+  $rgw_user = $::ceph::params::user_httpd,
+  $use_ssl  = $::ceph::use_ssl,
 
   # RadosGW settings
   $rgw_host                         = $::ceph::rgw_host,
@@ -33,7 +33,9 @@ class ceph::radosgw (
   $rgw_nss_db_path                  = $::ceph::rgw_nss_db_path,
 ) {
 
-  $dir_httpd_root = '/var/www/radosgw'
+  $keyring_path     = "/etc/ceph/keyring.${rgw_id}"
+  $radosgw_auth_key = "client.${rgw_id}"
+  $dir_httpd_root   = '/var/www/radosgw'
 
   package { [$::ceph::params::package_radosgw,
              $::ceph::params::package_fastcgi,
@@ -46,9 +48,18 @@ class ceph::radosgw (
     ensure  => 'running',
     name    => $::ceph::params::service_radosgw,
     enable  => true,
+    require => Package[$::ceph::params::package_radosgw],
   }
 
-  if !(defined('horizon') or 
+  # The Ubuntu upstart script is incompatible with the upstart provider
+  #  This will force the service to fall back to the debian init script
+  if ($::operatingsystem == 'Ubuntu') {
+    Service['radosgw'] {
+      provider  => 'debian'
+    }
+  }
+
+  if !(defined('horizon') or
        defined($::ceph::params::package_httpd) or
        defined($::ceph::params::service_httpd) ) {
     package {$::ceph::params::package_httpd:
@@ -70,19 +81,19 @@ class ceph::radosgw (
 
   # All files need to be owned by the rgw / http user.
   File {
-    owner    => $rgw_user,
-    group    => $rgw_user,
+    owner => $rgw_user,
+    group => $rgw_user,
   }
 
   ceph_conf {
-    'client.radosgw.gateway/host':                             value => $rgw_host;
-    'client.radosgw.gateway/keyring':                          value => $keyring_path;
-    'client.radosgw.gateway/rgw_socket_path':                  value => $rgw_socket_path;
-    'client.radosgw.gateway/log_file':                         value => $rgw_log_file;
-    'client.radosgw.gateway/user':                             value => $rgw_user;
-    'client.radosgw.gateway/rgw_data':                         value => $rgw_data;
-    'client.radosgw.gateway/rgw_dns_name':                     value => $rgw_dns_name;
-    'client.radosgw.gateway/rgw_print_continue':               value => $rgw_print_continue;
+    "client.${rgw_id}/host":                value => $rgw_host;
+    "client.${rgw_id}/keyring":             value => $keyring_path;
+    "client.${rgw_id}/rgw_socket_path":     value => $rgw_socket_path;
+    "client.${rgw_id}/log_file":            value => $rgw_log_file;
+    "client.${rgw_id}/user":                value => $rgw_user;
+    "client.${rgw_id}/rgw_data":            value => $rgw_data;
+    "client.${rgw_id}/rgw_dns_name":        value => $rgw_dns_name;
+    "client.${rgw_id}/rgw_print_continue":  value => $rgw_print_continue;
   }
 
   if ($use_ssl) {
@@ -101,24 +112,24 @@ class ceph::radosgw (
   if ($rgw_use_keystone) {
 
     ceph_conf {
-      'client.radosgw.gateway/rgw_keystone_url':                 value => $rgw_keystone_url;
-      'client.radosgw.gateway/rgw_keystone_admin_token':         value => $rgw_keystone_admin_token;
-      'client.radosgw.gateway/rgw_keystone_accepted_roles':      value => $rgw_keystone_accepted_roles;
-      'client.radosgw.gateway/rgw_keystone_token_cache_size':    value => $rgw_keystone_token_cache_size;
-      'client.radosgw.gateway/rgw_keystone_revocation_interval': value => $rgw_keystone_revocation_interval;
+      "client.${rgw_id}/rgw_keystone_url":                 value => $rgw_keystone_url;
+      "client.${rgw_id}/rgw_keystone_admin_token":         value => $rgw_keystone_admin_token;
+      "client.${rgw_id}/rgw_keystone_accepted_roles":      value => $rgw_keystone_accepted_roles;
+      "client.${rgw_id}/rgw_keystone_token_cache_size":    value => $rgw_keystone_token_cache_size;
+      "client.${rgw_id}/rgw_keystone_revocation_interval": value => $rgw_keystone_revocation_interval;
     }
 
     if ($rgw_use_pki) {
 
       ceph_conf {
-      'client.radosgw.gateway/nss db path':                      value => $rgw_nss_db_path;
+      "client.${rgw_id}/nss db path": value => $rgw_nss_db_path;
       }
 
       # This creates the signing certs used by radosgw to check cert revocation
       #   status from keystone
       exec {'create nss db signing certs':
         command => "openssl x509 -in /etc/keystone/ssl/certs/ca.pem -pubkey | \
-          certutil -d ${rgw_nss_db_path} -A -n ca -t 'TCu,Cu,Tuw' && \ 
+          certutil -d ${rgw_nss_db_path} -A -n ca -t 'TCu,Cu,Tuw' && \
           openssl x509 -in /etc/keystone/ssl/certs/signing_cert.pem -pubkey | \
           certutil -A -d ${rgw_nss_db_path} -n signing_cert -t 'P,P,P'",
         user    => $rgw_user,
@@ -136,7 +147,7 @@ class ceph::radosgw (
 
   if ($::osfamily == 'Debian'){
     #a2mod is provided by horizon module
-    a2mod { ['rewrite', 'fastcgi']: 
+    a2mod { ['rewrite', 'fastcgi']:
       ensure => present,
     }
 
@@ -160,7 +171,7 @@ class ceph::radosgw (
   }
 
   file {[$::ceph::params::dir_httpd_ssl,
-         "${::ceph::rgw_data}/ceph-radosgw.gateway",
+         "${::ceph::rgw_data}/ceph-${rgw_id}",
          $::ceph::rgw_data,
          $dir_httpd_root,
          $rgw_nss_db_path,
@@ -184,24 +195,16 @@ class ceph::radosgw (
     mode    => '0755',
     }
 
-  exec { "ceph-create-radosgw-keyring-on ${name}":
-    command => "ceph-authtool --create-keyring ${keyring_path}",
-    creates => $keyring_path,
+  exec { "ceph create ${radosgw_auth_key}":
+    command => "ceph auth get-or-create ${radosgw_auth_key} osd 'allow rwx' mon 'allow rw'",
+  }
+
+  exec { "Populate ${radosgw_auth_key} keyring":
+    command => "ceph auth get-or-create ${radosgw_auth_key} > ${keyring_path}",
+    creates => $keyring_path
   }
 
   file { $keyring_path: mode => '0640', }
-
-  exec { "ceph-generate-key-on ${name}":
-    command => "ceph-authtool ${keyring_path} -n ${radosgw_auth_key} --gen-key",
-  }
-
-  exec { "ceph-add-capabilities-to-the-key-on ${name}":
-    command => "ceph-authtool -n ${radosgw_auth_key} --cap osd 'allow rwx' --cap mon 'allow rw' ${keyring_path}",
-  }
-
-  exec { "ceph-add-to-ceph-keyring-entries-on ${name}":
-    command => "ceph -k /etc/ceph/ceph.client.admin.keyring auth add ${radosgw_auth_key} -i ${keyring_path}",
-  }
 
   Ceph_conf <||> ->
   Package[$::ceph::params::package_httpd] ->
@@ -212,16 +215,14 @@ class ceph::radosgw (
         "${::ceph::params::dir_httpd_sites}/fastcgi.conf",
         "${dir_httpd_root}/s3gw.fcgi",
         $::ceph::params::dir_httpd_ssl,
-        "${::ceph::rgw_data}/ceph-radosgw.gateway",
+        "${::ceph::rgw_data}/ceph-${rgw_id}",
         $::ceph::rgw_data,
         $dir_httpd_root,
         $rgw_nss_db_path,
         $rgw_log_file,]] ->
-  Exec["ceph-create-radosgw-keyring-on ${name}"] ->
+  Exec["ceph create ${radosgw_auth_key}"] ->
+  Exec["Populate ${radosgw_auth_key} keyring"] ->
   File[$keyring_path] ->
-  Exec["ceph-generate-key-on ${name}"] ->
-  Exec["ceph-add-capabilities-to-the-key-on ${name}"] ->
-  Exec["ceph-add-to-ceph-keyring-entries-on ${name}"] ->
   Firewall['012 RadosGW allow'] ~>
   Service ['httpd'] ~>
   Service['radosgw']

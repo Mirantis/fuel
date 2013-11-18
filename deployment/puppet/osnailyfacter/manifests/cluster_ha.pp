@@ -42,6 +42,17 @@ class osnailyfacter::cluster_ha {
     $heat_hash = $::fuel_settings['heat']
   }
 
+  if !$::fuel_settings['ceilometer'] {
+    $ceilometer_hash = {
+      enabled => false,
+      db_password => 'ceilometer',
+      user_password => 'ceilometer',
+      metering_secret => 'ceilometer',
+    }
+  } else {
+    $ceilometer_hash = $::fuel_settings['ceilometer']
+  }
+
   if $::fuel_settings['role'] == 'primary-controller' {
     package { 'cirros-testvm':
       ensure => "present"
@@ -119,7 +130,7 @@ class osnailyfacter::cluster_ha {
   $controller_public_addresses = nodes_to_hash($controllers,'name','public_address')
   $controller_storage_addresses = nodes_to_hash($controllers,'name','storage_address')
   $controller_hostnames = keys($controller_internal_addresses)
-  $controller_nodes = sort(values($controller_internal_addresses))
+  $controller_nodes = ipsort(values($controller_internal_addresses))
   $controller_node_public  = $::fuel_settings['public_vip']
   $controller_node_address = $::fuel_settings['management_vip']
   $mountpoints = filter_hash($mp_hash,'point')
@@ -177,6 +188,8 @@ class osnailyfacter::cluster_ha {
     } else {
       $primary_proxy = false
     }
+  } elsif ($storage_hash['objects_ceph']) {
+    $rgw_balancers = $controller_storage_addresses
   }
 
 
@@ -251,6 +264,7 @@ class osnailyfacter::cluster_ha {
       export_resources              => false,
       glance_backend                => $glance_backend,
       swift_proxies                 => $swift_proxies,
+      rgw_balancers                 => $rgw_balancers,
       quantum                       => $::use_quantum,
       quantum_config                => $quantum_config,
       quantum_network_node          => $::use_quantum,
@@ -261,6 +275,10 @@ class osnailyfacter::cluster_ha {
       cinder_db_password            => $cinder_hash[db_password],
       cinder_volume_group           => "cinder",
       manage_volumes                => $manage_volumes,
+      ceilometer                    => $ceilometer_hash[enabled],
+      ceilometer_db_password        => $ceilometer_hash[db_password],
+      ceilometer_user_password      => $ceilometer_hash[user_password],
+      ceilometer_metering_secret    => $ceilometer_hash[metering_secret],
       galera_nodes                  => $controller_nodes,
       custom_mysql_setup_class      => $custom_mysql_setup_class,
       mysql_skip_name_resolve       => true,
@@ -355,6 +373,7 @@ class osnailyfacter::cluster_ha {
           auth_method     => 'password',
           auth_url        => "http://${::fuel_settings['management_vip']}:5000/v2.0/",
           authtenant_name => $access_hash[tenant],
+          api_retries     => 10,
         }
         Class[nova::api] -> Nova_floating_range <| |>
       }
@@ -379,25 +398,6 @@ class osnailyfacter::cluster_ha {
           use_neutron               => $::use_quantum,
         }
       }
-
-      if $murano_hash['enabled'] {
-
-        class { 'murano' :
-          murano_api_host          => $controller_node_address,
-
-          murano_rabbit_host       => $controller_node_public,
-          murano_rabbit_login      => 'murano',
-          murano_rabbit_password   => $heat_hash['rabbit_password'],
-
-          murano_db_host           => $controller_node_address,
-          murano_db_password       => $murano_hash['db_password'],
-
-          murano_keystone_host     => $controller_node_address,
-          murano_keystone_user     => 'admin',
-          murano_keystone_password => 'admin',
-          murano_keystone_tenant   => 'admin',
-        }
-
         class { 'heat' :
           pacemaker              => true,
           external_ip            => $controller_node_public,
@@ -416,7 +416,26 @@ class osnailyfacter::cluster_ha {
           heat_db_password       => $heat_hash['db_password'],
         }
 
-        Class['heat'] -> Class['murano']
+ 
+      if $murano_hash['enabled'] {
+
+        class { 'murano' :
+          murano_api_host          => $controller_node_address,
+
+          murano_rabbit_host       => $controller_node_public,
+          murano_rabbit_login      => 'murano',
+          murano_rabbit_password   => $heat_hash['rabbit_password'],
+
+          murano_db_host           => $controller_node_address,
+          murano_db_password       => $murano_hash['db_password'],
+
+          murano_keystone_host     => $controller_node_address,
+          murano_keystone_user     => 'admin',
+          murano_keystone_password => 'admin',
+          murano_keystone_tenant   => 'admin',
+        }
+
+       Class['heat'] -> Class['murano']
 
       }
 
@@ -460,6 +479,9 @@ class osnailyfacter::cluster_ha {
         cinder_iscsi_bind_addr => $cinder_iscsi_bind_addr,
         cinder_user_password   => $cinder_hash[user_password],
         cinder_db_password     => $cinder_hash[db_password],
+        ceilometer             => $ceilometer_hash[enabled],
+        ceilometer_metering_secret => $ceilometer_hash[metering_secret],
+        ceilometer_user_password => $ceilometer_hash[user_password],
         db_host                => $::fuel_settings['management_vip'],
         quantum                => $::use_quantum,
         quantum_config         => $quantum_config,

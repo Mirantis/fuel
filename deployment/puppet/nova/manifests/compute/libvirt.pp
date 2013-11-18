@@ -9,9 +9,21 @@ class nova::compute::libvirt (
   if $::osfamily == 'RedHat' {
 
     exec { 'symlink-qemu-kvm': 
+#    yumrepo {'CentOS-Base':
+#      name     => 'updates',
+#      priority => 10,
+#      before   => [Package['libvirt']]
+#    }->
+
+
+#    package { 'qemu':
+#      ensure => present,
+#    }
+
+    exec { 'symlink-qemu-kvm':
       command => "/bin/ln -sf /usr/libexec/qemu-kvm /usr/bin/qemu-system-x86_64",
-    } 
-                   
+    }
+
     stdlib::safe_package {'dnsmasq-utils':}
 
     package { 'cpufreq-init': 
@@ -104,5 +116,15 @@ class nova::compute::libvirt (
     'DEFAULT/connection_type':  value => 'libvirt';
     'DEFAULT/vncserver_listen': value => $vncserver_listen;
     'DEFAULT/disk_cachemodes': value => '"file=writethrough"';
+  }
+
+if str2bool($::is_virtual) {
+    nova_config {
+      'DEFAULT/libvirt_cpu_mode': value => 'none';
+    }
+  } else {
+    nova_config {
+      'DEFAULT/libvirt_cpu_mode': value => 'host-model';
+    }
   }
 }

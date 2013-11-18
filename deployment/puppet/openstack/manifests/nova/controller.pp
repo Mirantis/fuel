@@ -31,7 +31,7 @@ class openstack::nova::controller (
   # Nova Required
   $nova_user_password,
   $nova_db_password,
-  primary_controller         = false,
+  $primary_controller         = false,
   # Network
   $fixed_range               = '10.0.0.0/24',
   $floating_range            = false,
@@ -268,6 +268,7 @@ class openstack::nova::controller (
       create_networks   => $really_create_networks,
       num_networks      => $num_networks,
       network_size      => $network_size,
+      nameservers       => $nameservers,
       enabled           => $enable_network_service,
       install_service   => $enable_network_service,
       ensure_package    => $ensure_package
