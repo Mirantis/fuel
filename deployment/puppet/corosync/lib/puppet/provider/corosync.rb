@@ -7,7 +7,7 @@ class Puppet::Provider::Corosync < Puppet::Provider
   
   def self.dump_cib
     stdin, stdout, stderr = Open3.popen3("#{command(:crm)} configure show xml")
-    return stdout, nil
+    return stdout.read.chomp, nil
   end
 
   def try_command(command,resource_name,should=nil,cib=nil,timeout=120)
