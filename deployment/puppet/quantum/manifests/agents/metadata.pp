@@ -59,7 +59,8 @@ class quantum::agents::metadata (
           Anchor['quantum-metadata-agent-done']
   } else {
     # OCF script for pacemaker
-    # and his dependences
+    # and its dependencies
+    Exec[create_ocf_dirs] ->
     file {'quantum-metadata-agent-ocf':
       path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-metadata',
       mode => 755,
@@ -67,7 +68,6 @@ class quantum::agents::metadata (
       group => root,
       source => "puppet:///modules/quantum/ocf/quantum-agent-metadata",
     }
-    Package['pacemaker'] -> File['quantum-metadata-agent-ocf']
 
     service { 'quantum-metadata-agent__disabled':
       name    => $::quantum::params::metadata_agent_service,
@@ -128,8 +128,8 @@ class quantum::agents::metadata (
     }
 
     Anchor['quantum-metadata-agent'] ->
+     File['quantum-metadata-agent-ocf'] ->
       Quantum_metadata_agent_config<||> ->
-        File['quantum-metadata-agent-ocf'] ->
           Service['quantum-metadata-agent__disabled'] ->
             Cs_resource["$res_name"] ->
               Service["$res_name"] ->

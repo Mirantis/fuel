@@ -82,7 +82,8 @@ class quantum::agents::dhcp (
     Quantum_dhcp_agent_config <| |> -> Cs_shadow['dhcp']
 
     # OCF script for pacemaker
-    # and his dependences
+    # and its dependencies
+    Exec[create_ocf_dirs] ->
     file {'quantum-dhcp-agent-ocf':
       path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-dhcp',
       mode => 755,
@@ -90,8 +91,6 @@ class quantum::agents::dhcp (
       group => root,
       source => "puppet:///modules/quantum/ocf/quantum-agent-dhcp",
     }
-    Package['pacemaker'] -> File['quantum-dhcp-agent-ocf']
-    File['quantum-dhcp-agent-ocf'] -> Cs_resource["p_${::quantum::params::dhcp_agent_service}"]
     File['q-agent-cleanup.py'] -> Cs_resource["p_${::quantum::params::dhcp_agent_service}"]
     File<| title=='quantum-logging.conf' |> ->
     cs_resource { "p_${::quantum::params::dhcp_agent_service}":
@@ -214,6 +213,7 @@ class quantum::agents::dhcp (
   Class[quantum::waistline] -> Service[quantum-dhcp-service]
 
   Anchor['quantum-dhcp-agent'] ->
+   File['quantum-dhcp-agent-ocf'] ->
     Quantum_dhcp_agent_config <| |> ->
       Cs_resource<| title=="p_${::quantum::params::dhcp_agent_service}" |> ->
         Service['quantum-dhcp-service'] ->

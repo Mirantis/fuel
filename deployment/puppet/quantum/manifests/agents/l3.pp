@@ -87,7 +87,8 @@ class quantum::agents::l3 (
     Quantum_l3_agent_config <||> -> Cs_shadow['l3']
 
     # OCF script for pacemaker
-    # and his dependences
+    # and its dependencies
+    Exec[create_ocf_dirs] ->
     file {'quantum-l3-agent-ocf':
       path=>'/usr/lib/ocf/resource.d/mirantis/quantum-agent-l3',
       mode => 755,
@@ -95,7 +96,6 @@ class quantum::agents::l3 (
       group => root,
       source => "puppet:///modules/quantum/ocf/quantum-agent-l3",
     }
-    Package['pacemaker'] -> File['quantum-l3-agent-ocf']
     File['quantum-l3-agent-ocf'] -> Cs_resource["p_${::quantum::params::l3_agent_service}"]
     File['q-agent-cleanup.py'] -> Cs_resource["p_${::quantum::params::l3_agent_service}"]
 
@@ -197,6 +197,7 @@ class quantum::agents::l3 (
 
     # Ensure service is stopped  and disabled by upstart/init/etc.
     Anchor['quantum-l3'] ->
+     File['quantum-l3-agent-ocf'] ->
       Service['quantum-l3-init_stopped'] ->
         Cs_resource["p_${::quantum::params::l3_agent_service}"] ->
           Service['quantum-l3'] ->
