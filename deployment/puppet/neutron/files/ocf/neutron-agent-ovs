@@ -41,6 +41,8 @@ OCF_RESKEY_pid_default="$HA_RSCTMP/$OCF_RESOURCE_INSTANCE.pid"
 OCF_RESKEY_amqp_server_port_default="5672"
 OCF_RESKEY_integration_bridge_default="br-int"
 OCF_RESKEY_segmentation_bridge_default="br-tun"
+OCF_RESKEY_debug_default=false
+
 
 : ${OCF_RESKEY_binary=${OCF_RESKEY_binary_default}}
 : ${OCF_RESKEY_config=${OCF_RESKEY_config_default}}
@@ -51,6 +53,8 @@ OCF_RESKEY_segmentation_bridge_default="br-tun"
 : ${OCF_RESKEY_integration_bridge=${OCF_RESKEY_integration_bridge_default}}
 : ${OCF_RESKEY_segmentation_bridge=${OCF_RESKEY_segmentation_bridge_default}}
 : ${OCF_RESKEY_log_file=${OCF_RESKEY_log_file_default}}
+: ${OCF_RESKEY_debug=${OCF_RESKEY_debug_default}}
+
 
 #######################################################################
 

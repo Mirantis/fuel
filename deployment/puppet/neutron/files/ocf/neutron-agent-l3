@@ -46,7 +46,6 @@ OCF_RESKEY_password_default="neutron_pass"
 OCF_RESKEY_tenant_default="services"
 OCF_RESKEY_external_bridge_default="br-ex"
 OCF_RESKEY_debug_default=false
-OCF_RESKEY_debug_syslog=false
 
 : ${OCF_RESKEY_os_auth_url=${OCF_RESKEY_os_auth_url_default}}
 : ${OCF_RESKEY_username=${OCF_RESKEY_username_default}}
@@ -59,7 +58,6 @@ OCF_RESKEY_debug_syslog=false
 : ${OCF_RESKEY_pid=${OCF_RESKEY_pid_default}}
 : ${OCF_RESKEY_external_bridge=${OCF_RESKEY_external_bridge_default}}
 : ${OCF_RESKEY_debug=${OCF_RESKEY_debug_default}}
-: ${OCF_RESKEY_syslog=${OCF_RESKEY_syslog_default}}
 : ${OCF_RESKEY_log_file=${OCF_RESKEY_log_file_default}}
 
 
