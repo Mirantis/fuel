@@ -54,7 +54,6 @@ class neutron::server (
     'filter:authtoken/admin_password':    value => $neutron_config['keystone']['admin_password'];
   }
 
-  File<| title=='neutron-logging.conf' |> ->
   service {'neutron-server':
     name       => $::neutron::params::server_service,
     ensure     => running,
@@ -63,6 +62,8 @@ class neutron::server (
     hasrestart => true,
     provider   => $::neutron::params::service_provider,
   }
+  # In RC-script start line must be:
+  # daemon --user neutron --pidfile $pidfile "$exec ${configs[@]/#/--config-file } >> $logfile 2>&1 & echo \$! > $pidfile"
 
   Anchor['neutron-server'] ->
       Neutron_config<||> ->

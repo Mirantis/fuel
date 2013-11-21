@@ -67,6 +67,11 @@ class neutron::plugins::ovs (
     'AGENT/polling_interval':       value => $neutron_config['polling_interval'];
     'AGENT/root_helper':            value => $neutron_config['root_helper'];
     'SECURITYGROUP/firewall_driver': value => 'neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver';
+    'DEFAULT/log_dir':        ensure => absent;
+    'DEFAULT/log_file':       ensure => absent;
+    'DEFAULT/log_config':     ensure => absent;
+    'DEFAULT/use_syslog':     ensure => absent;
+    'DEFAULT/use_stderr':     ensure => absent;
   }
 
   if $neutron_config['L2']['enable_tunneling'] {
