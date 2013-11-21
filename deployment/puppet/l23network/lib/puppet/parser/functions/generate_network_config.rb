@@ -1,3 +1,4 @@
+require 'set'
 require 'ipaddr'
 require 'forwardable'
 require 'puppet/parser'
@@ -18,6 +19,37 @@ end
 
 
 module L23network
+  class TT
+    def initialize()
+      @patches = Set.new()
+      @bt = {}  # Bridge => Set(tags&trunks)
+      @phy = {} # Physical ETH => bridge
+    end
+
+    def add_tag(br, tag)
+      @bt[br] ||= Set.new()
+      if tag.is_a? String or tag.is_a? Integer
+        _add_tag(br, tag)
+      elsif tag.is_a? Array or tag.is_a? Set
+        tag.each { |e| _add_tag(br, e) }
+      end
+    end
+
+    def add_patch(pp)
+      @patches.add(pp)
+    end
+
+    def add_phy(br, phy)
+      @phy[phy] = br
+    end
+
+    private
+    def _add_tag(br, tag)
+      tag = tag.to_i
+      @bt[br].add(tag) if tag != 0
+    end
+  end
+
   def self.sanitize_transformation(trans)
     action = trans[:action].downcase()
     # Setup defaults
@@ -121,6 +153,8 @@ Puppet::Parser::Functions::newfunction(:generate_network_config, :type => :rvalu
     if config_hash.nil?
       raise(Puppet::ParseError, "get_network_role_property(...): You must call prepare_network_config(...) first!")
     end
+
+    tagdb = TT.new()
 
     Puppet.debug "stage1@generate_network_config:config_hash: #{config_hash.inspect}"
 
