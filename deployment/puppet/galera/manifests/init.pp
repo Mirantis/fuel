@@ -180,7 +180,7 @@ class galera (
     require    => [Package["MySQL-server", "galera"]],
     provider   => "pacemaker",
   }
-  Package['pacemaker'] -> File['mysql-wss']
+  File['mysql-wss'] -> Package['pacemaker']
    Cs_resource["$res_name"] ->
       Cs_commit["$res_name"] ->
           Service["$cib_name"]

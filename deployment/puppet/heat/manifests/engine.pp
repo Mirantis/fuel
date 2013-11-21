@@ -95,7 +95,8 @@ class heat::engine (
     } else {
       $ocf_script_template = 'heat_engine_ubuntu.ocf.erb'
     }
-
+    File['heat-engine-ocf'] -> Package['pacemaker']
+    Exec[create_ocf_dirs] ->
     file { 'heat-engine-ocf' :
       ensure  => present,
       path    => "${ocf_scripts_dir}/${ocf_scripts_provider}/${service_name}",
