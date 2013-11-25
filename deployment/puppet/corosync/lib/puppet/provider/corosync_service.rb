@@ -6,8 +6,7 @@ class Puppet::Provider::Corosync_service < Puppet::Provider
 
 
   def self.dump_cib
-    stdout = Open3.popen3("#{command(:cibadmin)} -Q")[1].read
-    return stdout, nil
+    Open3.popen3("#{command(:cibadmin)} -Q")[1].read
   end
 
   def try_command(command,resource_name,should=nil,cib=nil,timeout=120)
