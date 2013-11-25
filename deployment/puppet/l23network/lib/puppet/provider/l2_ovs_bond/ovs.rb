@@ -1,7 +1,8 @@
 Puppet::Type.type(:l2_ovs_bond).provide(:ovs) do
   optional_commands(
     :vsctl  => "/usr/bin/ovs-vsctl",
-    :appctl => "/usr/bin/ovs-appctl"
+    :appctl => "/usr/bin/ovs-appctl",
+    :iproute => "/sbin/ip"
   )
 
   def _exists?(bond)
@@ -40,6 +41,10 @@ Puppet::Type.type(:l2_ovs_bond).provide(:ovs) do
       bond_create_cmd += bond_properties
     end
     begin
+      @resource[:interfaces].each do |iface|
+        ip_addr_flush_cmd = ['addr', 'flush', 'dev', iface]
+        iproute(ip_addr_flush_cmd)
+      end
       vsctl(bond_create_cmd)
     rescue Puppet::ExecutionFailure => error
       notice(">>>#{bond_create_cmd.join(',')}<<<")
