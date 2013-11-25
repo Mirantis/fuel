@@ -1,6 +1,6 @@
 Puppet::Type.type(:ini_setting)#.providers
 
-Puppet::Type.type(:neutron_plugin_ovs).provide(
+Puppet::Type.type(:neutron_plugin_nicira).provide(
   :ini_setting,
   :parent => Puppet::Type.type(:ini_setting).provider(:ruby)
 ) do

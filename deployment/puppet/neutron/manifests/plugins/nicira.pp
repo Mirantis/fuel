@@ -1,7 +1,8 @@
 class neutron::plugins::nicira (
   $neutron_config = {},
   $ip_address = $::ipaddress,
-  $on_compute = false;
+  $on_compute = false,
+  $integration_bridge = "br-int"
 )
 {
   if ! $on_compute {
@@ -14,8 +15,12 @@ class neutron::plugins::nicira (
   }
   anchor {'neutron-plugin-nicira':}
 
+  package {'nicira-ovs-hypervisor-node':
+    ensure => present,
+  }
+
   if ! $on_compute {
-    Quantum_plugin_ovs<||> ~> Service<| title == 'neutron-server' |>
+    Neutron_plugin_nicira<||> ~> Service<| title == 'neutron-server' |>
   }
   $br_int = $neutron_config['L2']['integration_bridge']
 
@@ -33,7 +38,7 @@ class neutron::plugins::nicira (
     transport_zone_uuid => $neutron_config['nicira']['transport_zone_uuid'],
     ip_address => $ip_address,
     connector_type => $neutron_config['nicira']['connector_type'],
-    integration_bridge => $br_int,
+    integration_bridge => $integration_bridge,
   }
 
   if ! $on_compute {
@@ -45,6 +50,10 @@ class neutron::plugins::nicira (
         mode    => '0755',
       }
     }
+
+    package {'openstack-neutron-nicira':
+      ensure => present,
+    } ->
 
     File['/etc/neutron'] ->
     file {'/etc/neutron/plugins':
@@ -58,7 +67,7 @@ class neutron::plugins::nicira (
     file { '/etc/neutron/plugin.ini':
       ensure  => link,
       target  => '/etc/neutron/plugins/nicira/nvp.ini',
-    }
+    } ->
   #  neutron_plugin_nicira {
   #    'DATABASE/sql_connection':      value => $neutron_config['database']['url'];
   #    'DATABASE/sql_max_retries':     value => $neutron_config['database']['reconnects'];

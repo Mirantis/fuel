@@ -7,19 +7,18 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
   commands :vsctl => '/usr/bin/ovs-vsctl'
   commands :vspki => '/usr/bin/ovs-pki'
 
-  @cert_dir = "/etc/openvswitch"
-  @cert_path = "#{@cert_dir}/ovsclient-cert.pem"
-  @privkey_path = "#{@cert_dir}/ovsclient-privkey.pem"
-  @cacert_path = "#{@cert_dir}/vswitchd.cacert"
-
   def generate_cert
+    @cert_dir = "/etc/openvswitch"
+    @cert_path = "#{@cert_dir}/ovsclient-cert.pem"
+    @privkey_path = "#{@cert_dir}/ovsclient-privkey.pem"
+    @cacert_path = "#{@cert_dir}/vswitchd.cacert"
     if not File.exists? @cert_path
       old_dir = Dir.pwd
       Dir.chdir @cert_dir
-      vspki("init --force")
-      vspki("req+sign ovsclient controller")
-      vsctl("-- --bootstrap set-ssl #{@cert_path} #{@privkey_path} #{@cacert_path}")
-      vsctl("set-manager ssl:#{@resource[:nsx_endpoint]}")
+      vspki("init", "--force")
+      vspki("req+sign", "ovsclient", "controller")
+      vsctl("--", "--bootstrap", "set-ssl", "#{@cert_path}", "#{@privkey_path}", "#{@cacert_path}")
+      vsctl("set-manager", "ssl:#{@resource[:nsx_endpoint]}")
       Dir.chdir old_dir
     end
   end
@@ -47,7 +46,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
     nodes = JSON.load(data)['results']
     nodes.each { |node|
       resp, data = @conn.get(node['_href'], { 'Cookie' => @cookie })
-      if JSON.load(data)['display_name'] == @resource[:name]
+      if JSON.load(data)['display_name'] == @resource[:display_name]
         return JSON.load(data)['uuid']
       end
     } 
@@ -57,7 +56,7 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
   def exists?
     @conn, @cookie = login
     query_result = get_uuid
-    if query_result != nil
+    unless query_result.nil?
       return true
     end
     return false
@@ -66,8 +65,16 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
   def create
     generate_cert
     cert = get_cert
+    bridge_ip = @resource[:ip_address].split("/")[0]
+    connector_mapping = {
+                       'gre' => 'GREConnector',
+                       'stt' => 'STTConnector',
+                       'bridge' => 'BridgeConnector',
+                       'ipsec_gre' => 'IPsecGREConnector',
+                       'ipsec_stt' => 'IPsecSTTConnector'
+    }
     query = {
-	  'display_name' => @resource[:name],
+	  'display_name' => @resource[:display_name],
 	  'credential' => {
 	    'client_certificate' => {
 	      'pem_encoded' => cert 
@@ -77,18 +84,18 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
 	  'transport_connectors' => [
 	    {
 	      'transport_zone_uuid' => @resource[:transport_zone_uuid],
-	      'ip_address' => @resource[:ip_address],
-	      'type' => @resource[:connector_type]
+	      'ip_address' => bridge_ip,
+	      'type' => connector_mapping[@resource[:connector_type]]
 	    }
 	  ],
 	  'integration_bridge_id' => @resource[:integration_bridge]
     }
-    @conn.post('/ws.v1/transport-node', query.to_json, { 'Cookie' => @cookie , 'Content-Type' => 'application/json'})
+    resp, data = @conn.post('/ws.v1/transport-node', query.to_json, { 'Cookie' => @cookie , 'Content-Type' => 'application/json'})
   end
 
   def destroy
     uuid = get_uuid
-    if uuid != nil
+    unless uuid.nil?
       @conn.delete("/ws.v1/transport-node/#{uuid}", { 'Cookie' => @cookie})
     end
   end

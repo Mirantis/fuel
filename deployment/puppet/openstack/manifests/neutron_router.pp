@@ -22,6 +22,12 @@ class openstack::neutron_router (
   # $private_interface        = "br-mgmt",
   # $create_networks          = true,
 ) {
+    if ! $quantum_config['nicira']['nicira'] {
+      $neutron_plugin = 'neutron.plugins.openvswitch.ovs_neutron_plugin.OVSNeutronPluginV2'
+    } else {
+      $neutron_plugin = 'neutron.plugins.nicira.NeutronPlugin.NvpPluginV2'
+    }
+
     class { '::neutron':
       neutron_config       => $neutron_config,
       verbose              => $verbose,
@@ -30,9 +36,10 @@ class openstack::neutron_router (
       syslog_log_facility  => $syslog_log_facility,
       syslog_log_level     => $syslog_log_level,
       server_ha_mode       => $ha_mode,
+      core_plugin          => $neutron_plugin,
     }
     #todo: add neutron::server here (into IF)
-    if ! $neutron_config['nicira']['enabled'] {
+    if ! $neutron_config['nicira']['nicira'] {
       class { '::neutron::plugins::ovs':
         neutron_config      => $neutron_config,
         #bridge_mappings     => ["physnet1:br-ex","physnet2:br-prv"],
@@ -67,7 +74,7 @@ class openstack::neutron_router (
     } else {
       class { '::neutron::plugins::nicira':
         neutron_config => $neutron_config,
-        $ip_address    => $::ipaddress_br-ex,
+        ip_address    => $::fuel_settings['network_scheme']['endpoints']['br-mgmt']['IP'],
       } 
 
       if $neutron_network_node {

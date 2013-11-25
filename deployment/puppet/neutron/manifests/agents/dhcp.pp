@@ -133,7 +133,7 @@ class neutron::agents::dhcp (
     Cs_commit['dhcp'] ~> ::Corosync::Cleanup["p_${::neutron::params::dhcp_agent_service}"]
     ::Corosync::Cleanup["p_${::neutron::params::dhcp_agent_service}"] -> Service['neutron-dhcp-service']
 
-    if ! $neutron_settings['nicira']['enabled'] {
+    if ! $neutron_config['nicira']['nicira'] {
 
       Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_colocation['dhcp-with-ovs']
       Cs_resource["p_${::neutron::params::dhcp_agent_service}"] -> Cs_order['dhcp-after-ovs']
@@ -145,7 +145,7 @@ class neutron::agents::dhcp (
     cs_shadow { 'dhcp': cib => 'dhcp' }
     cs_commit { 'dhcp': cib => 'dhcp' }
 
-    if ! $neutron_settings['nicira']['enabled'] {
+    if ! $neutron_config['nicira']['nicira'] {
 
       cs_colocation { 'dhcp-with-ovs':
         ensure     => present,
@@ -195,6 +195,13 @@ class neutron::agents::dhcp (
     }
 
     Neutron::Network::Provider_router<||> -> Service<| title=='neutron-dhcp-service' |>
+
+    if ! $neutron_config['nicira']['nicira'] {
+      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']]
+    } else {
+      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron']]
+    }
+
     service { 'neutron-dhcp-service':
       name       => "p_${::neutron::params::dhcp_agent_service}",
       enable     => true,
@@ -202,7 +209,7 @@ class neutron::agents::dhcp (
       hasstatus  => true,
       hasrestart => false,
       provider   => $service_provider,
-      require    => [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']],
+      require    => $dhcp_service_requirements,
     }
 
   } else {
