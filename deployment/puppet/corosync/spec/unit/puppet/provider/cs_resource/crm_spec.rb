@@ -93,7 +93,7 @@ describe Puppet::Type.type(:cs_resource).provider(:crm) do
     it "should find instances" do
       provider.class.stubs(:block_until_ready).returns(true)
       out=File.open(File.dirname(__FILE__) + '/../../../../fixtures/cib/cib.xml')
-      provider.class.stubs(:dump_cib).returns(out,nil)
+      provider.class.stubs(:dump_cib).returns(out)
       resources = []
       provider.class.instances.each do
         |instance|
