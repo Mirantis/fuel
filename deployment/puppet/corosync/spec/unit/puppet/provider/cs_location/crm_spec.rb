@@ -96,7 +96,7 @@ describe Puppet::Type.type(:cs_location).provider(:crm) do
     it "should find instances" do
       provider.class.stubs(:block_until_ready).returns(true)
       out=File.open(File.dirname(__FILE__) + '/../../../../fixtures/cib/cib.xml')
-      provider.class.stubs(:dump_cib).returns(out,nil)
+      provider.class.stubs(:dump_cib).returns(out)
       instances = provider.class.instances
       instances[0].instance_eval{@property_hash}.should eql(
       {:name=>"l_11",:rules=>[

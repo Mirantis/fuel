@@ -12,13 +12,13 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   commands :crm_attribute => 'crm_attribute'
   commands :crm_resource => 'crm_resource'
 
-  desc "Pacemaker service management."
+  desc 'Pacemaker service management.'
 
   has_feature :refreshable
   has_feature :enableable
   has_feature :ensurable
   def self.get_cib
-    raw, _status = dump_cib
+    raw = dump_cib
     @@cib=REXML::Document.new(raw)
   end
 
@@ -38,9 +38,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     get_resources
     instances = []
     XPath.match(@@resources, '//primitive').each do |element|
-      if !element.nil?
-        instances << new(:name => element.attributes['id'], :hasstatus => true, :hasrestart => false)
-      end
+        instances << new(:name => element.attributes['id'], :hasstatus => true, :hasrestart => false) if element
     end
     instances
   end
@@ -51,14 +49,16 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     @service={}
     default_start_timeout = 30
     default_stop_timeout = 30
-    cib_resource =  XPath.match(@@resources, "//primitive[@id=\'#{@resource[:name]}\']").first
+    unless cib_resource =  XPath.match(@@resources, "//primitive[@id=\'#{@resource[:name]}\']").first
+      raise(Puppet::Error,"resource #{@resource[:name]} not found")
+    end
     @service[:msname] = ['master','clone'].include?(cib_resource.parent.name) ? cib_resource.parent.attributes['id'] : nil
     @service[:name] = @resource[:name]
     @service[:class] = cib_resource.attributes['class']
     @service[:provider] = cib_resource.attributes['provider']
     @service[:type] = cib_resource.attributes['type']
     @service[:metadata] = {}
-    if !cib_resource.elements['meta_attributes'].nil?
+    if cib_resource.elements['meta_attributes']
       cib_resource.elements['meta_attributes'].each_element do |m|
         @service[:metadata][m.attributes['name'].to_sym] = m.attributes['value']
       end
@@ -73,27 +73,23 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     op_stop=XPath.match(REXML::Document.new(cib_resource.to_s),"//operations/op[@name='stop']").first
     @service[:start_timeout] =  default_start_timeout
     @service[:stop_timeout] =  default_stop_timeout
-    if !op_start.nil?
-      @service[:start_timeout] = op_start.attributes['timeout'].to_i
-    end
-    if !op_stop.nil?
-      @service[:stop_timeout] = op_stop.attributes['timeout'].to_i
-    end
+    @service[:start_timeout] = op_start.attributes['timeout'].to_i if op_start
+    @service[:stop_timeout] = op_stop.attributes['timeout'].to_i if op_stop
   end
 
   def get_service_name
     get_service_hash
-    service_name = @service[:msname] ? @service[:msname] : @service[:name]
+    @service[:msname] || @service[:name]
   end
 
   def self.get_stonith
     get_cib
     stonith = XPath.first(@@cib,"crm_config/nvpair[@name='stonith-enabled']")
-    @@stonith = stonith == "true"
+    @@stonith = stonith == 'true'
   end
 
   def self.get_node_state_stonith(ha_state,in_ccm,crmd,join,expected,shutdown)
-    if (in_ccm == "true") && (ha_state == 'active') && (crmd == 'online')
+    if (in_ccm == 'true') && (ha_state == 'active') && (crmd == 'online')
       case join
       when 'member'
         state = :online
@@ -106,7 +102,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
       else
         state = :unclean
       end
-    elsif !(in_ccm == "true") && (ha_state =='dead') && (crmd == 'offline') && !(shutdown == 0)
+    elsif (in_ccm != 'true') && (ha_state =='dead') && (crmd == 'offline') && (shutdown != 0)
       state = :offline
     elsif shutdown == 0
       state = :unclean
@@ -118,15 +114,17 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
 
   def self.get_node_state_no_stonith(ha_state,in_ccm,crmd,join,expected,shutdown)
     state = :unclean
-    if !(in_ccm == "true") || (ha_state == 'dead')
+    if (in_ccm != 'true') || (ha_state == 'dead')
       state = :offline
     elsif crmd == 'online'
+
       if join == 'member'
         state = :online
       else
         state = :offline
       end
-    elsif !(shutdown == "0")
+
+    elsif shutdown != '0'
       state = :offline
     else
       state = :unclean
@@ -161,9 +159,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
         state = get_node_state(ha_state,in_ccm,crmd,join,expected,shutdown)
         if state == :online
           standby = node.elements["instance_attributes/nvpair[@name='standby']"]
-          if standby && ['true', 'yes', '1', 'on'].include?(standby.attributes['value'])
-            state = :standby
-          end
+          state = :standby if standby && ['true', 'yes', '1', 'on'].include?(standby.attributes['value'])
         end
       end
       @@nodes << {:uname => uname, :state => state}
@@ -173,7 +169,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   def get_last_successful_operations
     self.class.get_cib
     self.class.get_nodes
-    @last_successful_operations = []
+    last_successful_operations = []
     @@nodes.each do |node|
       next unless node[:state] == :online
       debug("getting last ops on #{node[:uname]} for #{@resource[:name]}")
@@ -186,12 +182,11 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
       start_stop_ops = completed_ops.select{|op| ["start","stop","monitor","promote"].include? op.attributes['operation']}
       debug("START/STOP OPERATIONS:\n\n #{start_stop_ops.inspect}")
       next if start_stop_ops.nil?
-      sorted_operations = start_stop_ops.sort do
-        |a,b| a.attributes['call-id'].to_i <=> b.attributes['call-id'].to_i
+      sorted_operations = start_stop_ops.sort do |a,b|
+        a.attributes['call-id'].to_i <=> b.attributes['call-id'].to_i
       end
       good_operations = sorted_operations.select do |op|
-        op.attributes['rc-code'] == '0' or
-        op.attributes['operation'] == 'monitor'
+        op.attributes['rc-code'] == '0' || op.attributes['operation'] == 'monitor'
       end
       debug("GOOD OPERATIONS :\n\n #{good_operations.inspect}")
       next if good_operations.nil?
@@ -203,18 +198,16 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
         debug("last operations: #{last_op.attributes['operation']}")
         last_successful_op = last_op.attributes['operation']
       else
-        if last_op.attributes['rc-code'].to_i == 0
-          last_successful_op = 'start'
-        elsif  last_op.attributes['rc-code'].to_i == 8
+        if [8,0].include?(last_op.attributes['rc-code'].to_i)
           last_successful_op = 'start'
         else
           last_successful_op = 'stop'
         end
       end
       debug("LAST SUCCESSFUL OP :\n\n #{last_successful_op.inspect}")
-      @last_successful_operations << last_successful_op if !last_successful_op.nil?
+      last_successful_operations << last_successful_op if last_successful_op
     end
-    @last_successful_operations
+    last_successful_operations
   end
 
   #  def get_operations
@@ -240,7 +233,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     get_service_hash
     enable
     crm('resource', 'start', get_service_name)
-    debug("Starting countdown for resource start")
+    debug('Starting countdown for resource start')
     debug("Start timeout is #{@service[:start_timeout]}")
     Timeout::timeout(@service[:start_timeout],Puppet::Error) do
       loop do
@@ -255,7 +248,7 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
     get_service_hash
     enable
     crm('resource', 'stop', get_service_name)
-    debug("Starting countdown for resource stop")
+    debug('Starting countdown for resource stop')
     debug("Stop timeout is #{@service[:stop_timeout]}")
     Timeout::timeout(@service[:stop_timeout],Puppet::Error) do
       loop do
@@ -271,13 +264,12 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   end
 
   def status(cleanup=true)
-    debug(crm('status'))
     crm_resource('--resource', get_service_name, '--cleanup', '--node', `uname -n`.chomp) if cleanup
-    debug("getting last operations")
-    get_last_successful_operations
-    if @last_successful_operations.any? {|op| ['start','promote'].include?(op)}
+    debug('getting last operations')
+    successful_operations = get_last_successful_operations
+    if successful_operations.any? {|op| ['start','promote'].include?(op)}
       return :running
-    elsif @last_successful_operations.all? {|op| op == 'stop'} or @last_successful_operations.empty?
+    elsif successful_operations.all? {|op| op == 'stop'} || successful_operations.empty?
       return :stopped
     else
       raise(Puppet::Error,"resource #{@resource[:name]} in unknown state")
