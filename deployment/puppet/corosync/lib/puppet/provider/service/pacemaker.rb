@@ -208,6 +208,9 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
           last_successful_op = 'start'
         else
           last_successful_op = 'stop'
+          if last_op.attributes['rc-code'].to_i == 5 and node[:uname] == Facter.value(:pacemaker_hostname)
+            @needs_cleaning = true
+          end
         end
       end
       debug("LAST SUCCESSFUL OP :\n\n #{last_successful_op.inspect}")
@@ -238,6 +241,10 @@ Puppet::Type.type(:service).provide :pacemaker, :parent => Puppet::Provider::Cor
   def start
     get_service_hash
     enable
+    if @needs_cleaning
+        crm_resource('--cleanup','--resource',get_service_name,'--node',Facter.value(:pacemaker_hostname))
+        sleep 5
+    end
     crm('resource', 'start', get_service_name)
     debug("Starting countdown for resource start")
     debug("Start timeout is #{@service[:start_timeout]}")
