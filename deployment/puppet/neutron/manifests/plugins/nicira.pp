@@ -17,6 +17,10 @@ class neutron::plugins::nicira (
 
   package {'nicira-ovs-hypervisor-node':
     ensure => present,
+  } ->
+
+  service {'nicira-ovs-hypervisor-node':
+    ensure => running,
   }
 
   if ! $on_compute {
@@ -39,6 +43,7 @@ class neutron::plugins::nicira (
     ip_address => $ip_address,
     connector_type => $neutron_config['nicira']['connector_type'],
     integration_bridge => $integration_bridge,
+    notify => Service['nicira-ovs-hypervisor-node']
   }
 
   if ! $on_compute {
@@ -68,12 +73,10 @@ class neutron::plugins::nicira (
       ensure  => link,
       target  => '/etc/neutron/plugins/nicira/nvp.ini',
     } ->
-  #  neutron_plugin_nicira {
-  #    'DATABASE/sql_connection':      value => $neutron_config['database']['url'];
-  #    'DATABASE/sql_max_retries':     value => $neutron_config['database']['reconnects'];
-  #    'DATABASE/reconnect_interval':  value => $neutron_config['database']['reconnect_interval'];
-  #  } ->
     neutron_plugin_nicira {
+      'DATABASE/sql_connection':      value => $neutron_config['database']['url'];
+      'DATABASE/sql_max_retries':     value => $neutron_config['database']['reconnects'];
+      'DATABASE/reconnect_interval':  value => $neutron_config['database']['reconnect_interval'];
       'DEFAULT/default_tz_uuid':            value => $neutron_config['nicira']['transport_zone_uuid'];
       'DEFAULT/nvp_user':                   value => $neutron_config['nicira']['nsx_username'];
       'DEFAULT/nvp_password':               value => $neutron_config['nicira']['nsx_password'];

@@ -12,13 +12,13 @@ Puppet::Type.type(:l2_ovs_nicira).provide(:ovs) do
     @cert_path = "#{@cert_dir}/ovsclient-cert.pem"
     @privkey_path = "#{@cert_dir}/ovsclient-privkey.pem"
     @cacert_path = "#{@cert_dir}/vswitchd.cacert"
+    vsctl("set-manager", "ssl:#{@resource[:nsx_endpoint]}")
     if not File.exists? @cert_path
       old_dir = Dir.pwd
       Dir.chdir @cert_dir
       vspki("init", "--force")
       vspki("req+sign", "ovsclient", "controller")
-      vsctl("--", "--bootstrap", "set-ssl", "#{@cert_path}", "#{@privkey_path}", "#{@cacert_path}")
-      vsctl("set-manager", "ssl:#{@resource[:nsx_endpoint]}")
+      vsctl("--", "--bootstrap", "set-ssl", "#{@privkey_path}", "#{@cert_path}", "#{@cacert_path}")
       Dir.chdir old_dir
     end
   end

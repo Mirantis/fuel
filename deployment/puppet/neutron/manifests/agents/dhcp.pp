@@ -77,6 +77,12 @@ class neutron::agents::dhcp (
 
   Service <| title == 'neutron-server' |> -> Service['neutron-dhcp-service']
 
+  if ! $neutron_config['nicira']['nicira'] {
+    $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']]
+  } else {
+    $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron']]
+  }
+
   if $service_provider == 'pacemaker' {
     Service <| title == 'neutron-server' |> -> Cs_shadow['dhcp']
     Neutron_dhcp_agent_config <| |> -> Cs_shadow['dhcp']
@@ -196,11 +202,6 @@ class neutron::agents::dhcp (
 
     Neutron::Network::Provider_router<||> -> Service<| title=='neutron-dhcp-service' |>
 
-    if ! $neutron_config['nicira']['nicira'] {
-      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']]
-    } else {
-      $dhcp_service_requirements = [Package[$dhcp_agent_package], Class['neutron']]
-    }
 
     service { 'neutron-dhcp-service':
       name       => "p_${::neutron::params::dhcp_agent_service}",
@@ -223,7 +224,7 @@ class neutron::agents::dhcp (
       hasstatus  => true,
       hasrestart => true,
       provider   => $::neutron::params::service_provider,
-      require    => [Package[$dhcp_agent_package], Class['neutron'], Service['neutron-ovs-agent']],
+      require    => $dhcp_service_requirements,
     }
   }
   Class[neutron::waistline] -> Service[neutron-dhcp-service]
