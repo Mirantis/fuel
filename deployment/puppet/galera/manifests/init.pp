@@ -146,7 +146,13 @@ class galera (
 
   cs_shadow { $res_name: cib => $cib_name }
   cs_commit { $res_name: cib => $cib_name }
-  ::corosync::cleanup { "clone_$res_name": }
+
+  if $primary_controller {
+    $cleanup_wait = 40
+  } else {
+    $cleanup_wait = 5
+  }
+  corosync::cleanup { "clone_$res_name": wait_before => $cleanup_wait}
 
   Cs_commit["$res_name"] ~> Corosync::Cleanup["clone_$res_name"] -> Service["mysql"]
 
