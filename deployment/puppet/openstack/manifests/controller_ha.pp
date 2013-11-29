@@ -52,6 +52,12 @@ define haproxy_service(
       $balancer_port = 5673
     }
 
+    'radosgw': {
+      $haproxy_config_options = { 'option' => ['httplog'], 'balance' => 'roundrobin' }
+      $balancermember_options = 'check'
+      $balancer_port = '6780'
+    }
+
     default: {
       $haproxy_config_options = { 'option' => ['httplog'], 'balance' => 'roundrobin' }
       $balancermember_options = 'check'
@@ -114,7 +120,7 @@ class openstack::controller_ha (
    $auto_assign_floating_ip = false, $mysql_root_password, $admin_email, $admin_user = 'admin', $admin_password, $keystone_admin_tenant='admin',
    $keystone_db_password, $keystone_admin_token, $glance_db_password, $glance_user_password, $glance_image_cache_max_size,
    $nova_db_password, $nova_user_password, $queue_provider, $rabbit_password, $rabbit_user, $rabbit_nodes,
-   $qpid_password, $qpid_user, $qpid_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef,
+   $qpid_password, $qpid_user, $qpid_nodes, $memcached_servers, $export_resources, $glance_backend='file', $swift_proxies=undef, $rgw_balancers=undef,
    $quantum = false,
    $quantum_config={},
    $cinder = false, $cinder_iscsi_bind_addr = false,
@@ -128,6 +134,10 @@ class openstack::controller_ha (
    $cinder_volume_group     = 'cinder-volumes',
    $cinder_user_password    = 'cinder_user_pass',
    $cinder_db_password      = 'cinder_db_pass',
+   $ceilometer                 = false,
+   $ceilometer_db_password     = 'ceilometer_pass',
+   $ceilometer_user_password   = 'ceilometer_pass',
+   $ceilometer_metering_secret = 'ceilometer',
    $rabbit_node_ip_address  = $internal_address,
    $horizon_use_ssl         = false,
    $quantum_network_node    = false,
@@ -215,8 +225,17 @@ class openstack::controller_ha (
     if $custom_mysql_setup_class == 'galera' {
       haproxy_service { 'mysqld': order => 95, port => 3306, virtual_ips => [$internal_virtual_ip], define_backend => true }
     }
-    if $glance_backend == 'swift' {
-      haproxy_service { 'swift': order => 96, port => 8080, virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
+
+    if $swift_proxies {
+      haproxy_service { 'swift': order => '96', port => '8080', virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $swift_proxies }
+    }
+
+    if $rgw_balancers {
+      haproxy_service { 'radosgw': order => '97', port => '8080', virtual_ips => [$public_virtual_ip,$internal_virtual_ip], balancers => $rgw_balancers, define_backend => true }
+    }
+
+    if $ceilometer {
+      haproxy_service { 'ceilometer': order => 97, port => 8777, virtual_ips => [$public_virtual_ip, $internal_virtual_ip]  }
     }
 
     Haproxy_service<| |> ~> Exec['restart_haproxy']
@@ -317,6 +336,10 @@ class openstack::controller_ha (
       manage_volumes          => $manage_volumes,
       nv_physical_volume      => $nv_physical_volume,
       cinder_volume_group     => $cinder_volume_group,
+      ceilometer              => $ceilometer,
+      ceilometer_db_password  => $ceilometer_db_password,
+      ceilometer_user_password => $ceilometer_user_password,
+      ceilometer_metering_secret => $ceilometer_metering_secret,
       # turn on SWIFT_ENABLED option for Horizon dashboard
       swift                        => $glance_backend ? { 'swift'    => true, default => false },
       use_syslog                   => $use_syslog,
