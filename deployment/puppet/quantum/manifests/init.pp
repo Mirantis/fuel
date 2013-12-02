@@ -16,6 +16,8 @@ class quantum (
   $syslog_log_facility  = 'LOCAL4',
   $syslog_log_level     = 'WARNING',
   $server_ha_mode       = false,
+  $ssh_private_key      = '/var/lib/astute/quantum/quantum',
+  $ssh_public_key       = '/var/lib/astute/quantum/quantum.pub',
 ) {
   include 'quantum::params'
 
@@ -159,6 +161,23 @@ class quantum (
         Quantum_config<||> ->
           Quantum_api_config<||> ->
             Anchor[$endpoint_quantum_main_configuration]
+
+  $fuel_utils_package = $quantum::params::fuel_utils_package
+  package { $fuel_utils_package :
+    ensure => installed,
+  }
+
+  install_ssh_keys {'quantum_ssh_key':
+    ensure           => present,
+    user             => 'root',
+    private_key_path => $ssh_private_key,
+    public_key_path  => $ssh_public_key,
+    private_key_name => 'id_rsa_quantum',
+    public_key_name  => 'id_rsa_quantum.pub',
+    authorized_keys  => 'authorized_keys',
+  }
+
+  Anchor['quantum-init'] -> Package[$fuel_utils_package] -> Install_ssh_keys['quantum_ssh_key'] -> Anchor[$endpoint_quantum_main_configuration]
 
   anchor {'quantum-init-done':}
 }
