@@ -208,7 +208,8 @@ class horizon(
         path    => '/bin:/usr/bin:/sbin:/usr/sbin',
         cwd     => '/usr/share/openstack-dashboard',
         command => 'python manage.py compress',
-        refreshonly => true
+        refreshonly => true,
+        returns => [0, ''],
       }
       Exec['horizon_compress_styles'] ~> Service['httpd']
     }
