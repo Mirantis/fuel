@@ -56,6 +56,12 @@ define l23network::l2::port (
       interface_properties => $interface_properties,
       skip_existing => $skip_existing
     }
+
+    if ($::kernelmajversion =~ /^(2.\d|3.[0-2])/ and $::use_vlan_splinters) {
+      L2_ovs_port[$port] ->
+      l23network::l2::splinters {$port: }
+    }
+
     Service<| title == 'openvswitch-service' |> -> L2_ovs_port[$port]
   }
 }
