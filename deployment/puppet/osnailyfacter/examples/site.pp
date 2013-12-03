@@ -57,6 +57,8 @@ if $::fuel_settings['nodes'] {
     $use_ceph = false
   }
 
+  # Should we evaluate and enable vlan splinters?
+  $use_vlan_splinters = false
 
   if $use_quantum {
     prepare_network_config($::fuel_settings['network_scheme'])
