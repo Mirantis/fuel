@@ -27,12 +27,10 @@ class quantum::agents::l3 (
          ensure  => 'present',
          content => 'manual',
          mode    => 644,
-         before  => Package['quantum-l3'],
-       }
+       } -> Package['quantum-l3'] ->
        exec { 'rm-quantum-l3-override':
          path      => '/sbin:/bin:/usr/bin:/usr/sbin',
          command   => "rm -f /etc/init/quantum-l3-agent.override",
-         require    => Package['quantum-l3'],
        }
      }
   }
