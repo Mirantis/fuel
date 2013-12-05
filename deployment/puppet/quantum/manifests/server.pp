@@ -27,12 +27,10 @@ class quantum::server (
          ensure  => 'present',
          content => 'manual',
          mode    => 644,
-         before  => Package['quantum-server'],
-       }
+       } -> Package['quantum-server'] ->
        exec { 'rm-quantum-metadata-override': 
          path      => '/sbin:/bin:/usr/bin:/usr/sbin',
          command   => "rm -f /etc/init/quantum-metadata-agent.override",
-         require    => Package['quantum-server'],
        }
     }
   }

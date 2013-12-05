@@ -26,12 +26,10 @@ class quantum::agents::dhcp (
          ensure  => 'present',
          content => 'manual',
          mode    => 644,
-         before  => Package['quantum-dhcp-agent'],
-       }
+       } -> Package['quantum-dhcp-agent'] ->
        exec { 'rm-quantum-dhcp-override':
          path      => '/sbin:/bin:/usr/bin:/usr/sbin',
          command   => "rm -f /etc/init/quantum-dhcp-agent.override",
-         require    => Package['quantum-dhcp-agent'],
        }
     }
   }
