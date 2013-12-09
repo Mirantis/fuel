@@ -23,4 +23,12 @@ Puppet::Type.newtype(:l2_ovs_bridge) do
     newproperty(:external_ids) do
       desc "External IDs for the bridge"
     end
+
+    newproperty(:in_band) do
+      desc "Enable/Disable in-band mode"
+    end
+
+    newproperty(:fail_mode) do
+      desc "Fail mode configuration for bridge"
+    end
 end

@@ -5,7 +5,11 @@ class neutron::network::predefined_netwoks (
 
   Keystone_user_role<| title=="$auth_user@$auth_tenant"|> -> Neutron_net<| |>
   Service <| title == 'keystone' |> -> Neutron_net <| |>
-  Anchor['neutron-plugin-ovs-done'] -> Neutron_net <| |>
+  if ! $neutron_config['nicira']['nicira'] {
+    Anchor['neutron-plugin-ovs-done'] -> Neutron_net <| |>
+  } else {
+    Anchor['neutron-plugin-nicira-done'] -> Neutron_net <| |>
+  }
 
   neutron_floatingip_pool{'admin':
     pool_size => get_floatingip_pool_size_for_admin($neutron_config)
