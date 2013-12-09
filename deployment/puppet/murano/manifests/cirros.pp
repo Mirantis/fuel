@@ -14,19 +14,19 @@ class murano::cirros (
     ensure => "present"
   }
 
-  #case $::osfamily {
-  #  'RedHat': {
-  #    exec { 'upload-img':
-  #      command => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} image-create --name=${img_name} --is-public=${public} --container-format=${container_format} --disk-format=${disk_format} --property murano_image_info=\'{\"title\": \"Murano Demo\", \"type\": \"cirros.demo\"}\'< /tmp/murano-cirros.qcow2",
-  #      unless => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index && (/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index | grep ${img_name})",
-  #    }
-  #  }
-  #  'Debian': {
-  #    exec { 'upload-img':
-  #      command => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} image-create  --name=${img_name} --is_public=${public} --container_format=${container_format} --disk_format=${disk_format}  --property murano_image_info=\'{\"title\": \"Murano Demo\", \"type\": \"cirros.demo\"}\'< /tmp/murano-cirros.qcow2",
-  #      unless => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index && (/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index | grep ${img_name})",
-  #    }
-  #  }
-  #}
+  case $::osfamily {
+    'RedHat': {
+      exec { 'upload-img':
+        command => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} image-create --name=${img_name} --is-public=${public} --container-format=${container_format} --disk-format=${disk_format} --property murano_image_info=\'{\"title\": \"Murano Demo\", \"type\": \"cirros.demo\"}\'< /opt/vm/murano-cirros.qcow2",
+        unless => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index && (/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index | grep ${img_name})",
+      }
+    }
+    'Debian': {
+      exec { 'upload-img':
+        command => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} image-create  --name=${img_name} --is_public=${public} --container_format=${container_format} --disk_format=${disk_format}  --property murano_image_info=\'{\"title\": \"Murano Demo\", \"type\": \"cirros.demo\"}\'< /usr/share/cirros-testvm/murano-cirros.qcow2",
+        unless => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index && (/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index | grep ${img_name})",
+      }
+    }
+  }
 
 }
