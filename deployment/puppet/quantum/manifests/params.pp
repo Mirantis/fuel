@@ -34,6 +34,7 @@ class quantum::params {
       $python_path        = 'python2.7/dist-packages'
       $cidr_package       = 'ipcalc'
       $vlan_package       = 'vlan'
+      $fuel_utils_package = 'fuel-utils'
 
       case $::operatingsystem {
         'Debian': {
@@ -78,6 +79,7 @@ class quantum::params {
       $linuxbridge_config_file    = '/etc/quantum/plugins/linuxbridge/linuxbridge_conf.ini'
 
       $metadata_agent_service = 'quantum-metadata-agent'
+      $fuel_utils_package = [ 'fuel-utils', 'python-ecdsa' ]
     }
   }
 }

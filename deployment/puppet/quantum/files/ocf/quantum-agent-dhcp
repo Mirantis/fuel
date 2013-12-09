@@ -321,6 +321,7 @@ quantum_dhcp_agent_start() {
 
     # detach deffered rescheduling procedure
     bash -c "sleep 13 ; q-agent-cleanup.py --agent=dhcp --reschedule --remove-dead 2>&1 >> /var/log/quantum/rescheduling.log" &
+    fuel-fdb-cleaner --ssh-keyfile /root/.ssh/id_rsa_quantum -l /var/log/quantum/dhcp-fdb-cleaner.log
 
     ocf_log info "OpenStack DHCP Server (quantum-dhcp-agent) started"
     return $OCF_SUCCESS
