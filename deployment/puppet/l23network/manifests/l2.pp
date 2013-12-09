@@ -16,7 +16,7 @@ class l23network::l2 (
        before => Package[$::l23network::params::ovs_packages],
      }
     }
-    if $::operatingsystem == 'Centos' {
+    if ( $::operatingsystem == 'Centos' and $::kernelmajversion == '2.6' ) {
      package { 'kmod-openvswitch':
        before => Package[$::l23network::params::ovs_packages],
      }
