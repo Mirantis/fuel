@@ -205,7 +205,8 @@ class neutron::agents::l3 (
     Anchor['neutron-l3'] ->
       Service['neutron-l3-init_stopped'] ->
         Cs_resource["p_${::neutron::params::l3_agent_service}"] ->
-          Service['neutron-l3'] ->
+          Cs_commit['l3']->
+           Service['neutron-l3'] ->
             Anchor['neutron-l3-done']
 
     service { 'neutron-l3-init_stopped':
