@@ -201,6 +201,7 @@ class neutron::agents::ovs (
       }
     }
     default: {
+      Package["$ovs_agent_package"] ->
       service { 'neutron-ovs-cleanup':
         name       => 'neutron-ovs-cleanup',
         enable     => true,
