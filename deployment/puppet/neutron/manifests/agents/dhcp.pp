@@ -230,9 +230,9 @@ class neutron::agents::dhcp (
 
   Anchor['neutron-dhcp-agent'] ->
     Cs_resource<| title=="p_${::neutron::params::dhcp_agent_service}" |> ->
-     Cs_commit['dhcp'] ->
-      Service['neutron-dhcp-service'] ->
-        Anchor['neutron-dhcp-agent-done']
+      Cs_commit <| title== 'dhcp' |> ->
+        Service['neutron-dhcp-service'] ->
+          Anchor['neutron-dhcp-agent-done']
 
   anchor {'neutron-dhcp-agent-done': }
 
