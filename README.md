@@ -7,3 +7,4 @@ OpenStack is a very versatile and flexible cloud management platform. By exposin
 This architectural flexibility doesn’t set itself up magically; it asks you, the user and cloud administrator, to organize and manage a large array of configuration options. Consequently, getting the most out of your OpenStack cloud over time – in terms of flexibility, scalability, and manageability – requires a thoughtful combination of automation and configuration choices.
 
 Mirantis Fuel for OpenStack was created to solve exactly this problem.
+T
