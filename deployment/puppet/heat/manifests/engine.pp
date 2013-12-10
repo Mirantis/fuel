@@ -63,8 +63,6 @@ class heat::engine (
       cib => $service_name,
     }
 
-    corosync::cleanup { $service_name : }
-
     cs_resource { $service_name :
       ensure          => present,
       cib             => $service_name,

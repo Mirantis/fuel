@@ -22,7 +22,6 @@ class cluster::haproxy (
 
   Anchor['haproxy'] -> Cs_shadow["$cib_name"]
 
-  corosync::cleanup {"clone_$cib_name": }
   Cs_commit[$cib_name] -> Service['haproxy']
 
   file {'haproxy-ocf':
