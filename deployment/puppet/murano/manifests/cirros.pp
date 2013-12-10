@@ -6,12 +6,17 @@ class murano::cirros (
   $disk_format      = 'raw',
   $container_format = 'bare',
   $public           = 'true',
-  $img_name         = 'MuranoVm',
+  $img_name         = 'TestVm',
   $os_name          = 'cirros',
 ) {
 
-  package { 'murano-cirros-testvm' :
-    ensure => "present"
+  #package { 'murano-cirros-testvm' :
+  #  ensure => "present"
+  #}
+
+  exec { 'tag-murano-img':
+    command => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} image-update --name=${img_name} --property murano_image_info=\'{\"title\": \"Murano Demo\", \"type\": \"cirros.demo\"}\'",
+    onlyif  => "/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index && (/usr/bin/glance -N ${os_auth_url} -T ${os_tenant_name} -I ${os_username} -K ${os_password} index | grep ${img_name})",
   }
 
   #case $::osfamily {
