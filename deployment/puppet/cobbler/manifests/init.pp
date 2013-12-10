@@ -75,6 +75,7 @@ class cobbler(
   class { ::cobbler::iptables : }
   class { ::cobbler::snippets : }
   class { ::cobbler::server : }
+  class { ::cobbler::pxehttp : }
 
   cobbler_digest_user {$cobbler_user:
     password => $cobbler_password,

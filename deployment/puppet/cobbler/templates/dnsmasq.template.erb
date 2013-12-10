@@ -25,7 +25,9 @@ dhcp-option=6,<%= @name_server %>
 
 dhcp-range=internal,<%= @dhcp_start_address %>,<%= @dhcp_end_address %>,<%= @dhcp_netmask %>
 dhcp-option=net:internal,option:router,<%= @dhcp_gateway %>
-pxe-service=net:#gpxe,x86PC,"Install",pxelinux,<%= @next_server %>
-dhcp-boot=net:internal,pxelinux.0,boothost,<%= @next_server %>
+dhcp-boot=net:#gpxe,undionly.kpxe
+dhcp-boot=pxelinux.0
+dhcp-option-force=209,pxelinux.cfg
+dhcp-option-force=210,http://<%= @next_server %>/tftpboot/
 
 $insert_cobbler_system_definitions
