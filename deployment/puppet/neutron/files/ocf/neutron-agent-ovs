@@ -240,7 +240,7 @@ neutron_ovs_agent_status() {
     # compare PID from file with PID from `pgrep...`
     f_pid=`cat $OCF_RESKEY_pid | tr '\n' ' ' | awk '{print $1}'`
     if [ "xxx$pid" == "xxx$f_pid" ]; then
-        return $OCF_NOT_RUNNING
+        return $OCF_SUCCESS
     fi
 
     # at this point we have PID file and PID from it
