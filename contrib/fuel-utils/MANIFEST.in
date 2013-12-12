@@ -1,0 +1,2 @@
+recursive-include fdb_cleaner *.html *.min.js *.css *.png *.jpg *.gif *.json *.yaml *.ini
+recursive-exclude fdb_cleaner *.orig *.pyc *.pyo *.sqlite
